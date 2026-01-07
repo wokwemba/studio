@@ -6,7 +6,7 @@ import {
   ProvideAiRiskAdviceOutput,
 } from '@/ai/flows/provide-ai-risk-advice';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader } from 'lucide-react';
+import { Loader, Wand2 } from 'lucide-react';
 import { RiskTrendChart } from '@/components/dashboard/risk-trend-chart';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { metrics } from '@/app/data';
@@ -21,6 +21,9 @@ export default function RiskProfilePage() {
   useEffect(() => {
     provideAiRiskAdvice({ riskProfile }).then((result) => {
       setAdvice(result);
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
       setLoading(false);
     });
   }, []);
@@ -38,20 +41,23 @@ export default function RiskProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">AI Risk Advisor</CardTitle>
+            <CardTitle className="font-headline flex items-center gap-2">
+              <Wand2 className="h-5 w-5 text-primary" />
+              <span>AI Risk Advisor</span>
+            </CardTitle>
             <CardDescription>
               Personalized advice to improve your security posture.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[8rem]">
             {loading ? (
-              <div className="flex justify-center items-center h-24">
+              <div className="flex justify-center items-center h-full">
                 <Loader className="h-8 w-8 animate-spin" />
               </div>
             ) : advice ? (
               <p className="text-muted-foreground">{advice.advice}</p>
             ) : (
-              <p>Could not load AI-driven advice.</p>
+              <p className="text-destructive">Could not load AI-driven advice at this time.</p>
             )}
           </CardContent>
         </Card>
