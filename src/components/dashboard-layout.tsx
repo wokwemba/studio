@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
@@ -11,14 +12,41 @@ import { useEffect } from "react";
 
 const unauthenticatedRoutes = ["/login", "/signup"];
 
+async function setSessionCookie(token: string) {
+    await fetch('/api/auth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token }),
+    });
+}
+
+async function clearSessionCookie() {
+    await fetch('/api/auth', {
+        method: 'DELETE',
+    });
+}
+
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isUserLoading && !user && !unauthenticatedRoutes.includes(pathname)) {
-      router.push('/login');
+    if (!isUserLoading) {
+      if (user) {
+        user.getIdToken().then(setSessionCookie);
+        if (unauthenticatedRoutes.includes(pathname)) {
+            router.push('/');
+        }
+      } else {
+        clearSessionCookie();
+        if (!unauthenticatedRoutes.includes(pathname)) {
+            router.push('/login');
+        }
+      }
     }
   }, [user, isUserLoading, router, pathname]);
 
