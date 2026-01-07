@@ -69,14 +69,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
     );
   }
-  
-  // If the page is a public auth page (login/signup), or if the user is logged in,
-  // render the layout. Otherwise, we show a loader while redirecting.
-  if (unauthenticatedRoutes.includes(pathname) || user) {
-     if (unauthenticatedRoutes.includes(pathname)) {
-        return <>{children}</>;
-      }
 
+  // If the user is on a public auth page (login/signup), just render the content.
+  if (unauthenticatedRoutes.includes(pathname)) {
+    return <>{children}</>;
+  }
+
+  // If the user is logged in, render the full dashboard layout.
+  if (user) {
     return (
         <div className="min-h-screen w-full flex">
         <Sidebar>
@@ -98,11 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // If we are here, user is not logged in and not on an auth page,
-  // the useEffect above is handling the redirect. Show a loader.
-   return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader className="h-16 w-16 animate-spin text-primary" />
-      </div>
-    );
+  // If user is not logged in and not on an auth page, it's a public page. Render children without the dashboard shell.
+  // The useEffect above handles redirecting away from protected routes.
+  return <>{children}</>;
 }
