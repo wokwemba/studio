@@ -11,6 +11,7 @@ import {
   FileText,
   User,
   Globe,
+  History,
 } from "lucide-react";
 
 import {
@@ -29,6 +30,7 @@ const links = [
   { href: "/risk-profile", label: "Risk Profile", icon: User },
   { href: "/certificates", label: "Certificates", icon: FileText },
   { href: "/threat-intel", label: "Threat Intel", icon: Globe },
+  { href: "/recent-attacks", label: "Recent Attacks", icon: History },
 ];
 
 export function SidebarNav() {
