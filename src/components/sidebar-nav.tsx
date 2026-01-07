@@ -1,0 +1,52 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import {
+  BookUser,
+  ShieldCheck,
+  Trophy,
+  LayoutDashboard,
+  Target,
+  FileText,
+  User,
+} from "lucide-react";
+
+import {
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
+
+const links = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/training", label: "My Training", icon: BookUser },
+  { href: "/simulations", label: "Simulations", icon: Target },
+  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/risk-profile", label: "Risk Profile", icon: User },
+  { href: "/certificates", label: "Certificates", icon: FileText },
+];
+
+export function SidebarNav() {
+  const pathname = usePathname();
+
+  return (
+    <SidebarMenu>
+      {links.map((link) => (
+        <SidebarMenuItem key={link.href}>
+          <SidebarMenuButton
+            asChild
+            isActive={pathname === link.href}
+            className="font-headline"
+          >
+            <Link href={link.href}>
+              <link.icon className="h-5 w-5" />
+              <span>{link.label}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  );
+}
