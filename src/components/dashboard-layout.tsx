@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Sidebar, SidebarContent, SidebarHeader, SidebarInset } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarHeader } from "@/components/ui/sidebar";
 import { SidebarNav } from "@/components/sidebar-nav";
 import Header from "@/components/header";
 import { ShieldCheck, Loader } from "lucide-react";
@@ -44,8 +44,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar variant="inset" collapsible="icon">
+    <div className="min-h-screen w-full flex">
+      <Sidebar>
         <SidebarHeader>
           <Link href="/" className="flex items-center gap-2">
             <ShieldCheck className="w-8 h-8 text-primary" />
@@ -56,10 +56,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <SidebarNav />
         </SidebarContent>
       </Sidebar>
-      <SidebarInset>
+      <div className="flex flex-col flex-1">
         <Header />
-        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
-      </SidebarInset>
+        <main className="p-4 sm:p-6 lg:p-8 flex-1">{children}</main>
+      </div>
     </div>
   );
 }

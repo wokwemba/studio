@@ -16,6 +16,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ const links = [
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const { state } = useSidebar();
 
   return (
     <SidebarMenu>
@@ -43,7 +45,7 @@ export function SidebarNav() {
           >
             <Link href={link.href}>
               <link.icon className="h-5 w-5" />
-              <span>{link.label}</span>
+              {state === 'expanded' && <span>{link.label}</span>}
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
