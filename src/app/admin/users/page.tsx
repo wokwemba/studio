@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -35,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Loader } from 'lucide-react';
+import { EditUserRoleDialog } from '@/components/admin/edit-user-role-dialog';
 
 type User = {
   id: string;
@@ -46,7 +48,7 @@ type User = {
   avatarId?: string;
 };
 
-type Role = {
+export type Role = {
     id: string;
     name: 'User' | 'Admin' | 'SuperAdmin';
 }
@@ -67,14 +69,17 @@ const UserTableRow = ({ user }: { user: User }) => {
     const firestore = useFirestore();
     const roleDocRef = useMemoFirebase(() => (firestore && user.roleId ? doc(firestore, 'roles', user.roleId) : null), [firestore, user.roleId]);
     const { data: role } = useDoc<Role>(roleDocRef);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
     const getAvatar = (id?: string) => {
         if (!id) return '';
-        return PlaceHolderImages.find((p) => p.id === id)?.imageUrl || '';
+        const image = PlaceHolderImages.find((p) => p.id === id);
+        return image?.imageUrl || PlaceHolderImages.find(p => p.id === 'user-avatar-1')?.imageUrl || '';
     }
     const roleName = role?.name || 'User';
 
     return (
+        <>
         <TableRow className={cn(roleName === 'SuperAdmin' && "bg-accent/50")}>
             <TableCell>
                 <div className="flex items-center gap-3">
@@ -105,7 +110,9 @@ const UserTableRow = ({ user }: { user: User }) => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem>Edit User</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>
+                      Edit Role
+                    </DropdownMenuItem>
                     <DropdownMenuItem>View Activity</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className='text-destructive'>Deactivate User</DropdownMenuItem>
@@ -113,6 +120,13 @@ const UserTableRow = ({ user }: { user: User }) => {
                 </DropdownMenu>
             </TableCell>
         </TableRow>
+        <EditUserRoleDialog 
+            user={user}
+            currentRoleId={user.roleId}
+            isOpen={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+        />
+        </>
     );
 }
 
