@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   explainSimulationFailure,
   ExplainSimulationFailureOutput,
 } from '@/ai/flows/explain-simulation-failure';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Loader, Wand2 } from 'lucide-react';
 
 const emailContent = `
     From: IT Support <it-support@example-corp.com>
@@ -28,20 +29,29 @@ const emailContent = `
 export default function SimulationsPage() {
   const [explanation, setExplanation] =
     useState<ExplainSimulationFailureOutput | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const handleAnalyze = () => {
+    setLoading(true);
+    setError(null);
+    setExplanation(null);
+
     explainSimulationFailure({
       emailContent: emailContent,
       userDepartment: 'Marketing',
-    }).then((result) => {
-      setExplanation(result);
-    }).catch(err => {
-      console.error("Simulations Page Error:", err);
-    }).finally(() => {
-      setLoading(false);
-    });
-  }, []);
+    })
+      .then((result) => {
+        setExplanation(result);
+      })
+      .catch((err) => {
+        console.error('Simulations Page Error:', err);
+        setError('Could not load AI analysis. The service may be temporarily unavailable due to high demand.');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -55,24 +65,32 @@ export default function SimulationsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-lg font-headline">Phishing Email Content</h3>
-                <pre className="bg-muted p-4 rounded-lg mt-2 font-code text-sm whitespace-pre-wrap">{emailContent}</pre>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg font-headline">AI Explanation</h3>
-                 {loading ? (
-                    <div className="flex justify-center items-center h-24">
-                      <Loader className="h-8 w-8 animate-spin" />
-                    </div>
-                  ) : explanation ? (
-                    <p className="text-muted-foreground mt-2">{explanation.explanation}</p>
-                  ) : (
-                    <p className="text-destructive text-sm mt-2">Could not load AI analysis. The service may be temporarily unavailable due to high demand.</p>
-                  )}
+            <div>
+              <h3 className="font-semibold text-lg font-headline">Phishing Email Content</h3>
+              <pre className="bg-muted p-4 rounded-lg mt-2 font-code text-sm whitespace-pre-wrap">{emailContent}</pre>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg font-headline">AI Explanation</h3>
+              <div className="min-h-[8rem] mt-2 flex items-center justify-center p-4 border rounded-lg bg-muted/50">
+                {loading ? (
+                  <Loader className="h-8 w-8 animate-spin" />
+                ) : error ? (
+                   <p className="text-destructive text-sm">{error}</p>
+                ) : explanation ? (
+                  <p className="text-muted-foreground text-sm">{explanation.explanation}</p>
+                ) : (
+                   <p className="text-muted-foreground text-sm">Click the button to analyze why this simulation might succeed.</p>
+                )}
               </div>
             </div>
+          </div>
         </CardContent>
+        <CardFooter>
+            <Button onClick={handleAnalyze} disabled={loading}>
+                {loading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                {loading ? 'Analyzing...' : 'Analyze with AI'}
+            </Button>
+        </CardFooter>
       </Card>
     </div>
   );

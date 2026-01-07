@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   provideAiRiskAdvice,
   ProvideAiRiskAdviceOutput,
 } from '@/ai/flows/provide-ai-risk-advice';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Loader, Wand2 } from 'lucide-react';
 import { RiskTrendChart } from '@/components/dashboard/risk-trend-chart';
 import { MetricCard } from '@/components/dashboard/metric-card';
@@ -13,21 +14,28 @@ import { metrics } from '@/app/data';
 
 export default function RiskProfilePage() {
   const [advice, setAdvice] = useState<ProvideAiRiskAdviceOutput | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const riskProfile =
     'This user has a high phishing detection failure rate and low multi-factor authentication (MFA) awareness. They have completed only 50% of their assigned training modules.';
 
-  useEffect(() => {
-    provideAiRiskAdvice({ riskProfile }).then((result) => {
-      setAdvice(result);
-    }).catch(err => {
-      console.error(err);
-      // No need to set a separate error state, the null `advice` will be handled
-    }).finally(() => {
+  const handleGetAdvice = () => {
+    setLoading(true);
+    setError(null);
+    setAdvice(null);
+    provideAiRiskAdvice({ riskProfile })
+      .then((result) => {
+        setAdvice(result);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError('Could not load AI-driven advice. The service may be temporarily unavailable.');
+      })
+      .finally(() => {
         setLoading(false);
-    });
-  }, []);
+      });
+  };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
@@ -38,9 +46,9 @@ export default function RiskProfilePage() {
           <MetricCard key={metric.label} {...metric} />
         ))}
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
               <Wand2 className="h-5 w-5 text-primary" />
@@ -50,17 +58,23 @@ export default function RiskProfilePage() {
               Personalized advice to improve your security posture.
             </CardDescription>
           </CardHeader>
-          <CardContent className="min-h-[8rem]">
+          <CardContent className="flex-1 flex items-center justify-center min-h-[8rem]">
             {loading ? (
-              <div className="flex justify-center items-center h-full">
-                <Loader className="h-8 w-8 animate-spin" />
-              </div>
+              <Loader className="h-8 w-8 animate-spin" />
+            ) : error ? (
+              <p className="text-destructive text-sm text-center">{error}</p>
             ) : advice ? (
-              <p className="text-muted-foreground">{advice.advice}</p>
+              <p className="text-muted-foreground text-center">{advice.advice}</p>
             ) : (
-              <p className="text-destructive text-sm">Could not load AI-driven advice. The service may be temporarily unavailable.</p>
+              <p className="text-muted-foreground text-sm text-center">Click the button to get personalized AI advice.</p>
             )}
           </CardContent>
+          <CardFooter>
+            <Button onClick={handleGetAdvice} disabled={loading} className="w-full">
+              {loading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+              {loading ? 'Getting Advice...' : 'Get AI Advice'}
+            </Button>
+          </CardFooter>
         </Card>
         <RiskTrendChart />
       </div>
