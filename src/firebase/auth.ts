@@ -23,7 +23,10 @@ const createUserProfile = async (userCredential: UserCredential): Promise<UserCr
     let roleId = ROLES.USER;
     if (user.email === 'wokwemba@safaricom.co.ke') {
         roleId = ROLES.ADMIN;
+    } else if (user.email === 'super@admin.com') { // Example for super admin
+        roleId = ROLES.SUPER_ADMIN;
     }
+
 
     const newUserProfile = {
         email: user.email,
@@ -36,29 +39,38 @@ const createUserProfile = async (userCredential: UserCredential): Promise<UserCr
     };
 
     try {
-        await setDoc(userDocRef, newUserProfile);
-        return userCredential; // Pass through the user credential on success
-    } catch (error) {
-        console.error("Failed to create user profile:", error);
-        const permissionError = new FirestorePermissionError({
-            path: userDocRef.path,
-            operation: 'create',
-            requestResourceData: newUserProfile,
+        // Use a non-blocking write for the user profile
+        setDoc(userDocRef, newUserProfile).catch(error => {
+            console.error("Non-blocking profile creation failed:", error);
+            // Even though it's non-blocking, we can still report the error
+            const permissionError = new FirestorePermissionError({
+                path: userDocRef.path,
+                operation: 'create',
+                requestResourceData: newUserProfile,
+            });
+            errorEmitter.emit('permission-error', permissionError);
         });
-        errorEmitter.emit('permission-error', permissionError);
-        // Re-throw to allow the caller to handle the profile creation failure
+        return userCredential; // Return immediately
+    } catch (error) {
+        console.error("Failed to initiate user profile creation:", error);
+        // This synchronous catch might not be hit if setDoc is fully async,
+        // but it's good practice to keep it.
         throw error;
     }
 };
 
 /** Creates a new user with email and password and sets up their profile. */
-export async function signUpWithEmail(auth: Auth, email: string, password: string): Promise<void> {
+export async function signUpWithEmail(auth: Auth, email: string, password: string): Promise<{ success: boolean; error?: string }> {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await createUserProfile(userCredential);
-  } catch (error) {
+    return { success: true };
+  } catch (error: any) {
     console.error("Email sign-up failed:", error);
-    throw error;
+    if (error.code === 'auth/email-already-in-use') {
+        return { success: false, error: 'This email is already registered. Please sign in instead.' };
+    }
+    return { success: false, error: 'An unexpected error occurred during sign up.' };
   }
 }
 

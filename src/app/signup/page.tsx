@@ -31,17 +31,14 @@ export default function SignupPage() {
         return;
     }
 
-    try {
-      await signUpWithEmail(auth, email, password);
-       // The onAuthStateChanged listener will handle the redirect.
+    const result = await signUpWithEmail(auth, email, password);
+
+    setLoading(false);
+    if (result.success) {
+      // The onAuthStateChanged listener will handle the redirect.
       router.push('/');
-    } catch (err: any) {
-      if (err instanceof FirebaseError && err.code === 'auth/email-already-in-use') {
-        setError('This email address is already in use. Please log in or use a different email.');
-      } else {
-        setError(err.message || 'An unexpected error occurred during sign up.');
-      }
-      setLoading(false);
+    } else {
+      setError(result.error || 'An unexpected error occurred.');
     }
   };
 
