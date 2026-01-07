@@ -26,7 +26,6 @@ const links = [
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/risk-profile", label: "Risk Profile", icon: User },
   { href: "/certificates", label: "Certificates", icon: FileText },
-  { href: "/profile", label: "Profile", icon: User },
 ];
 
 export function SidebarNav() {
@@ -40,6 +39,7 @@ export function SidebarNav() {
             asChild
             isActive={pathname === link.href}
             className="font-headline"
+            tooltip={link.label}
           >
             <Link href={link.href}>
               <link.icon className="h-5 w-5" />

@@ -12,11 +12,11 @@ export function MetricCard({ label, value, subValue, change }: Metric) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium font-body">{label}</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
         {change && trendIcons[change]}
       </CardHeader>
       <CardContent>
-        <div className="text-4xl font-bold font-headline">{value}</div>
+        <div className="text-2xl font-bold font-headline">{value}</div>
         <p className="text-xs text-muted-foreground">{subValue}</p>
       </CardContent>
     </Card>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   Card,
   CardContent,
@@ -38,12 +38,12 @@ export function RiskTrendChart() {
             accessibilityLayer
             data={riskTrendData}
             margin={{
-              left: 0,
+              left: -20,
               right: 12,
               top: 5
             }}
           >
-            <CartesianGrid vertical={false} />
+            <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
             <XAxis
               dataKey="date"
               tickLine={false}
@@ -57,30 +57,31 @@ export function RiskTrendChart() {
                 });
               }}
             />
+            <YAxis tickLine={false} axisLine={false} tickMargin={8} domain={['dataMin - 5', 'dataMax + 5']} />
             <ChartTooltip
-              cursor={false}
+              cursor={{stroke: 'hsl(var(--primary))', strokeWidth: 1, strokeDasharray: "3 3"}}
               content={<ChartTooltipContent indicator="line" />}
             />
             <defs>
               <linearGradient id="fillRisk" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-risk)"
+                  stopColor="hsl(var(--primary))"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-risk)"
+                  stopColor="hsl(var(--primary))"
                   stopOpacity={0.1}
                 />
               </linearGradient>
             </defs>
             <Area
               dataKey="risk"
-              type="natural"
+              type="monotone"
               fill="url(#fillRisk)"
-              fillOpacity={0.4}
-              stroke="var(--color-risk)"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
               stackId="a"
             />
           </AreaChart>

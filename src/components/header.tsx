@@ -12,13 +12,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useAuth } from "@/firebase";
+import { useAuth, useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function Header() {
   const userAvatar = PlaceHolderImages.find((p) => p.id === 'user-avatar-1')?.imageUrl || '';
   const auth = useAuth();
+  const { user } = useUser();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -28,10 +29,10 @@ export default function Header() {
 
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="md:hidden" />
-        <h1 className="text-lg font-headline font-semibold md:hidden">CyberAegis AI</h1>
+        <h1 className="text-lg font-headline font-semibold md:hidden">CyberAegis</h1>
       </div>
 
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
@@ -54,7 +55,7 @@ export default function Header() {
             <Button variant="secondary" size="icon" className="rounded-full">
               <Avatar>
                 <AvatarImage src={userAvatar} data-ai-hint="person avatar" alt="User Avatar" />
-                <AvatarFallback>AK</AvatarFallback>
+                <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <span className="sr-only">Toggle user menu</span>
             </Button>
