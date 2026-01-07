@@ -23,17 +23,15 @@ export default function AdminPage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-headline">
-            System Administration
+            Welcome to the Admin Console
           </CardTitle>
           <CardDescription>
-            Core platform settings and management tools.
+            Select a page from the sidebar to get started.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            The previous AI campaign generation has been replaced by a live,
-            interactive AI tutor on the &quot;My Training&quot; page.
-            This admin panel can be extended with new management features in the future.
+            This is the central hub for managing your organization's security posture, training campaigns, and compliance.
           </p>
         </CardContent>
       </Card>
