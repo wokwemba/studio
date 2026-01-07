@@ -66,7 +66,7 @@ const prompt = ai.definePrompt({
 
   The output should be an array of insights, each containing a finding and a recommendation.
 
-  Users Data: {{{JSON.stringify(users)}}
+  Users Data: {{{JSON.stringify(users)}}}
   Training Modules: {{{JSON.stringify(trainingModules)}}}
   Tenant ID: {{{tenantId}}}
 

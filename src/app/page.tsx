@@ -1,6 +1,7 @@
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { RiskTrendChart } from '@/components/dashboard/risk-trend-chart';
 import { LeaderboardTable } from '@/components/dashboard/leaderboard-table';
+import { AiInsights } from '@/components/dashboard/ai-insights';
 import { metrics } from '@/app/data';
 
 export default function Home() {
@@ -16,9 +17,10 @@ export default function Home() {
           <RiskTrendChart />
         </div>
         <div className="lg:col-span-2">
-          <LeaderboardTable />
+           <AiInsights />
         </div>
       </div>
+      <LeaderboardTable />
     </div>
   );
 }
