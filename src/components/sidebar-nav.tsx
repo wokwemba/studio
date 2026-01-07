@@ -13,6 +13,7 @@ import {
   Globe,
   History,
   Settings,
+  Copy,
 } from "lucide-react";
 
 import {
@@ -26,6 +27,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/training", label: "My Training", icon: BookUser },
+  { href: "/flashcards", label: "Flashcards", icon: Copy },
   { href: "/simulations", label: "Simulations", icon: Target },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/risk-profile", label: "Risk Profile", icon: User },
