@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -46,7 +46,6 @@ function formatIdToTitle(id: string) {
 
 
 export default function TrainingModulePage({ params }: { params: { campaignId: string; moduleId: string } }) {
-  use(Promise.resolve());
   const [trainingModule, setTrainingModule] = useState<TrainingModuleWithQuiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [quizStarted, setQuizStarted] = useState(false);
