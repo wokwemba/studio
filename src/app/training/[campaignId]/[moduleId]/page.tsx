@@ -39,6 +39,11 @@ function parseQuiz(quizString: string): QuizQuestion[] {
   }
 }
 
+function formatIdToTitle(id: string) {
+    return id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
+
 export default function TrainingModulePage({ params }: { params: { campaignId: string; moduleId: string } }) {
   const [trainingModule, setTrainingModule] = useState<TrainingModuleWithQuiz | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,12 +54,13 @@ export default function TrainingModulePage({ params }: { params: { campaignId: s
   const [score, setScore] = useState(0);
 
   const campaign = trainingCampaigns.find(c => c.id === params.campaignId);
-  const moduleInfo = campaign?.modules.find(m => m.id === params.moduleId);
+  // No longer need moduleInfo, we'll generate based on moduleId
+  const moduleTitle = formatIdToTitle(params.moduleId);
 
   useEffect(() => {
-    if (moduleInfo) {
+    if (params.moduleId) {
       generateTrainingModule({
-        topic: moduleInfo.title,
+        topic: moduleTitle,
         difficulty: 'easy',
         targetRole: 'Employee',
       }).then((module) => {
@@ -70,7 +76,7 @@ export default function TrainingModulePage({ params }: { params: { campaignId: s
         setLoading(false);
       });
     }
-  }, [moduleInfo]);
+  }, [params.moduleId, moduleTitle]);
 
   const handleStartQuiz = () => {
     setQuizStarted(true);
@@ -110,8 +116,8 @@ export default function TrainingModulePage({ params }: { params: { campaignId: s
     );
   }
 
-  if (!trainingModule || !moduleInfo) {
-    return <p>Training module not found.</p>;
+  if (!trainingModule) {
+    return <p>Could not generate training module. Please try again.</p>;
   }
 
   if (quizFinished) {
