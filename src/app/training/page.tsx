@@ -22,7 +22,7 @@ export default function TrainingChatPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [score, setScore] = useState(0);
-  const [conversationId, setConversationId] = useState(
+  const [conversationId] = useState(
     () => `cyberaegis-chat-${Date.now()}`
   );
 
