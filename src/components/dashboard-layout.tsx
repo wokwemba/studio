@@ -1,12 +1,48 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
 import { Sidebar, SidebarContent, SidebarHeader, SidebarInset } from "@/components/ui/sidebar";
 import { SidebarNav } from "@/components/sidebar-nav";
 import Header from "@/components/header";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Loader } from "lucide-react";
 import Link from "next/link";
+import { useUser } from "@/firebase";
+import { useEffect } from "react";
+
+const unauthenticatedRoutes = ["/login", "/signup"];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (!isUserLoading && !user && !unauthenticatedRoutes.includes(pathname)) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router, pathname]);
+
+  if (isUserLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader className="h-16 w-16 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user && !unauthenticatedRoutes.includes(pathname)) {
+     return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader className="h-16 w-16 animate-spin" />
+      </div>
+    );
+  }
+  
+  if (unauthenticatedRoutes.includes(pathname)) {
+    return <>{children}</>;
+  }
+
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar>

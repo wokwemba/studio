@@ -4,6 +4,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import DashboardLayout from '@/components/dashboard-layout';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'CyberAegis AI',
@@ -25,10 +26,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet" />
       </head>
       <body className={cn('font-body antialiased')}>
-        <SidebarProvider>
-          <DashboardLayout>{children}</DashboardLayout>
-        </SidebarProvider>
-        <Toaster />
+        <FirebaseClientProvider>
+          <SidebarProvider>
+            <DashboardLayout>{children}</DashboardLayout>
+          </SidebarProvider>
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );
