@@ -6,34 +6,20 @@
       "type": "object",
       "description": "Represents a tenant (e.g., a company) using the platform.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the tenant."
-        },
         "name": {
           "type": "string",
           "description": "Name of the tenant (e.g., 'Acme Corp')."
         },
-        "industry": {
+        "region": {
           "type": "string",
-          "description": "The industry the tenant belongs to (e.g., 'Finance', 'Technology')."
+          "description": "The geographical region of the tenant."
         },
-        "riskScore": {
-          "type": "number",
-          "description": "Overall risk score for the tenant."
-        },
-        "subscription": {
-          "type": "string",
-          "description": "Subscription level of the tenant."
+        "branding": {
+          "type": "object",
+          "description": "Custom branding for the tenant."
         }
       },
-      "required": [
-        "id",
-        "name",
-        "industry",
-        "riskScore",
-        "subscription"
-      ]
+      "required": ["name", "region"]
     },
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -41,34 +27,123 @@
       "type": "object",
       "description": "Represents a user of the platform.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user."
-        },
-        "tenantId": {
-          "type": "string",
-          "description": "Reference to Tenant. (Relationship: Tenant 1:N User)"
-        },
-        "role": {
-          "type": "string",
-          "description": "Role of the user (e.g., 'user', 'admin', 'superadmin')."
-        },
-        "department": {
-          "type": "string",
-          "description": "Department the user belongs to."
-        },
-        "riskScore": {
-          "type": "number",
-          "description": "Risk score for the user."
-        }
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "tenantId": { "type": "string", "description": "Reference to Tenant." },
+        "roleId": { "type": "string", "description": "Reference to Role." },
+        "mfa_enabled": { "type": "boolean", "default": false },
+        "status": { "type": "string", "enum": ["active", "invited", "suspended"] }
       },
-      "required": [
-        "id",
-        "tenantId",
-        "role",
-        "department",
-        "riskScore"
-      ]
+      "required": ["name", "email", "tenantId", "roleId", "status"]
+    },
+    "Role": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Role",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "enum": ["User", "Admin", "SuperAdmin"] }
+      },
+      "required": ["name"]
+    },
+    "Permission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Permission",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string", "description": "e.g. MANAGE_USERS" }
+      },
+      "required": ["key"]
+    },
+    "RolePermission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RolePermission",
+      "type": "object",
+      "properties": {
+        "roleId": { "type": "string" },
+        "permissionId": { "type": "string" }
+      },
+      "required": ["roleId", "permissionId"]
+    },
+    "Campaign": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Campaign",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["training", "phishing", "fraud"] },
+        "start_date": { "type": "string", "format": "date-time" },
+        "end_date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["draft", "active", "completed"] }
+      },
+      "required": ["name", "type", "status"]
+    },
+    "Course": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Course",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "duration": { "type": "number", "description": "Duration in minutes." },
+        "version": { "type": "string" }
+      },
+      "required": ["title", "duration"]
+    },
+    "PhishingSimulation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PhishingSimulation",
+      "type": "object",
+      "properties": {
+        "template": { "type": "string" },
+        "difficulty": { "type": "string", "enum": ["low", "medium", "high"] },
+        "scheduled_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["template", "difficulty"]
+    },
+    "FraudScenario": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FraudScenario",
+      "type": "object",
+      "properties": {
+        "scenario_type": { "type": "string" },
+        "region": { "type": "string" },
+        "risk_level": { "type": "string" }
+      },
+      "required": ["scenario_type", "region"]
+    },
+    "Incident": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Incident",
+      "type": "object",
+      "properties": {
+        "reported_by": { "type": "string" },
+        "category": { "type": "string" },
+        "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "status": { "type": "string", "enum": ["open", "in_progress", "resolved", "closed"] },
+        "assigned_to": { "type": "string" }
+      },
+      "required": ["reported_by", "category", "severity", "status"]
+    },
+    "Certification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Certification",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "validity_months": { "type": "number" }
+      },
+      "required": ["name", "validity_months"]
+    },
+    "AuditLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AuditLog",
+      "type": "object",
+      "properties": {
+        "actor_id": { "type": "string" },
+        "action": { "type": "string" },
+        "resource": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["actor_id", "action", "resource", "timestamp"]
     },
     "TrainingModule": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -76,278 +151,47 @@
       "type": "object",
       "description": "Represents a training module.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the training module."
-        },
-        "category": {
-          "type": "string",
-          "description": "Category of the training module (e.g., 'Phishing', 'Password Security')."
-        },
-        "difficulty": {
-          "type": "string",
-          "description": "Difficulty level of the training module (e.g., 'Beginner', 'Intermediate', 'Advanced')."
-        },
-        "aiAdaptive": {
-          "type": "boolean",
-          "description": "Indicates if the training module is AI-adaptive."
-        },
-        "duration": {
-          "type": "number",
-          "description": "Duration of the training module in minutes."
-        }
+        "category": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "aiAdaptive": { "type": "boolean" },
+        "duration": { "type": "number" }
       },
-      "required": [
-        "id",
-        "category",
-        "difficulty",
-        "aiAdaptive",
-        "duration"
-      ]
+      "required": ["category", "difficulty", "aiAdaptive", "duration"]
     },
     "TrainingResult": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "TrainingResult",
       "type": "object",
-      "description": "Represents the result of a user completing a training module.",
+      "description": "Result of a user completing a training module.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the training result."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N TrainingResult)"
-        },
-        "moduleId": {
-          "type": "string",
-          "description": "Reference to TrainingModule. (Relationship: TrainingModule 1:N TrainingResult)"
-        },
-        "score": {
-          "type": "number",
-          "description": "Score achieved by the user in the training module."
-        },
-        "timeTaken": {
-          "type": "number",
-          "description": "Time taken by the user to complete the training module in seconds."
-        },
-        "riskImpact": {
-          "type": "number",
-          "description": "The risk impact this training had on the user."
-        }
+        "userId": { "type": "string" },
+        "moduleId": { "type": "string" },
+        "score": { "type": "number" },
+        "timeTaken": { "type": "number" },
+        "riskImpact": { "type": "number" }
       },
-      "required": [
-        "id",
-        "userId",
-        "moduleId",
-        "score",
-        "timeTaken",
-        "riskImpact"
-      ]
-    },
-    "PhishingSimulation": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PhishingSimulation",
-      "type": "object",
-      "description": "Represents a phishing simulation.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the phishing simulation."
-        },
-        "tenantId": {
-          "type": "string",
-          "description": "Reference to Tenant. (Relationship: Tenant 1:N PhishingSimulation)"
-        },
-        "successRate": {
-          "type": "number",
-          "description": "Success rate of the phishing simulation."
-        },
-        "failUsers": {
-          "type": "array",
-          "description": "List of user IDs who failed the phishing simulation.",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [
-        "id",
-        "tenantId",
-        "successRate",
-        "failUsers"
-      ]
-    },
-    "MetricsSnapshot": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "MetricsSnapshot",
-      "type": "object",
-      "description": "Represents a snapshot of metrics at a specific point in time.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the metrics snapshot."
-        },
-        "tenantId": {
-          "type": "string",
-          "description": "Reference to Tenant. (Relationship: Tenant 1:N MetricsSnapshot)"
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "Timestamp of the metrics snapshot.",
-          "format": "date-time"
-        },
-        "avgRisk": {
-          "type": "number",
-          "description": "Average risk score at the time of the snapshot."
-        },
-        "completionRate": {
-          "type": "number",
-          "description": "Training completion rate at the time of the snapshot."
-        }
-      },
-      "required": [
-        "id",
-        "tenantId",
-        "timestamp",
-        "avgRisk",
-        "completionRate"
-      ]
+      "required": ["userId", "moduleId", "score", "timeTaken"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "anonymous"]
   },
   "firestore": {
     "structure": [
-      {
-        "path": "tenants/{tenantId}",
-        "definition": {
-          "entityName": "Tenant",
-          "schema": {
-            "$ref": "#/backend/entities/Tenant"
-          },
-          "description": "Stores tenant information.  'tenantId' is used to isolate tenant-specific data.",
-          "params": [
-            {
-              "name": "tenantId",
-              "description": "The unique identifier for the tenant."
-            }
-          ]
-        }
-      },
-      {
-        "path": "users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user information. Includes 'tenantId' and 'role' for authorization purposes, denormalizing tenant association and user role for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "trainingModules/{moduleId}",
-        "definition": {
-          "entityName": "TrainingModule",
-          "schema": {
-            "$ref": "#/backend/entities/TrainingModule"
-          },
-          "description": "Stores information about training modules.",
-          "params": [
-            {
-              "name": "moduleId",
-              "description": "The unique identifier for the training module."
-            }
-          ]
-        }
-      },
-      {
-        "path": "trainingCampaigns/{campaignId}",
-        "definition": {
-          "entityName": "TrainingCampaign",
-          "schema": {
-            "$ref": "#/backend/entities/TrainingCampaign"
-          },
-          "description": "Stores AI-generated training campaigns.",
-          "params": [
-            {
-              "name": "campaignId",
-              "description": "The unique identifier for the training campaign."
-            }
-          ]
-        }
-      },
-      {
-        "path": "users/{userId}/trainingResults/{trainingResultId}",
-        "definition": {
-          "entityName": "TrainingResult",
-          "schema": {
-            "$ref": "#/backend/entities/TrainingResult"
-          },
-          "description": "Stores training results for a specific user.  Path-based ownership ensures only the user (or tenant admin) can access these results. Includes 'userId' as a path parameter.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "trainingResultId",
-              "description": "The unique identifier for the training result."
-            }
-          ]
-        }
-      },
-      {
-        "path": "tenants/{tenantId}/phishingSimulations/{phishingSimulationId}",
-        "definition": {
-          "entityName": "PhishingSimulation",
-          "schema": {
-            "$ref": "#/backend/entities/PhishingSimulation"
-          },
-          "description": "Stores phishing simulation data for a specific tenant.  Path-based isolation ensures only tenant admins can access these simulations. Includes 'tenantId' as a path parameter.",
-          "params": [
-            {
-              "name": "tenantId",
-              "description": "The unique identifier for the tenant."
-            },
-            {
-              "name": "phishingSimulationId",
-              "description": "The unique identifier for the phishing simulation."
-            }
-          ]
-        }
-      },
-      {
-        "path": "tenants/{tenantId}/metricsSnapshots/{metricsSnapshotId}",
-        "definition": {
-          "entityName": "MetricsSnapshot",
-          "schema": {
-            "$ref": "#/backend/entities/MetricsSnapshot"
-          },
-          "description": "Stores metrics snapshots for a specific tenant. Path-based isolation ensures only tenant admins can access these snapshots. Includes 'tenantId' as a path parameter.",
-          "params": [
-            {
-              "name": "tenantId",
-              "description": "The unique identifier for the tenant."
-            },
-            {
-              "name": "metricsSnapshotId",
-              "description": "The unique identifier for the metrics snapshot."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore structure is designed to support a multi-tenant cybersecurity training platform with AI-powered personalization and real-time metrics. The structure prioritizes authorization independence, clarity, and scalability.  Authorization independence is achieved by denormalizing tenant-level roles (admin, superadmin) and user roles directly within user documents and other relevant subcollections. The Membership Map pattern isn't strictly applied given the simpler role structure. Structural Segregation is employed by separating data with different access needs. The design facilitates secure list operations (QAPs) via path-based ownership and role-based access control. For example, training results are stored under the user's document, allowing for easy retrieval of a user's training history without exposing other users' data. Similarly, phishing simulations are stored under the tenant's document, ensuring that only tenant admins can access simulation data.  Metrics snapshots are also stored at tenant level. The new `trainingCampaigns` collection stores AI-generated content at the root, making it globally accessible for all users while write access is restricted to admins."
+      {"path": "tenants/{tenantId}", "definition": {"schema": {"$ref": "#/entities/Tenant"}}},
+      {"path": "users/{userId}", "definition": {"schema": {"$ref": "#/entities/User"}}},
+      {"path": "roles/{roleId}", "definition": {"schema": {"$ref": "#/entities/Role"}}},
+      {"path": "permissions/{permissionId}", "definition": {"schema": {"$ref": "#/entities/Permission"}}},
+      {"path": "role_permissions/{rolePermissionId}", "definition": {"schema": {"$ref": "#/entities/RolePermission"}}},
+      {"path": "tenants/{tenantId}/campaigns/{campaignId}", "definition": {"schema": {"$ref": "#/entities/Campaign"}}},
+      {"path": "tenants/{tenantId}/courses/{courseId}", "definition": {"schema": {"$ref": "#/entities/Course"}}},
+      {"path": "tenants/{tenantId}/phishing_simulations/{simId}", "definition": {"schema": {"$ref": "#/entities/PhishingSimulation"}}},
+      {"path": "tenants/{tenantId}/fraud_scenarios/{scenarioId}", "definition": {"schema": {"$ref": "#/entities/FraudScenario"}}},
+      {"path": "tenants/{tenantId}/incidents/{incidentId}", "definition": {"schema": {"$ref": "#/entities/Incident"}}},
+      {"path": "tenants/{tenantId}/certifications/{certId}", "definition": {"schema": {"$ref": "#/entities/Certification"}}},
+      {"path": "tenants/{tenantId}/audit_logs/{logId}", "definition": {"schema": {"$ref": "#/entities/AuditLog"}}},
+      {"path": "trainingModules/{moduleId}", "definition": {"schema": {"$ref": "#/entities/TrainingModule"}}},
+      {"path": "users/{userId}/trainingResults/{resultId}", "definition": {"schema": {"$ref": "#/entities/TrainingResult"}}}
+    ]
   }
 }
