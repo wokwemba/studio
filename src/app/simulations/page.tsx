@@ -8,12 +8,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader } from 'lucide-react';
 
-export default function SimulationsPage() {
-  const [explanation, setExplanation] =
-    useState<ExplainSimulationFailureOutput | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const emailContent = `
+const emailContent = `
     From: IT Support <it-support@example-corp.com>
     Subject: Urgent: Action Required - Your account will be suspended
     
@@ -30,6 +25,11 @@ export default function SimulationsPage() {
     IT Support
   `;
 
+export default function SimulationsPage() {
+  const [explanation, setExplanation] =
+    useState<ExplainSimulationFailureOutput | null>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     explainSimulationFailure({
       emailContent: emailContent,
@@ -38,7 +38,7 @@ export default function SimulationsPage() {
       setExplanation(result);
       setLoading(false);
     });
-  }, [emailContent]);
+  }, []);
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
