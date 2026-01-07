@@ -21,9 +21,24 @@ export type GenerateTrainingModuleInput = z.infer<typeof GenerateTrainingModuleI
 
 const GenerateTrainingModuleOutputSchema = z.object({
   title: z.string().describe('The title of the training module.'),
-  content: z.string().describe('The content of the training module.'),
-  quiz: z.string().describe('A quiz related to the training module.'),
-  scenario: z.string().describe('A realistic scenario related to the training module.'),
+  content: z.string().describe('The content of the training module as a series of paragraphs. Use newline characters for separation.'),
+  quiz: z.string().describe(`A multiple-choice quiz with 3-5 questions related to the training module content. 
+    Each question must be separated by '---'. 
+    For each question, provide the question, 3-4 options prefixed with '-', and the correct answer prefixed with 'Correct Answer: '.
+    Example:
+    Question: What is phishing?
+    - A type of food
+    - A fraudulent attempt to obtain sensitive information
+    - A fishing video game
+    Correct Answer: A fraudulent attempt to obtain sensitive information
+    ---
+    Question: What is a strong password?
+    - 123456
+    - password
+    - A complex combination of letters, numbers, and symbols
+    Correct Answer: A complex combination of letters, numbers, and symbols
+    `),
+  scenario: z.string().describe('A realistic scenario related to the training module. Use newline characters for separation.'),
 });
 
 export type GenerateTrainingModuleOutput = z.infer<typeof GenerateTrainingModuleOutputSchema>;
@@ -38,16 +53,18 @@ const generateTrainingModulePrompt = ai.definePrompt({
   name: 'generateTrainingModulePrompt',
   input: {schema: GenerateTrainingModuleInputSchema},
   output: {schema: GenerateTrainingModuleOutputSchema},
-  prompt: `You are an expert in creating cybersecurity training modules. Your task is to generate a training module based on the following information:
+  prompt: `You are an expert in creating cybersecurity training modules. Your task is to generate a concise and engaging training module based on the following information:
 
 Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}
 Target Role: {{{targetRole}}}
 
-Module Title:
-Module Content:
-Quiz:
-Scenario: `,
+Generate the following sections:
+- Module Title: A clear and descriptive title.
+- Module Content: 2-3 paragraphs explaining the core concepts.
+- Scenario: A short, realistic scenario illustrating the topic.
+- Quiz: A 3-question multiple-choice quiz based on the content and scenario.
+`,
 });
 
 const generateTrainingModuleFlow = ai.defineFlow(
