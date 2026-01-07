@@ -45,7 +45,8 @@ function formatIdToTitle(id: string) {
 }
 
 
-export default function TrainingModulePage({ params }: { params: { campaignId: string; moduleId: string } }) {
+export default function TrainingModulePage({ params: paramsProp }: { params: { campaignId: string; moduleId: string } }) {
+  const params = use(paramsProp);
   const [trainingModule, setTrainingModule] = useState<TrainingModuleWithQuiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [quizStarted, setQuizStarted] = useState(false);
@@ -126,7 +127,7 @@ export default function TrainingModulePage({ params }: { params: { campaignId: s
   }
 
   if (!trainingModule) {
-    return <p>Could not load training module. Please try again.</p>;
+    return <p>Could not generate training module. Please try again.</p>;
   }
 
   if (quizFinished) {
