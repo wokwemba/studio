@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useAuth } from '@/firebase';
-import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
+import { signInWithEmail } from '@/firebase/auth';
 import { ShieldCheck, Loader } from 'lucide-react';
 
 export default function LoginPage() {
@@ -31,7 +31,7 @@ export default function LoginPage() {
     }
 
     try {
-      await initiateEmailSignIn(auth, email, password);
+      await signInWithEmail(auth, email, password);
       // The onAuthStateChanged listener in the layout will handle the redirect
       // after successful login. We can optimistically navigate.
       router.push('/');

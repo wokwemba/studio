@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useAuth } from '@/firebase';
-import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
+import { signUpWithEmail } from '@/firebase/auth';
 import { ShieldCheck, Loader } from 'lucide-react';
 
 export default function SignupPage() {
@@ -31,7 +31,7 @@ export default function SignupPage() {
     }
 
     try {
-      await initiateEmailSignUp(auth, email, password);
+      await signUpWithEmail(auth, email, password);
        // The onAuthStateChanged listener will handle the redirect.
       router.push('/');
     } catch (err: any) {

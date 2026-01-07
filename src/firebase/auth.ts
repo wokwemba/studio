@@ -1,7 +1,6 @@
 'use client';
 import {
-  Auth, // Import Auth type for type hinting
-  signInAnonymously,
+  Auth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   UserCredential,
@@ -52,19 +51,10 @@ const createUserProfile = async (userCredential: UserCredential): Promise<UserCr
     }
 };
 
-
-/** Initiate anonymous sign-in (non-blocking). Returns a promise that resolves on success or rejects on error. */
-export function initiateAnonymousSignIn(authInstance: Auth): Promise<void> {
-  return signInAnonymously(authInstance).then(() => {}).catch(error => {
-    console.error("Anonymous sign-in failed:", error);
-    throw error;
-  });
-}
-
-/** Initiate email/password sign-up (non-blocking). Returns a promise. */
-export async function initiateEmailSignUp(authInstance: Auth, email: string, password: string): Promise<void> {
+/** Creates a new user with email and password and sets up their profile. */
+export async function signUpWithEmail(auth: Auth, email: string, password: string): Promise<void> {
   try {
-    const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await createUserProfile(userCredential);
   } catch (error) {
     console.error("Email sign-up failed:", error);
@@ -72,10 +62,12 @@ export async function initiateEmailSignUp(authInstance: Auth, email: string, pas
   }
 }
 
-/** Initiate email/password sign-in (non-blocking). Returns a promise. */
-export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): Promise<void> {
-  return signInWithEmailAndPassword(authInstance, email, password).then(() => {}).catch(error => {
+/** Signs in an existing user with email and password. */
+export async function signInWithEmail(auth: Auth, email: string, password: string): Promise<void> {
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
     console.error("Email sign-in failed:", error);
     throw error;
-  });
+  }
 }
