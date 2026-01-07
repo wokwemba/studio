@@ -21,6 +21,7 @@ export function AiInsights() {
     null
   );
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const users = leaderboardData.map((u) => ({
@@ -45,7 +46,11 @@ export function AiInsights() {
       trainingModules: modules,
     }).then((result) => {
       setInsights(result);
-      setLoading(false);
+    }).catch(err => {
+      console.error("AI Insights Error:", err);
+      setError("Could not load AI insights at the moment.");
+    }).finally(() => {
+        setLoading(false);
     });
   }, []);
 
@@ -65,7 +70,11 @@ export function AiInsights() {
           <div className="flex-1 flex justify-center items-center h-24">
             <Loader className="h-8 w-8 animate-spin" />
           </div>
-        ) : insights && insights.insights.length > 0 ? (
+        ) : error || !insights || insights.insights.length === 0 ? (
+          <div className="flex-1 flex justify-center items-center text-sm text-muted-foreground">
+            <p>{error || 'Could not load AI insights at the moment.'}</p>
+          </div>
+        ) : (
           <ul className="space-y-4">
             {insights.insights.slice(0, 2).map((insight, index) => (
               <li
@@ -79,10 +88,6 @@ export function AiInsights() {
               </li>
             ))}
           </ul>
-        ) : (
-          <div className="flex-1 flex justify-center items-center text-sm text-muted-foreground">
-            <p>Could not load AI insights at the moment.</p>
-          </div>
         )}
       </CardContent>
     </Card>

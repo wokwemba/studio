@@ -21,10 +21,11 @@ export default function RiskProfilePage() {
   useEffect(() => {
     provideAiRiskAdvice({ riskProfile }).then((result) => {
       setAdvice(result);
-      setLoading(false);
     }).catch(err => {
       console.error(err);
-      setLoading(false);
+      // No need to set a separate error state, the null `advice` will be handled
+    }).finally(() => {
+        setLoading(false);
     });
   }, []);
 
@@ -57,7 +58,7 @@ export default function RiskProfilePage() {
             ) : advice ? (
               <p className="text-muted-foreground">{advice.advice}</p>
             ) : (
-              <p className="text-destructive">Could not load AI-driven advice at this time.</p>
+              <p className="text-destructive text-sm">Could not load AI-driven advice. The service may be temporarily unavailable.</p>
             )}
           </CardContent>
         </Card>

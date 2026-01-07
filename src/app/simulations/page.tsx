@@ -36,6 +36,9 @@ export default function SimulationsPage() {
       userDepartment: 'Marketing',
     }).then((result) => {
       setExplanation(result);
+    }).catch(err => {
+      console.error("Simulations Page Error:", err);
+    }).finally(() => {
       setLoading(false);
     });
   }, []);
@@ -51,24 +54,24 @@ export default function SimulationsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader className="h-8 w-8 animate-spin" />
-            </div>
-          ) : explanation ? (
-            <div className="space-y-4">
+          <div className="space-y-4">
               <div>
                 <h3 className="font-semibold text-lg font-headline">Phishing Email Content</h3>
                 <pre className="bg-muted p-4 rounded-lg mt-2 font-code text-sm whitespace-pre-wrap">{emailContent}</pre>
               </div>
               <div>
                 <h3 className="font-semibold text-lg font-headline">AI Explanation</h3>
-                <p className="text-muted-foreground mt-2">{explanation.explanation}</p>
+                 {loading ? (
+                    <div className="flex justify-center items-center h-24">
+                      <Loader className="h-8 w-8 animate-spin" />
+                    </div>
+                  ) : explanation ? (
+                    <p className="text-muted-foreground mt-2">{explanation.explanation}</p>
+                  ) : (
+                    <p className="text-destructive text-sm mt-2">Could not load AI analysis. The service may be temporarily unavailable due to high demand.</p>
+                  )}
               </div>
             </div>
-          ) : (
-            <p>Could not load simulation analysis.</p>
-          )}
         </CardContent>
       </Card>
     </div>
