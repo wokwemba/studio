@@ -14,11 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Bot, Loader, Send, User as UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  chat,
-  ChatMessage,
-  ChatResponse,
-} from '@/ai/flows/chat-flow';
+import { chat, ChatResponse } from '@/ai/flows/chat-flow';
+import { ChatMessage } from '@/ai/flows/schemas/chat-schema';
 
 export default function TrainingChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
