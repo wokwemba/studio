@@ -36,21 +36,15 @@ const riskBadgeVariant: Record<
 };
 
 export function LeaderboardTable() {
-  const userAvatar = PlaceHolderImages.find((p) => p.id === 'user-avatar-1')?.imageUrl || '';
-  const leaderboardUser1 = PlaceHolderImages.find((p) => p.id === 'leaderboard-user-1')?.imageUrl || '';
-  const leaderboardUser2 = PlaceHolderImages.find((p) => p.id === 'leaderboard-user-2')?.imageUrl || '';
-  const leaderboardUser3 = PlaceHolderImages.find((p) => p.id === 'leaderboard-user-3')?.imageUrl || '';
-  const leaderboardUser4 = PlaceHolderImages.find((p) => p.id === 'leaderboard-user-4')?.imageUrl || '';
+  const getImage = (id: string) => PlaceHolderImages.find((p) => p.id === id)?.imageUrl || '';
 
-  const getAvatar = (rank: number) => {
-    if (rank === 1) return leaderboardUser1;
-    if (rank === 2) return leaderboardUser2;
-    if (rank === 3) return userAvatar;
-    if (rank === 4) return leaderboardUser3;
-    if (rank === 5) return leaderboardUser4;
-    return '';
+  const leaderboardAvatars: {[key: string]: string} = {
+    'A. Kamau': getImage('leaderboard-user-1'),
+    'J. Otieno': getImage('leaderboard-user-2'),
+    'You': getImage('user-avatar-1'),
+    'L. Wanjiru': getImage('leaderboard-user-3'),
+    'M. Ochieng': getImage('leaderboard-user-4'),
   }
-
 
   return (
     <Card>
@@ -84,7 +78,7 @@ export function LeaderboardTable() {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={getAvatar(entry.rank)}
+                        src={leaderboardAvatars[entry.user.name]}
                         alt={entry.user.name}
                         data-ai-hint="person avatar"
                       />

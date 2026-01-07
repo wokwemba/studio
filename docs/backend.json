@@ -31,6 +31,7 @@
         "email": { "type": "string", "format": "email" },
         "tenantId": { "type": "string", "description": "Reference to Tenant." },
         "roleId": { "type": "string", "description": "Reference to Role." },
+        "avatarId": { "type": "string", "description": "Reference to a placeholder image ID for the user's avatar." },
         "mfa_enabled": { "type": "boolean", "default": false },
         "status": { "type": "string", "enum": ["Active", "Invited", "Suspended"] },
         "risk": { "type": "string", "enum": ["Low", "Medium", "High"] }

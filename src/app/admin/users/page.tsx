@@ -32,27 +32,24 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import { Loader } from 'lucide-react';
 
 type User = {
   id: string;
   name: string;
   email: string;
-  roleId: string; // This will be 'Admin', 'User', 'SuperAdmin' from roles collection
+  roleId: string;
   risk: 'Low' | 'Medium' | 'High';
   status: 'Active' | 'Invited' | 'Suspended';
   avatarId?: string;
 };
 
-// This is a simplified mapping. In a real app, you'd fetch roles and join.
-const roleNameMapping: Record<string, 'Admin' | 'User' | 'SuperAdmin'> = {
-    'admin_role_id': 'Admin',
-    'user_role_id': 'User',
-    'super_admin_role_id': 'SuperAdmin',
-};
-
+type Role = {
+    id: string;
+    name: 'User' | 'Admin' | 'SuperAdmin';
+}
 
 const riskVariant: Record<User['risk'], 'success' | 'outline' | 'destructive'> = {
   'Low': 'success',
@@ -66,15 +63,64 @@ const statusVariant: Record<User['status'], 'success' | 'secondary' | 'destructi
     'Suspended': 'destructive',
 };
 
+const UserTableRow = ({ user }: { user: User }) => {
+    const firestore = useFirestore();
+    const roleDocRef = useMemoFirebase(() => (firestore && user.roleId ? doc(firestore, 'roles', user.roleId) : null), [firestore, user.roleId]);
+    const { data: role } = useDoc<Role>(roleDocRef);
+
+    const getAvatar = (id?: string) => {
+        if (!id) return '';
+        return PlaceHolderImages.find((p) => p.id === id)?.imageUrl || '';
+    }
+    const roleName = role?.name || 'User';
+
+    return (
+        <TableRow className={cn(roleName === 'SuperAdmin' && "bg-accent/50")}>
+            <TableCell>
+                <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9">
+                    <AvatarImage src={getAvatar(user.avatarId)} data-ai-hint="person avatar" alt={user.name} />
+                    <AvatarFallback>{user.name?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <div className="font-medium">{user.name || 'N/A'}</div>
+                        <div className="text-muted-foreground text-sm">{user.email}</div>
+                    </div>
+                </div>
+            </TableCell>
+            <TableCell>{roleName}</TableCell>
+            <TableCell>
+                <Badge variant={riskVariant[user.risk]}>{user.risk}</Badge>
+            </TableCell>
+            <TableCell>
+                <Badge variant={statusVariant[user.status]}>{user.status}</Badge>
+            </TableCell>
+            <TableCell>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Toggle menu</span>
+                    </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuItem>Edit User</DropdownMenuItem>
+                    <DropdownMenuItem>View Activity</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className='text-destructive'>Deactivate User</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </TableCell>
+        </TableRow>
+    );
+}
+
+
 export default function AdminUsersPage() {
   const firestore = useFirestore();
   const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const { data: users, isLoading } = useCollection<User>(usersQuery);
-
-  const getAvatar = (id?: string) => {
-    if (!id) return '';
-    return PlaceHolderImages.find((p) => p.id === id)?.imageUrl || '';
-  }
 
   return (
     <Card>
@@ -112,44 +158,7 @@ export default function AdminUsersPage() {
           </TableHeader>
           <TableBody>
             {users?.map((user) => (
-              <TableRow key={user.id} className={cn(roleNameMapping[user.roleId] === 'SuperAdmin' && "bg-accent/50")}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                     <Avatar className="h-9 w-9">
-                      <AvatarImage src={getAvatar(user.avatarId)} data-ai-hint="person avatar" alt={user.name} />
-                      <AvatarFallback>{user.name?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <div className="font-medium">{user.name || 'N/A'}</div>
-                        <div className="text-muted-foreground text-sm">{user.email}</div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>{roleNameMapping[user.roleId] || 'User'}</TableCell>
-                <TableCell>
-                  <Badge variant={riskVariant[user.risk]}>{user.risk}</Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={statusVariant[user.status]}>{user.status}</Badge>
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>Edit User</DropdownMenuItem>
-                      <DropdownMenuItem>View Activity</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className='text-destructive'>Deactivate User</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
+              <UserTableRow key={user.id} user={user} />
             ))}
           </TableBody>
         </Table>
