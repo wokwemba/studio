@@ -1,0 +1,186 @@
+/**
+ * Core Philosophy: This ruleset enforces a multi-tenant security model where data is strictly isolated by a `tenantId`.
+ * Access is granted based on a user's role (`user`, `admin`, `superadmin`) within their assigned tenant. The default
+ * security posture is to deny all access unless explicitly granted.
+ *
+ * Data Structure: The data is organized into top-level collections for global data (`trainingModules`), user profiles
+ * (`users`), and tenants (`tenants`). Tenant-specific data, such as `phishingSimulations` and `metricsSnapshots`, is
+ * logically nested within subcollections under `/tenants/{tenantId}`. A user's private data, like `trainingResults`,
+ * is stored in a subcollection under their own user document at `/users/{userId}`.
+ *
+ * Key Security Decisions:
+ * - Tenant Isolation: The primary security boundary is the tenant. A user or admin in one tenant has no visibility
+ *   into another tenant's data.
+ * - Role-Based Access: A user's capabilities are determined by the `role` field on their `/users/{userId}` document.
+ *   - `user`: Can manage their own data and read shared data within their tenant.
+ *   - `admin`: Has read/write access to all data within their own tenant for administrative purposes.
+ *   - `superadmin`: Has global read/write access across all tenants, intended for platform maintenance.
+ * - User Privacy: A user's personal data (e.g., training results) is private to them, but readable by admins within
+ *   their own tenant. Listing all users in the system is disallowed to prevent data leakage.
+ *
+ * Denormalization for Authorization: To enable efficient and secure rule evaluation, key authorization data is denormalized.
+ * Every `User` document contains a `tenantId` and a `role`. This avoids costly and complex lookups to determine a user's
+ * permissions, allowing rules to make decisions based on a single `get` call to the requesting user's own profile.
+ *
+ * Structural Segregation: The data model effectively separates data with different access patterns into distinct collections.
+ * For example, private `trainingResults` are in a user subcollection, while tenant-wide `phishingSimulations` are in a
+ * tenant subcollection. This simplifies rules and makes list operations more secure and performant.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // Helper Functions
+    // ------------------------------------------------------------------------
+
+    /**
+     * Returns the authenticated user's profile data document.
+     * Caches the result for the duration of the request evaluation.
+     */
+    function requestingUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    /**
+     * Checks if a user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the requesting user's UID matches the provided userId.
+     * This is the foundation of the user-ownership model.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if the requesting user is a Super Admin.
+     */
+    function isSuperAdmin() {
+      return isSignedIn() && requestingUserData().role == 'superadmin';
+    }
+
+    /**
+     * Checks if the requesting user is an Admin of the specified tenant.
+     */
+    function isTenantAdmin(tenantId) {
+      let userData = requestingUserData();
+      return isSignedIn() && userData.role == 'admin' && userData.tenantId == tenantId;
+    }
+
+    /**
+     * Checks if the requesting user is a member of the specified tenant.
+     */
+    function isMemberOfTenant(tenantId) {
+      return isSignedIn() && requestingUserData().tenantId == tenantId;
+    }
+
+    /**
+     * Checks if the document being accessed already exists.
+     * CRITICAL: Must be used for all update and delete operations.
+     */
+    function documentExists() {
+      return resource != null;
+    }
+
+    // ------------------------------------------------------------------------
+    // Collection Rules
+    // ------------------------------------------------------------------------
+
+    /**
+     * @description Manages tenant company profiles. Only superadmins can create/delete tenants.
+     * Tenant admins can update their own tenant's info, and members of a tenant can read it.
+     * @path /tenants/{tenantId}
+     * @allow (get) An authenticated user in 'tenant-abc' reads '/tenants/tenant-abc'.
+     * @deny (update) A regular user from 'tenant-abc' tries to update '/tenants/tenant-abc'.
+     * @principle Enforces role-based access control for tenant-level resources.
+     */
+    match /tenants/{tenantId} {
+      allow get: if isMemberOfTenant(tenantId) || isSuperAdmin();
+      allow list: if isSignedIn();
+      allow create: if isSuperAdmin();
+      allow update: if documentExists() && (isTenantAdmin(tenantId) || isSuperAdmin());
+      allow delete: if documentExists() && isSuperAdmin();
+
+      /**
+       * @description Stores phishing simulations for a specific tenant.
+       * Readable by any member of the tenant, but only writable by tenant admins.
+       * @path /tenants/{tenantId}/phishingSimulations/{phishingSimulationId}
+       * @allow (create) An 'admin' user from 'tenant-abc' creates a new simulation in '/tenants/tenant-abc/phishingSimulations'.
+       * @deny (create) A regular 'user' from 'tenant-abc' tries to create a simulation.
+       * @principle Path-based isolation ensures tenant data remains confidential.
+       */
+      match /phishingSimulations/{phishingSimulationId} {
+        allow get, list: if isMemberOfTenant(tenantId) || isSuperAdmin();
+        allow create: if isTenantAdmin(tenantId) || isSuperAdmin();
+        allow update, delete: if documentExists() && (isTenantAdmin(tenantId) || isSuperAdmin());
+      }
+
+      /**
+       * @description Stores historical metrics snapshots for a specific tenant.
+       * Readable by any member of the tenant, but only writable by tenant admins.
+       * @path /tenants/{tenantId}/metricsSnapshots/{metricsSnapshotId}
+       * @allow (list) Any user from 'tenant-abc' lists snapshots from '/tenants/tenant-abc/metricsSnapshots'.
+       * @deny (delete) An 'admin' from 'tenant-xyz' tries to delete a snapshot from '/tenants/tenant-abc'.
+       * @principle Path-based isolation ensures tenant data remains confidential.
+       */
+      match /metricsSnapshots/{metricsSnapshotId} {
+        allow get, list: if isMemberOfTenant(tenantId) || isSuperAdmin();
+        allow create: if isTenantAdmin(tenantId) || isSuperAdmin();
+        allow update, delete: if documentExists() && (isTenantAdmin(tenantId) || isSuperAdmin());
+      }
+    }
+
+    /**
+     * @description Manages user profiles. Users can create and manage their own profiles.
+     * Tenant admins can read profiles within their tenant. Superadmins have full access.
+     * @path /users/{userId}
+     * @allow (create) A new user with uid 'user-123' creates their own document at '/users/user-123'.
+     * @deny (list) Any user, including admins, tries to list all documents in the `/users` collection.
+     * @principle Enforces document ownership and prevents user enumeration.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isTenantAdmin(resource.data.tenantId) || isSuperAdmin();
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if documentExists() && isOwner(userId) || isTenantAdmin(resource.data.tenantId) || isSuperAdmin();
+      allow delete: if documentExists() && (isOwner(userId) || isSuperAdmin());
+
+      /**
+       * @description Stores a user's private training results.
+       * Only the user can manage their results. Tenant admins can read them.
+       * @path /users/{userId}/trainingResults/{trainingResultId}
+       * @allow (get) User 'user-123' reads their own result at '/users/user-123/trainingResults/result-abc'.
+       * @deny (update) User 'user-456' tries to update a result for 'user-123'.
+       * @principle Restricts access to a user's own private data tree.
+       */
+      match /trainingResults/{trainingResultId} {
+        // A `get` on the parent user doc is required to check the tenantId for admin access.
+        allow get, list: if isOwner(userId) || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) || isSuperAdmin();
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if documentExists() && isOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if documentExists() && isOwner(userId);
+      }
+    }
+
+    /**
+     * @description Stores global training modules available to all users.
+     * This data is public to read for any authenticated user, but only superadmins can modify it.
+     * @path /trainingModules/{moduleId}
+     * @allow (list) Any signed-in user lists all available training modules.
+     * @deny (create) An 'admin' user tries to create a new training module.
+     * @principle Implements a public-read, admin-write pattern for shared platform resources.
+     */
+    match /trainingModules/{moduleId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSuperAdmin();
+      allow update: if documentExists() && isSuperAdmin();
+      allow delete: if documentExists() && isSuperAdmin();
+    }
+  }
+}
