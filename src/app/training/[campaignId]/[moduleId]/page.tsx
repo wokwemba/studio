@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -12,6 +12,7 @@ import { trainingCampaigns } from '@/app/training/data';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import Link from 'next/link';
 
 type QuizQuestion = {
   question: string;
@@ -44,7 +45,8 @@ function formatIdToTitle(id: string) {
 }
 
 
-export default function TrainingModulePage({ params }: { params: { campaignId: string; moduleId: string } }) {
+export default function TrainingModulePage({ params: paramsProp }: { params: { campaignId: string; moduleId: string } }) {
+  const params = use(Promise.resolve(paramsProp));
   const [trainingModule, setTrainingModule] = useState<TrainingModuleWithQuiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [quizStarted, setQuizStarted] = useState(false);
@@ -54,7 +56,6 @@ export default function TrainingModulePage({ params }: { params: { campaignId: s
   const [score, setScore] = useState(0);
 
   const campaign = trainingCampaigns.find(c => c.id === params.campaignId);
-  // No longer need moduleInfo, we'll generate based on moduleId
   const moduleTitle = formatIdToTitle(params.moduleId);
 
   useEffect(() => {
