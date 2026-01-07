@@ -98,12 +98,26 @@ const surfaceAiInsightsFlow = ai.defineFlow(
     inputSchema: SurfaceAiInsightsInputSchema,
     outputSchema: SurfaceAiInsightsOutputSchema,
   },
-  async input => {
-    const {output} = await prompt({
-      tenantId: input.tenantId,
-      users: JSON.stringify(input.users),
-      trainingModules: JSON.stringify(input.trainingModules),
-    });
-    return output!;
+  async (input) => {
+    const maxRetries = 3;
+    let attempt = 0;
+    while (attempt < maxRetries) {
+      try {
+        const { output } = await prompt({
+          tenantId: input.tenantId,
+          users: JSON.stringify(input.users),
+          trainingModules: JSON.stringify(input.trainingModules),
+        });
+        return output!;
+      } catch (error) {
+        attempt++;
+        if (attempt >= maxRetries) {
+          throw error;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+     // This part should be unreachable
+    throw new Error('Failed to surface AI insights after multiple retries.');
   }
 );

@@ -81,7 +81,7 @@ const chatFlow = ai.defineFlow(
 export async function chat(input: ChatInput): Promise<ChatResponse> {
   // Adding a simple retry mechanism
   let attempt = 0;
-  const maxRetries = 2;
+  const maxRetries = 3;
   while (attempt < maxRetries) {
     try {
       const result = await chatFlow(input);
@@ -109,7 +109,7 @@ export async function chat(input: ChatInput): Promise<ChatResponse> {
         };
       }
       // Wait a moment before retrying
-      await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
     }
   }
   // This should not be reached, but satisfies TypeScript

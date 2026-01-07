@@ -64,3 +64,6 @@ const explainSimulationFailureFlow = ai.defineFlow({
       }
     }
     // This part should be unreachable
+    throw new Error('Failed to explain simulation failure after multiple retries.');
+  }
+);
