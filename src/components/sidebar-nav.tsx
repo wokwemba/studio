@@ -27,6 +27,7 @@ import {
   Bell,
   Monitor,
   Building,
+  Loader,
 } from "lucide-react";
 
 import {
@@ -38,6 +39,8 @@ import {
   SidebarGroupLabel,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
 
 const mainLinks = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -76,10 +79,28 @@ const superAdminLinks = [
 export function SidebarNav() {
   const pathname = usePathname();
   const { state } = useSidebar();
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const userDocRef = useMemoFirebase(
+    () => (user ? doc(firestore, "users", user.uid) : null),
+    [user, firestore]
+  );
+  const { data: userData, isLoading: isUserDataLoading } = useDoc<{roleId: string}>(userDocRef);
+
+  const userRoleDocRef = useMemoFirebase(
+    () => (userData?.roleId ? doc(firestore, "roles", userData.roleId) : null),
+    [userData]
+  );
+  const { data: roleData, isLoading: isRoleDataLoading } = useDoc<{name: 'User' | 'Admin' | 'SuperAdmin'}>(userRoleDocRef);
+
+  const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin';
+  const userIsSuperAdmin = roleData?.name === 'SuperAdmin';
+
 
   const isActive = (href: string) => {
-    if (href === "/admin") {
-      return pathname.startsWith('/admin');
+    if (href === "/admin" || href === "/admin/users") {
+        return pathname.startsWith('/admin');
     }
     return pathname === href;
   }
@@ -101,42 +122,55 @@ export function SidebarNav() {
           </SidebarMenuButton>
         </SidebarMenuItem>
       ))}
-      <SidebarSeparator />
-       <SidebarGroup>
-          <SidebarGroupLabel>Admin Console</SidebarGroupLabel>
-            {adminLinks.map((link) => (
-              <SidebarMenuItem key={link.href}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive(link.href)}
-                  className="font-headline"
-                  tooltip={link.label}
-                  size="sm"
-                >
-                  <Link href={link.href}>
-                    <link.icon className="h-4 w-4" />
-                    {state === 'expanded' && <span>{link.label}</span>}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-            {superAdminLinks.map((link) => (
+      {(isUserDataLoading || isRoleDataLoading) && state === 'expanded' && (
+        <>
+        <SidebarSeparator />
+          <div className="p-2 flex items-center gap-2 text-xs text-muted-foreground">
+            <Loader className="w-4 h-4 animate-spin" />
+            <span>Loading Admin Console...</span>
+          </div>
+        </>
+      )}
+      {userIsAdmin && (
+      <>
+        <SidebarSeparator />
+        <SidebarGroup>
+            <SidebarGroupLabel>Admin Console</SidebarGroupLabel>
+              {adminLinks.map((link) => (
                 <SidebarMenuItem key={link.href}>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={isActive(link.href)}
-                        className="font-headline"
-                        tooltip={link.label}
-                        size="sm"
-                    >
-                        <Link href={link.href}>
-                            <link.icon className="h-4 w-4" />
-                            {state === 'expanded' && <span>{link.label}</span>}
-                        </Link>
-                    </SidebarMenuButton>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(link.href)}
+                    className="font-headline"
+                    tooltip={link.label}
+                    size="sm"
+                  >
+                    <Link href={link.href}>
+                      <link.icon className="h-4 w-4" />
+                      {state === 'expanded' && <span>{link.label}</span>}
+                    </Link>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
-            ))}
-        </SidebarGroup>
+              ))}
+              {userIsSuperAdmin && superAdminLinks.map((link) => (
+                  <SidebarMenuItem key={link.href}>
+                      <SidebarMenuButton
+                          asChild
+                          isActive={isActive(link.href)}
+                          className="font-headline"
+                          tooltip={link.label}
+                          size="sm"
+                      >
+                          <Link href={link.href}>
+                              <link.icon className="h-4 w-4" />
+                              {state === 'expanded' && <span>{link.label}</span>}
+                          </Link>
+                      </SidebarMenuButton>
+                  </SidebarMenuItem>
+              ))}
+          </SidebarGroup>
+        </>
+        )}
     </SidebarMenu>
   );
 }

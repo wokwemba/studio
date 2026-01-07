@@ -32,9 +32,10 @@
         "tenantId": { "type": "string", "description": "Reference to Tenant." },
         "roleId": { "type": "string", "description": "Reference to Role." },
         "mfa_enabled": { "type": "boolean", "default": false },
-        "status": { "type": "string", "enum": ["active", "invited", "suspended"] }
+        "status": { "type": "string", "enum": ["Active", "Invited", "Suspended"] },
+        "risk": { "type": "string", "enum": ["Low", "Medium", "High"] }
       },
-      "required": ["name", "email", "tenantId", "roleId", "status"]
+      "required": ["name", "email", "tenantId", "roleId", "status", "risk"]
     },
     "Role": {
       "$schema": "http://json-schema.org/draft-07/schema#",
