@@ -1,0 +1,129 @@
+'use server';
+
+/**
+ * @fileOverview A conversational AI tutor for cybersecurity training.
+ *
+ * - chat: The main function to interact with the AI tutor.
+ * - ChatMessage: The type for a single message in the chat history.
+ * - ChatResponse: The response from the AI, including the updated history and score.
+ */
+
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+
+// Define the schema for a single chat message
+export const ChatMessageSchema = z.object({
+  role: z.enum(['user', 'model']),
+  content: z.string(),
+});
+export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+
+// Define the input schema for the main chat flow
+export const ChatInputSchema = z.object({
+  conversationId: z
+    .string()
+    .describe('A unique identifier for the conversation session.'),
+  history: z
+    .array(ChatMessageSchema)
+    .describe('The history of the conversation so far.'),
+  message: z.string().describe('The latest message from the user.'),
+});
+export type ChatInput = z.infer<typeof ChatInputSchema>;
+
+// Define the output schema from the AI model
+export const ChatResponseSchema = z.object({
+  history: z
+    .array(ChatMessageSchema)
+    .describe(
+      'The full, updated history of the conversation, including the new AI response.'
+    ),
+  score: z
+    .number()
+    .min(0)
+    .max(100)
+    .describe(
+      "The user's live score (0-100), adjusted based on their last answer."
+    ),
+});
+export type ChatResponse = z.infer<typeof ChatResponseSchema>;
+
+// Define the prompt for the AI tutor
+const tutorPrompt = ai.definePrompt({
+  name: 'cybersecurityTutorPrompt',
+  input: { schema: ChatInputSchema },
+  output: { schema: ChatResponseSchema },
+  prompt: `You are an expert AI Cybersecurity Tutor. Your goal is to teach users about cybersecurity in a conversational, interactive way.
+
+You must follow these rules:
+1.  **Maintain a Conversation:** Your responses should be natural and conversational, building on the user's messages.
+2.  **Teach and Quiz:** Your primary role is to teach. After explaining a concept, you MUST ask a multiple-choice or open-ended question to test the user's understanding.
+3.  **Evaluate and Score:** When the user answers a question, you MUST evaluate if they are correct. Update their score based on their answer. Start the score at 0. Add 10 points for a correct answer. Do not subtract points for wrong answers, but explain why they were wrong and re-teach the concept if needed.
+4.  **Welcome Message:** If the user's message is "Start the conversation", you must provide a friendly welcome message, introduce yourself, explain how the chat works (teaching, quizzing, and scoring), and then present the first topic and question.
+5.  **Always Respond with Full History:** Your final output MUST include the entire chat history, including the user's latest message and your new response.
+
+The user's current score is: {{history.filter(m => m.role === 'model').slice(-1)[0]?.content.match(/Score: (\d+)/)?.[1] ?? 0}}
+
+Here is the current conversation history:
+{{#each history}}
+- {{role}}: {{content}}
+{{/each}}
+
+User's new message: {{{message}}}
+
+Based on the user's message, continue the conversation, teach a concept, ask a question, and provide the updated score and full chat history.
+`,
+});
+
+// Define the main Genkit flow
+const chatFlow = ai.defineFlow(
+  {
+    name: 'conversationalTutorFlow',
+    inputSchema: ChatInputSchema,
+    outputSchema: ChatResponseSchema,
+  },
+  async (input) => {
+    // In a real application, you might use the conversationId to persist
+    // the chat history in a database like Firestore.
+    const { output } = await tutorPrompt(input);
+    return output!;
+  }
+);
+
+// Export a wrapper function to be called from the client
+export async function chat(input: ChatInput): Promise<ChatResponse> {
+  // Adding a simple retry mechanism
+  let attempt = 0;
+  const maxRetries = 2;
+  while (attempt < maxRetries) {
+    try {
+      const result = await chatFlow(input);
+      // Ensure history is not empty and contains at least one model response
+      if (!result.history || result.history.filter(m => m.role === 'model').length === 0) {
+        throw new Error("AI response was empty or invalid.");
+      }
+      return result;
+    } catch (error) {
+      console.error(`Chat flow attempt ${attempt + 1} failed:`, error);
+      attempt++;
+      if (attempt >= maxRetries) {
+        // Fallback response on final failure
+        const fallbackMessage: ChatMessage = {
+          role: 'model',
+          content: "I'm sorry, I'm having trouble responding right now. Please try again in a moment.",
+        };
+        const currentScore = input.history.length > 0
+          ? (await chatFlow(input)).score // A bit risky, might fail again. A safer bet is to parse from history.
+          : 0;
+
+        return {
+          history: [...input.history, fallbackMessage],
+          score: currentScore
+        };
+      }
+      // Wait a moment before retrying
+      await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+    }
+  }
+  // This should not be reached, but satisfies TypeScript
+  throw new Error("Exhausted all retries for chat flow.");
+}

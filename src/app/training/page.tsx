@@ -1,182 +1,178 @@
 'use client';
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+import { useState, useRef, useEffect, FormEvent } from 'react';
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Bot, Loader, Send, User as UserIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
-  ListChecks,
-  Clock,
-  Users,
-  Target,
-  Loader,
-  LucideIcon,
-  ShieldCheck,
-  Banknote,
-  LockKeyhole,
-  Laptop,
-  AlertTriangle,
-} from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { TrainingCampaign } from './data';
-import { collection } from 'firebase/firestore';
+  chat,
+  ChatMessage,
+  ChatResponse,
+} from '@/ai/flows/chat-flow';
 
-const iconMap: Record<string, LucideIcon> = {
-  ShieldCheck,
-  Target,
-  Banknote,
-  LockKeyhole,
-  Laptop,
-  AlertTriangle,
-};
-
-export default function TrainingPage() {
-  const firestore = useFirestore();
-  const campaignsCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'trainingCampaigns') : null),
-    [firestore]
+export default function TrainingChatPage() {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [score, setScore] = useState(0);
+  const [conversationId, setConversationId] = useState(
+    () => `cyberaegis-chat-${Date.now()}`
   );
-  const {
-    data: trainingCampaigns,
-    isLoading,
-    error,
-  } = useCollection<TrainingCampaign>(campaignsCollection);
 
-  const sortedCampaigns = trainingCampaigns?.sort((a, b) => a.title.localeCompare(b.title));
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Scroll to the bottom of the chat container when new messages are added
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    // Start the conversation with a welcome message from the bot
+    const startConversation = async () => {
+        setIsLoading(true);
+        try {
+            const initialResponse = await chat({
+              conversationId,
+              history: [],
+              message: "Start the conversation",
+            });
+            setMessages(initialResponse.history);
+            setScore(initialResponse.score);
+        } catch (error) {
+            console.error("Failed to start conversation:", error);
+            const errorMessage: ChatMessage = {
+                role: 'model',
+                content: 'Sorry, I am having trouble starting. Please refresh the page.',
+            };
+            setMessages([errorMessage]);
+        }
+        setIsLoading(false);
+    };
+    startConversation();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId]);
+
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: ChatMessage = { role: 'user', content: input };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response: ChatResponse = await chat({
+        conversationId,
+        history: [...messages, userMessage],
+        message: input,
+      });
+
+      setMessages(response.history);
+      setScore(response.score);
+    } catch (error) {
+      console.error('Chat API error:', error);
+      const errorMessage: ChatMessage = {
+        role: 'model',
+        content:
+          'Sorry, I encountered an error. Please try sending your message again.',
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    }
+
+    setIsLoading(false);
+  };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold mb-6 font-headline">
-        Training Campaigns
-      </h1>
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline">Available Campaigns</CardTitle>
+    <div className="h-[calc(100vh-10rem)]">
+      <Card className="h-full flex flex-col">
+        <CardHeader className="border-b">
+          <CardTitle className="font-headline flex items-center justify-between">
+            <span>AI Cybersecurity Tutor</span>
+            <div className="text-lg font-mono rounded-md bg-primary text-primary-foreground px-3 py-1">
+              Score: {score}
+            </div>
+          </CardTitle>
           <CardDescription>
-            Select a campaign to view its modules and start your training. These
-            are generated by AI and stored in Firestore.
+            Chat with Gemini to learn about cybersecurity topics. Your knowledge will be scored live.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={cn(
+                'flex items-start gap-4',
+                message.role === 'user' ? 'justify-end' : 'justify-start'
+              )}
+            >
+              {message.role === 'model' && (
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>
+                    <Bot />
+                  </AvatarFallback>
+                </Avatar>
+              )}
+              <div
+                className={cn(
+                  'max-w-prose p-3 rounded-lg',
+                  message.role === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted'
+                )}
+              >
+                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              </div>
+               {message.role === 'user' && (
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>
+                    <UserIcon />
+                  </AvatarFallback>
+                </Avatar>
+              )}
+            </div>
+          ))}
           {isLoading && (
-            <div className="flex justify-center items-center h-48">
-              <Loader className="h-8 w-8 animate-spin" />
+             <div className="flex items-start gap-4 justify-start">
+                 <Avatar className="h-8 w-8">
+                    <AvatarFallback><Bot /></AvatarFallback>
+                 </Avatar>
+                <div className="max-w-prose p-3 rounded-lg bg-muted flex items-center">
+                    <Loader className="h-5 w-5 animate-spin"/>
+                </div>
             </div>
           )}
-          {error && (
-            <p className="text-destructive text-center">
-              Could not load training campaigns.
-            </p>
-          )}
-          {!isLoading && !error && sortedCampaigns && (
-            <Accordion type="single" collapsible className="w-full">
-              {sortedCampaigns.map((campaign) => {
-                const CampaignIcon = iconMap[campaign.icon as string] || ShieldCheck;
-                return (
-                  <AccordionItem value={campaign.id} key={campaign.id}>
-                    <AccordionTrigger className="font-headline text-lg hover:no-underline">
-                      <div className="flex items-center gap-4">
-                        <div className="bg-primary/10 p-3 rounded-md">
-                          <CampaignIcon className="h-6 w-6 text-primary" />
-                        </div>
-                        {campaign.title}
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-4 pl-4 border-l-2 border-primary/20 ml-5">
-                        <p className="text-muted-foreground">
-                          {campaign.description}
-                        </p>
-                        <div className="flex flex-wrap gap-4 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span>Duration: {campaign.duration}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            <span>Audience: {campaign.audience}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Target className="h-4 w-4 text-muted-foreground" />
-                            <span>KPIs: {campaign.kpis}</span>
-                          </div>
-                        </div>
-
-                        <div>
-                          <h4 className="font-semibold mb-2 font-headline">
-                            Modules
-                          </h4>
-                          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {campaign.modules.map((module) => (
-                              <Card
-                                key={module.id}
-                                className="bg-background hover:bg-accent/50 transition-colors"
-                              >
-                                <CardHeader>
-                                  <CardTitle className="text-base font-headline">
-                                    {module.title}
-                                  </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                  <p className="text-xs text-muted-foreground mb-4 h-10">
-                                    {module.description}
-                                  </p>
-                                  <Button
-                                    asChild
-                                    variant="secondary"
-                                    size="sm"
-                                  >
-                                    <Link
-                                      href={`/training/${campaign.id}/${module.id}`}
-                                    >
-                                      Start Module
-                                    </Link>
-                                  </Button>
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold mb-2 font-headline">
-                            Activities
-                          </h4>
-                          <div className="flex flex-wrap gap-2">
-                            {campaign.activities.map((activity, index) => (
-                              <Badge key={index} variant="outline">
-                                {activity}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                );
-              })}
-            </Accordion>
-          )}
-           {!isLoading && !error && !sortedCampaigns?.length && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground mb-4">No training campaigns found.</p>
-                <Button asChild>
-                  <Link href="/admin">Go to Admin to Generate Campaigns</Link>
-                </Button>
-              </div>
-            )}
         </CardContent>
+        <CardFooter className="border-t pt-6">
+          <form onSubmit={handleSubmit} className="flex w-full items-center space-x-2">
+            <Input
+              id="message"
+              placeholder="Ask about phishing, malware, or anything cybersecurity..."
+              className="flex-1"
+              autoComplete="off"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={isLoading}
+            />
+            <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+              <Send className="h-4 w-4" />
+              <span className="sr-only">Send</span>
+            </Button>
+          </form>
+        </CardFooter>
       </Card>
     </div>
   );

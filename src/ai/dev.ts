@@ -6,3 +6,4 @@ import '@/ai/flows/explain-simulation-failure.ts';
 import '@/ai/flows/provide-ai-risk-advice.ts';
 import '@/ai/flows/surface-ai-insights.ts';
 import '@/ai/flows/generate-training-campaigns.ts';
+import '@/ai/flows/chat-flow.ts';
