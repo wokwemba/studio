@@ -131,6 +131,7 @@ export async function smartAuth(
 ): Promise<{
   success: boolean;
   isNewUser?: boolean;
+  role?: string;
   error?: string;
 }> {
   try {
@@ -171,7 +172,7 @@ export async function smartAuth(
     // Set the session cookie with the role
     await setSessionCookie(token, roleName);
 
-    return { success: true, isNewUser };
+    return { success: true, isNewUser, role: roleName };
 
   } catch (error: any) {
     return {

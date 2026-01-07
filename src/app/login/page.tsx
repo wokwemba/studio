@@ -42,7 +42,11 @@ export default function LoginPage() {
         title: result.isNewUser ? "Account Created!" : "Welcome Back!",
         description: result.isNewUser ? "You have been successfully signed up." : "You have been successfully logged in.",
       });
-      router.push('/');
+      if (result.role === 'Admin' || result.role === 'SuperAdmin') {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
     } else {
       setError(result.error || 'An unexpected error occurred.');
     }
