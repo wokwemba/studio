@@ -67,9 +67,9 @@ export default function FlashcardsPage() {
     try {
       const result = await generateFlashcards({ topic });
       setFlashcards(result.flashcards);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError('Failed to generate flashcards. The AI service may be busy. Please try again.');
+      setError(err.message || 'Failed to generate flashcards. The AI service may be busy. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +113,7 @@ export default function FlashcardsPage() {
       </Card>
 
       {error && (
-        <div className="mt-6 text-center text-destructive">{error}</div>
+        <div className="mt-6 text-center text-destructive bg-destructive/10 p-4 rounded-md">{error}</div>
       )}
 
       {flashcards.length > 0 && (

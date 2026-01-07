@@ -28,9 +28,9 @@ export default function AdminCampaignsPage() {
     try {
       const result = await generateTrainingCampaigns({ topic });
       setCampaign(result);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError('Failed to generate campaign. The AI service may be busy. Please try again.');
+      setError(err.message || 'Failed to generate campaign. The AI service may be busy. Please try again.');
     } finally {
       setIsLoading(false);
     }

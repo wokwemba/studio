@@ -70,7 +70,22 @@ const generateTrainingCampaignsFlow = ai.defineFlow(
     outputSchema: GenerateTrainingCampaignsOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+    let attempt = 0;
+    const maxRetries = 3;
+    while (attempt < maxRetries) {
+      try {
+        const { output } = await prompt(input);
+        return output!;
+      } catch (error) {
+        console.error(`Campaign generation attempt ${attempt + 1} failed:`, error);
+        attempt++;
+        if (attempt >= maxRetries) {
+          throw new Error("Failed to generate campaign. The AI service may be temporarily unavailable. Please try again in a moment.");
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+    // This line should not be reachable
+    throw new Error("Exhausted all retries for campaign generation.");
   }
 );

@@ -34,9 +34,9 @@ export default function GenerateTrainingModulePage() {
     try {
       const result = await generateTrainingModule(formData);
       setModule(result);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError('Failed to generate training module. The AI service may be busy. Please try again.');
+      setError(err.message || 'Failed to generate training module. The AI service may be busy. Please try again.');
     } finally {
       setIsLoading(false);
     }

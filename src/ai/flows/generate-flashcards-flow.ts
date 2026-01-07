@@ -71,14 +71,16 @@ const generateFlashcardsFlow = ai.defineFlow(
             const { output } = await generateFlashcardsPrompt(input);
             return output!;
         } catch (error) {
+            console.error(`Flashcard generation attempt ${attempt + 1} failed:`, error);
             attempt++;
             if (attempt >= maxRetries) {
-                console.error("Flashcard generation failed after multiple retries:", error);
-                throw new Error("Failed to generate flashcards. Please try again later.");
+                throw new Error("Failed to generate flashcards. The AI service may be temporarily unavailable. Please try again in a moment.");
             }
+            // Wait a moment before retrying, with increasing delay
             await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
     }
+     // This line should not be reachable, but it satisfies TypeScript's requirement that the function must return a value.
      throw new Error("Exhausted all retries for flashcard generation.");
   }
 );
