@@ -63,7 +63,4 @@ const explainSimulationFailureFlow = ai.defineFlow({
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
     }
-    // This part should be unreachable if maxRetries > 0
-    throw new Error('Failed to get explanation after multiple retries.');
-  }
-);
+    // This part should be unreachable
