@@ -9,4 +9,4 @@ import '@/ai/flows/generate-training-campaigns.ts';
 import '@/ai/flows/chat-flow.ts';
 import '@/ai/flows/generate-flashcards-flow.ts';
 import '@/ai/flows/schemas/chat-schema';
-import '@/ai
+import '@/ai/genkit';
