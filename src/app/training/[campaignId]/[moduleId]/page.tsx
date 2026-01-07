@@ -45,8 +45,8 @@ function formatIdToTitle(id: string) {
 }
 
 
-export default function TrainingModulePage({ params: paramsProp }: { params: { campaignId: string; moduleId: string } }) {
-  const params = use(Promise.resolve(paramsProp));
+export default function TrainingModulePage({ params }: { params: { campaignId: string; moduleId: string } }) {
+  use(Promise.resolve());
   const [trainingModule, setTrainingModule] = useState<TrainingModuleWithQuiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [quizStarted, setQuizStarted] = useState(false);
