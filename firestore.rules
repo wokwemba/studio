@@ -19,7 +19,12 @@ service cloud.firestore {
     
     // Get role from roleId stored on user document
     function getRole() {
-        return get(/databases/$(database)/documents/roles/$(requestingUserData().roleId)).data.name;
+        let roleId = requestingUserData().roleId;
+        // Ensure roleId is not null or empty before trying to access it
+        if (roleId != null && roleId != '') {
+          return get(/databases/$(database)/documents/roles/$(roleId)).data.name;
+        }
+        return 'User'; // Default to least privileged role
     }
 
     function isSuperAdmin() {
@@ -52,25 +57,56 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
 
       // Tenant-specific collections
-      match /{subCollection}/{docId} {
-        allow read: if isMemberOfTenant(tenantId) || isSuperAdmin();
+      // Admins of a tenant can manage sub-collections within their tenant.
+      // SuperAdmins have full access.
+      match /campaigns/{campaignId} {
+        allow read: if isMemberOfTenant(tenantId);
         allow write: if isTenantAdmin(tenantId) || isSuperAdmin();
+      }
+      match /courses/{courseId} {
+        allow read: if isMemberOfTenant(tenantId);
+        allow write: if isTenantAdmin(tenantId) || isSuperAdmin();
+      }
+      match /phishing_simulations/{simId} {
+        allow read: if isMemberOfTenant(tenantId);
+        allow write: if isTenantAdmin(tenantId) || isSuperAdmin();
+      }
+       match /fraud_scenarios/{scenarioId} {
+        allow read: if isMemberOfTenant(tenantId);
+        allow write: if isTenantAdmin(tenantId) || isSuperAdmin();
+      }
+      match /incidents/{incidentId} {
+        allow read: if isMemberOfTenant(tenantId);
+        // Any signed-in member of a tenant can create an incident report
+        allow create: if isMemberOfTenant(tenantId); 
+        allow update, delete: if isTenantAdmin(tenantId) || isSuperAdmin();
+      }
+      match /certifications/{certId} {
+        allow read: if isMemberOfTenant(tenantId);
+        allow write: if isTenantAdmin(tenantId) || isSuperAdmin();
+      }
+      match /audit_logs/{logId} {
+        // Audit logs are sensitive and should only be readable by admins of that tenant or super admins
+        allow read: if isTenantAdmin(tenantId) || isSuperAdmin();
+        // Audit logs should be immutable, only allow create
+        allow create: if isSignedIn(); // System/user actions create logs
+        allow update, delete: if false;
       }
     }
     
     // Roles are read-only for authenticated users, writable only by SuperAdmins
     match /roles/{roleId} {
       allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow list: if isAdmin();
       allow write: if isSuperAdmin();
     }
     
-    // Permissions are managed by SuperAdmins
+    // Permissions are managed only by SuperAdmins
     match /permissions/{permissionId} {
         allow read, write: if isSuperAdmin();
     }
     
-    // Role-permission mappings are managed by SuperAdmins
+    // Role-permission mappings are managed only by SuperAdmins
     match /role_permissions/{rolePermissionId} {
         allow read, write: if isSuperAdmin();
     }
@@ -81,10 +117,13 @@ service cloud.firestore {
       // Admins can read profiles in their tenant.
       // SuperAdmins have full access.
       allow get: if isOwner(userId) || isTenantAdmin(resource.data.tenantId) || isSuperAdmin();
-      allow list: if isAdmin(); // Admins can list users in their tenant, SuperAdmins can list all.
+      allow list: if isAdmin();
       allow create: if isOwner(userId) || isTenantAdmin(request.resource.data.tenantId) || isSuperAdmin();
-      allow update: if documentExists() && (isOwner(userId) || isTenantAdmin(resource.data.tenantId) || isSuperAdmin());
-      allow delete: if documentExists() && (isOwner(userId) || isSuperAdmin());
+      allow update(writeFields): 
+        if isOwner(userId) 
+        || (isTenantAdmin(resource.data.tenantId) && !('roleId' in writeFields)) // Tenant admins can't change roles
+        || isSuperAdmin();
+      allow delete: if documentExists() && (isTenantAdmin(resource.data.tenantId) || isSuperAdmin());
 
       // User-specific subcollections (e.g., trainingResults)
       match /trainingResults/{trainingResultId} {
