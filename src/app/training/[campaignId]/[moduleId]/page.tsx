@@ -20,30 +20,7 @@ type QuizQuestion = {
   correctAnswer: string;
 };
 
-type TrainingSession = {
-  title: string;
-  content: string;
-};
-
-type TrainingModuleWithSessions = Omit<GenerateTrainingModuleOutput, 'quiz'> & {
-  quiz: QuizQuestion[];
-};
-
-function parseQuiz(quizString: string): QuizQuestion[] {
-  try {
-    const questions = quizString.split('---').filter(q => q.trim().length > 0);
-    return questions.map(q => {
-      const lines = q.trim().split('\n');
-      const question = lines[0].replace('Question: ', '');
-      const options = lines.slice(1, -1).map(opt => opt.replace(/^- /, ''));
-      const correctAnswer = lines[lines.length - 1].replace('Correct Answer: ', '');
-      return { question, options, correctAnswer };
-    });
-  } catch (error) {
-    console.error("Failed to parse quiz:", error);
-    return [];
-  }
-}
+type TrainingModuleWithSessions = GenerateTrainingModuleOutput;
 
 function formatIdToTitle(id: string) {
     return id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -70,11 +47,9 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
         difficulty: 'easy',
         targetRole: 'Employee',
       }).then((module) => {
-        const parsedQuiz = parseQuiz(module.quiz);
-        const quizWithFallback = parsedQuiz.length > 0 ? parsedQuiz : [{question: 'Is security important?', options: ['Yes', 'No'], correctAnswer: 'Yes'}];
-        
-        setTrainingModule({ ...module, quiz: quizWithFallback });
-        setSelectedAnswers(new Array(quizWithFallback.length).fill(''));
+        const quiz = module.quiz.length > 0 ? module.quiz : [{question: 'Is security important?', options: ['Yes', 'No'], correctAnswer: 'Yes'}];
+        setTrainingModule({ ...module, quiz });
+        setSelectedAnswers(new Array(quiz.length).fill(''));
         setLoading(false);
       }).catch(err => {
         console.error("Failed to generate training module:", err);

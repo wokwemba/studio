@@ -25,22 +25,13 @@ const GenerateTrainingModuleOutputSchema = z.object({
     title: z.string().describe('The title of the learning session.'),
     content: z.string().describe('The content of the learning session as a paragraph.'),
   })).length(10).describe('An array of 10 learning sessions.'),
-  quiz: z.string().describe(`A multiple-choice quiz with 5 questions related to the training module content. 
-    Each question must be separated by '---'. 
-    For each question, provide the question, 3-4 options prefixed with '-', and the correct answer prefixed with 'Correct Answer: '.
-    Example:
-    Question: What is phishing?
-    - A type of food
-    - A fraudulent attempt to obtain sensitive information
-    - A fishing video game
-    Correct Answer: A fraudulent attempt to obtain sensitive information
-    ---
-    Question: What is a strong password?
-    - 123456
-    - password
-    - A complex combination of letters, numbers, and symbols
-    Correct Answer: A complex combination of letters, numbers, and symbols
-    `),
+  quiz: z.array(
+    z.object({
+      question: z.string().describe('The multiple-choice question.'),
+      options: z.array(z.string()).describe('An array of 3-4 possible answers.'),
+      correctAnswer: z.string().describe('The correct answer from the options array.'),
+    })
+  ).length(5).describe('A 5-question multiple-choice quiz based on the content of the sessions.'),
 });
 
 export type GenerateTrainingModuleOutput = z.infer<typeof GenerateTrainingModuleOutputSchema>;
