@@ -15,7 +15,7 @@ export default function AdminPage() {
         <div>
           <h1 className="text-3xl font-bold font-headline">Admin Dashboard</h1>
           <p className="text-muted-foreground">
-            Manage your organization&apos;s training and security posture.
+            Manage your organization's training and security posture.
           </p>
         </div>
       </div>
