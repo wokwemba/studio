@@ -49,7 +49,12 @@ export default function LoginPage() {
        </div>
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-headline">Login</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-headline">Login</CardTitle>
+            <Button asChild variant="outline">
+              <Link href="/signup">Sign Up</Link>
+            </Button>
+          </div>
           <CardDescription>Enter your email below to login to your account.</CardDescription>
         </CardHeader>
         <CardContent>
