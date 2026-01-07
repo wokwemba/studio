@@ -272,6 +272,22 @@
         }
       },
       {
+        "path": "trainingCampaigns/{campaignId}",
+        "definition": {
+          "entityName": "TrainingCampaign",
+          "schema": {
+            "$ref": "#/backend/entities/TrainingCampaign"
+          },
+          "description": "Stores AI-generated training campaigns.",
+          "params": [
+            {
+              "name": "campaignId",
+              "description": "The unique identifier for the training campaign."
+            }
+          ]
+        }
+      },
+      {
         "path": "users/{userId}/trainingResults/{trainingResultId}",
         "definition": {
           "entityName": "TrainingResult",
@@ -332,6 +348,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support a multi-tenant cybersecurity training platform with AI-powered personalization and real-time metrics. The structure prioritizes authorization independence, clarity, and scalability.  Authorization independence is achieved by denormalizing tenant-level roles (admin, superadmin) and user roles directly within user documents and other relevant subcollections. The Membership Map pattern isn't strictly applied given the simpler role structure. Structural Segregation is employed by separating data with different access needs. The design facilitates secure list operations (QAPs) via path-based ownership and role-based access control. For example, training results are stored under the user's document, allowing for easy retrieval of a user's training history without exposing other users' data. Similarly, phishing simulations are stored under the tenant's document, ensuring that only tenant admins can access simulation data.  Metrics snapshots are also stored at tenant level."
+    "reasoning": "The Firestore structure is designed to support a multi-tenant cybersecurity training platform with AI-powered personalization and real-time metrics. The structure prioritizes authorization independence, clarity, and scalability.  Authorization independence is achieved by denormalizing tenant-level roles (admin, superadmin) and user roles directly within user documents and other relevant subcollections. The Membership Map pattern isn't strictly applied given the simpler role structure. Structural Segregation is employed by separating data with different access needs. The design facilitates secure list operations (QAPs) via path-based ownership and role-based access control. For example, training results are stored under the user's document, allowing for easy retrieval of a user's training history without exposing other users' data. Similarly, phishing simulations are stored under the tenant's document, ensuring that only tenant admins can access simulation data.  Metrics snapshots are also stored at tenant level. The new `trainingCampaigns` collection stores AI-generated content at the root, making it globally accessible for all users while write access is restricted to admins."
   }
 }

@@ -3,7 +3,7 @@
  * Access is granted based on a user's role (`user`, `admin`, `superadmin`) within their assigned tenant. The default
  * security posture is to deny all access unless explicitly granted.
  *
- * Data Structure: The data is organized into top-level collections for global data (`trainingModules`), user profiles
+ * Data Structure: The data is organized into top-level collections for global data (`trainingModules`, `trainingCampaigns`), user profiles
  * (`users`), and tenants (`tenants`). Tenant-specific data, such as `phishingSimulations` and `metricsSnapshots`, is
  * logically nested within subcollections under `/tenants/{tenantId}`. A user's private data, like `trainingResults`,
  * is stored in a subcollection under their own user document at `/users/{userId}`.
@@ -62,6 +62,13 @@ service cloud.firestore {
      */
     function isSuperAdmin() {
       return isSignedIn() && requestingUserData().role == 'superadmin';
+    }
+
+    /**
+     * Checks if the requesting user is an Admin of any tenant.
+     */
+    function isAdmin() {
+      return isSignedIn() && (requestingUserData().role == 'admin' || isSuperAdmin());
     }
 
     /**
@@ -181,6 +188,17 @@ service cloud.firestore {
       allow create: if isSuperAdmin();
       allow update: if documentExists() && isSuperAdmin();
       allow delete: if documentExists() && isSuperAdmin();
+    }
+
+    /**
+     * @description Stores AI-generated training campaigns.
+     * Publicly readable by any signed-in user, but only writable by admins or superadmins.
+     * This allows admins to curate the training content for the platform.
+     * @path /trainingCampaigns/{campaignId}
+     */
+    match /trainingCampaigns/{campaignId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
   }
 }

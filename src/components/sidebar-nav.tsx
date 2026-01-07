@@ -12,6 +12,7 @@ import {
   User,
   Globe,
   History,
+  Settings,
 } from "lucide-react";
 
 import {
@@ -31,6 +32,7 @@ const links = [
   { href: "/certificates", label: "Certificates", icon: FileText },
   { href: "/threat-intel", label: "Threat Intel", icon: Globe },
   { href: "/recent-attacks", label: "Recent Attacks", icon: History },
+  { href: "/admin", label: "Admin", icon: Settings },
 ];
 
 export function SidebarNav() {

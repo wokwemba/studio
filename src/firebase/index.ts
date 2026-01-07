@@ -2,8 +2,8 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
+import { Auth, getAuth } from 'firebase/auth';
+import { Firestore, getFirestore } from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -33,6 +33,16 @@ export function initializeFirebase() {
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {
+  // If firebaseApp is not defined, we are in a server-side context where we can't initialize it
+  // Return stubs to avoid crashing the app
+  if (!firebaseApp) {
+    return {
+      firebaseApp: null,
+      auth: null,
+      firestore: null,
+    } as unknown as { firebaseApp: FirebaseApp; auth: Auth; firestore: Firestore };
+  }
+
   return {
     firebaseApp,
     auth: getAuth(firebaseApp),
