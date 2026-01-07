@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useAuth } from '@/firebase';
 import { signUpWithEmail } from '@/firebase/auth';
 import { ShieldCheck, Loader } from 'lucide-react';
+import { FirebaseError } from 'firebase/app';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -35,7 +36,11 @@ export default function SignupPage() {
        // The onAuthStateChanged listener will handle the redirect.
       router.push('/');
     } catch (err: any) {
-      setError(err.message);
+      if (err instanceof FirebaseError && err.code === 'auth/email-already-in-use') {
+        setError('This email address is already in use. Please log in or use a different email.');
+      } else {
+        setError(err.message || 'An unexpected error occurred during sign up.');
+      }
       setLoading(false);
     }
   };
