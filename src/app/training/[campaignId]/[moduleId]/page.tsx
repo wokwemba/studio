@@ -7,18 +7,13 @@ import {
   generateTrainingModule,
   GenerateTrainingModuleOutput,
 } from '@/ai/flows/generate-training-module';
-import { Loader, Check, X as Wrong, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Loader, Check, X as Wrong, ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
 import { trainingCampaigns } from '@/app/training/data';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import Link from 'next/link';
-
-type QuizQuestion = {
-  question: string;
-  options: string[];
-  correctAnswer: string;
-};
+import { cn } from '@/lib/utils';
 
 type TrainingModuleWithSessions = GenerateTrainingModuleOutput;
 
@@ -33,7 +28,7 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(0); // 0-9 for sessions, 10 for quiz
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
+  const [selectedAnswers, setSelectedAnswers] = useState<(string | null)[]>([]);
   const [quizFinished, setQuizFinished] = useState(false);
   const [score, setScore] = useState(0);
 
@@ -49,7 +44,7 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
       }).then((module) => {
         const quiz = module.quiz.length > 0 ? module.quiz : [{question: 'Is security important?', options: ['Yes', 'No'], correctAnswer: 'Yes'}];
         setTrainingModule({ ...module, quiz });
-        setSelectedAnswers(new Array(quiz.length).fill(''));
+        setSelectedAnswers(new Array(quiz.length).fill(null));
         setLoading(false);
       }).catch(err => {
         console.error("Failed to generate training module:", err);
@@ -62,7 +57,7 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
             quiz: [{ question: 'Is learning about security important?', options: ['Yes', 'No'], correctAnswer: 'Yes' }]
         };
         setTrainingModule(fallbackModule);
-        setSelectedAnswers(new Array(fallbackModule.quiz.length).fill(''));
+        setSelectedAnswers(new Array(fallbackModule.quiz.length).fill(null));
         setLoading(false);
       });
     }
@@ -81,11 +76,14 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
   };
 
   const handleAnswerChange = (value: string) => {
-    const newAnswers = [...selectedAnswers];
-    newAnswers[currentQuestionIndex] = value;
-    setSelectedAnswers(newAnswers);
+    // Only allow changing the answer if it hasn't been answered yet for the current question
+    if (selectedAnswers[currentQuestionIndex] === null) {
+        const newAnswers = [...selectedAnswers];
+        newAnswers[currentQuestionIndex] = value;
+        setSelectedAnswers(newAnswers);
+    }
   };
-
+  
   const handleNextQuestion = () => {
     if (currentQuestionIndex < (trainingModule?.quiz?.length || 0) - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -105,6 +103,7 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
   const isQuiz = currentStep === 10;
   const currentSession = trainingModule?.sessions[currentStep];
   const currentQuestion = trainingModule?.quiz[currentQuestionIndex];
+  const currentAnswer = selectedAnswers[currentQuestionIndex];
   const progress = isQuiz ? ((currentQuestionIndex + 1) / (trainingModule?.quiz.length || 1)) * 100 : ((currentStep + 1) / 10) * 100;
 
   if (loading) {
@@ -125,29 +124,40 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
         <Card className="text-center">
           <CardHeader>
-            <CardTitle className="font-headline text-3xl">Quiz Complete!</CardTitle>
+            <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit">
+                <ShieldCheck className="h-12 w-12 text-primary" />
+            </div>
+            <CardTitle className="font-headline text-3xl mt-4">Quiz Complete!</CardTitle>
             <CardDescription>You have completed the quiz for "{trainingModule.title}".</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <p className="text-5xl font-bold text-primary">{score.toFixed(0)}%</p>
+            <p className="text-6xl font-bold text-primary">{score.toFixed(0)}%</p>
             <p className="text-muted-foreground">Your score has been recorded.</p>
             <div>
               <h3 className="font-semibold text-lg font-headline mb-4">Review Your Answers</h3>
-              <ul className="space-y-4 text-left">
+              <ul className="space-y-2 text-left">
                 {trainingModule.quiz.map((q, index) => (
-                  <li key={index} className="p-4 bg-background rounded-lg">
+                  <li key={index} className="p-4 bg-background rounded-lg border">
                     <p className="font-medium">{q.question}</p>
                     <div className="flex items-center mt-2">
                       {selectedAnswers[index] === q.correctAnswer ? (
-                        <Check className="h-5 w-5 text-success mr-2" />
+                        <Check className="h-5 w-5 text-success mr-2 flex-shrink-0" />
                       ) : (
-                        <Wrong className="h-5 w-5 text-destructive mr-2" />
+                        <Wrong className="h-5 w-5 text-destructive mr-2 flex-shrink-0" />
                       )}
-                      <p className={`text-sm ${selectedAnswers[index] === q.correctAnswer ? 'text-success' : 'text-destructive'}`}>
-                        Your answer: {selectedAnswers[index]}
+                      <p className={cn(
+                        "text-sm",
+                        selectedAnswers[index] === q.correctAnswer ? 'text-foreground' : 'text-destructive line-through'
+                      )}>
+                        Your answer: {selectedAnswers[index] || 'Not answered'}
                       </p>
                     </div>
-                     <p className="text-sm text-muted-foreground ml-7">Correct answer: {q.correctAnswer}</p>
+                     {selectedAnswers[index] !== q.correctAnswer && (
+                        <div className="flex items-center mt-1">
+                            <Check className="h-5 w-5 text-success mr-2 invisible" />
+                            <p className="text-sm text-muted-foreground">Correct answer: {q.correctAnswer}</p>
+                        </div>
+                     )}
                   </li>
                 ))}
               </ul>
@@ -183,22 +193,47 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
                 </div>
 
               {!isQuiz && currentSession && (
-                <div className="space-y-4 min-h-[200px]">
+                <div className="space-y-4 min-h-[300px]">
                     <h3 className="text-lg font-semibold">{currentSession.title}</h3>
-                    <p className="text-muted-foreground whitespace-pre-line">{currentSession.content}</p>
+                    <p className="text-muted-foreground whitespace-pre-line leading-relaxed">{currentSession.content}</p>
                 </div>
               )}
               
               {isQuiz && currentQuestion && (
-                <div className="space-y-4 min-h-[200px]">
-                  <p className="font-semibold text-lg">{currentQuestion.question}</p>
-                  <RadioGroup value={selectedAnswers[currentQuestionIndex]} onValueChange={handleAnswerChange}>
-                    {currentQuestion.options.map((option, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <RadioGroupItem value={option} id={`option-${index}`} />
-                        <Label htmlFor={`option-${index}`} className="font-normal">{option}</Label>
-                      </div>
-                    ))}
+                <div className="space-y-6 min-h-[300px]">
+                  <p className="font-semibold text-lg text-center">{currentQuestion.question}</p>
+                  <RadioGroup value={currentAnswer || ''} onValueChange={handleAnswerChange} className="space-y-3">
+                    {currentQuestion.options.map((option, index) => {
+                      const isSelected = currentAnswer === option;
+                      const isCorrect = currentQuestion.correctAnswer === option;
+                      const hasBeenAnswered = currentAnswer !== null;
+
+                      return (
+                        <div key={index}>
+                          <RadioGroupItem value={option} id={`option-${index}`} className="sr-only" />
+                          <Label 
+                            htmlFor={`option-${index}`} 
+                            className={cn(
+                                "flex items-center gap-4 rounded-lg border-2 p-4 text-base transition-all cursor-pointer hover:border-primary",
+                                isSelected && hasBeenAnswered && isCorrect && "border-success bg-success/10 text-success",
+                                isSelected && hasBeenAnswered && !isCorrect && "border-destructive bg-destructive/10 text-destructive",
+                                !isSelected && hasBeenAnswered && isCorrect && "border-success bg-success/10 text-success",
+                                !isSelected && "border-border",
+                            )}
+                          >
+                            <div className={cn(
+                                "h-6 w-6 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                                isSelected ? "border-primary" : "border-muted-foreground"
+                            )}>
+                                {isSelected && <div className="h-3 w-3 rounded-full bg-primary" />}
+                            </div>
+                            <span className="flex-1">{option}</span>
+                            {hasBeenAnswered && isCorrect && <Check className="h-6 w-6 text-success" />}
+                            {hasBeenAnswered && isSelected && !isCorrect && <Wrong className="h-6 w-6 text-destructive" />}
+                          </Label>
+                        </div>
+                      )
+                    })}
                   </RadioGroup>
                 </div>
               )}
@@ -209,7 +244,7 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
                   </Button>
                   
                   {isQuiz ? (
-                     <Button onClick={handleNextQuestion} disabled={!selectedAnswers[currentQuestionIndex]}>
+                     <Button onClick={handleNextQuestion} disabled={currentAnswer === null}>
                         {currentQuestionIndex < trainingModule.quiz.length - 1 ? 'Next Question' : 'Finish Quiz'}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
