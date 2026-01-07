@@ -122,7 +122,7 @@ const getRoleNameFromId = async (firestore: any, roleId: string): Promise<string
  * @param auth The Firebase Auth instance.
  * @param email The user's email.
  * @param password The user's password.
- * @returns An object indicating success, whether the user is new, and any error message.
+ * @returns An object indicating success, whether the user is new, their role, and any error message.
  */
 export async function smartAuth(
   auth: Auth,
