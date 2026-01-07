@@ -97,7 +97,7 @@ export async function chat(input: ChatInput): Promise<ChatResponse> {
         // Fallback response on final failure
         const fallbackMessage: ChatMessage = {
           role: 'model',
-          content: "I'm sorry, I'm having trouble responding right now. Please try again in a moment.",
+          content: "I'm sorry, I'm having trouble responding right now. The AI service may be temporarily overloaded. Please try again in a moment.",
         };
         
         // Safely extract the last known score from the input history
