@@ -43,7 +43,7 @@ export interface InternalQuery extends Query<DocumentData> {
  * 
  *
  * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or BAD THINGS WILL HAPPEN
- * use useMemo to memoize it per React guidence.  Also make sure that it's dependencies are stable
+ * use useMemoFirebase to memoize it per React guidence.  Also make sure that it's dependencies are stable
  * references
  *  
  * @template T Optional type for document data. Defaults to any.
@@ -67,6 +67,12 @@ export function useCollection<T = any>(
       setIsLoading(false);
       setError(null);
       return;
+    }
+    
+    if (memoizedTargetRefOrQuery && !('__memo' in memoizedTargetRefOrQuery)) {
+        const errorMessage = 'The query passed to useCollection was not memoized with useMemoFirebase. This will cause infinite render loops.';
+        console.error(errorMessage, memoizedTargetRefOrQuery);
+        throw new Error(errorMessage);
     }
 
     setIsLoading(true);
@@ -107,8 +113,6 @@ export function useCollection<T = any>(
 
     return () => unsubscribe();
   }, [memoizedTargetRefOrQuery]); // Re-run if the target query/reference changes.
-  if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
-  }
+
   return { data, isLoading, error };
 }

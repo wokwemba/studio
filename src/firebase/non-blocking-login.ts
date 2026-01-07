@@ -15,7 +15,7 @@ import { errorEmitter } from './error-emitter';
 const DEFAULT_USER_ROLE_ID = 'user_role_id_placeholder'; 
 const DEFAULT_TENANT_ID = 'tenant_id_placeholder';
 
-const createUserProfile = (userCredential: UserCredential) => {
+const createUserProfile = async (userCredential: UserCredential): Promise<UserCredential> => {
     const user = userCredential.user;
     const db = getFirestore(user.auth.app);
     const userDocRef = doc(db, 'users', user.uid);
@@ -30,18 +30,20 @@ const createUserProfile = (userCredential: UserCredential) => {
         avatarId: `user-avatar-${Math.floor(Math.random() * 5) + 1}`, // Assign a random avatar
     };
 
-    return setDoc(userDocRef, newUserProfile)
-        .catch(error => {
-            console.error("Failed to create user profile:", error);
-            const permissionError = new FirestorePermissionError({
-                path: userDocRef.path,
-                operation: 'create',
-                requestResourceData: newUserProfile,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            // We still throw the original error to allow the caller to handle it if needed
-            throw error;
+    try {
+        await setDoc(userDocRef, newUserProfile);
+        return userCredential; // Pass through the user credential on success
+    } catch (error) {
+        console.error("Failed to create user profile:", error);
+        const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'create',
+            requestResourceData: newUserProfile,
         });
+        errorEmitter.emit('permission-error', permissionError);
+        // Re-throw to allow the caller to handle the profile creation failure
+        throw error;
+    }
 };
 
 
@@ -54,14 +56,14 @@ export function initiateAnonymousSignIn(authInstance: Auth): Promise<void> {
 }
 
 /** Initiate email/password sign-up (non-blocking). Returns a promise. */
-export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): Promise<void> {
-  return createUserWithEmailAndPassword(authInstance, email, password)
-    .then(createUserProfile) // Chain the profile creation here
-    .then(() => {}) // Return void promise on success
-    .catch(error => {
-        console.error("Email sign-up failed:", error);
-        throw error;
-  });
+export async function initiateEmailSignUp(authInstance: Auth, email: string, password: string): Promise<void> {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
+    await createUserProfile(userCredential);
+  } catch (error) {
+    console.error("Email sign-up failed:", error);
+    throw error;
+  }
 }
 
 /** Initiate email/password sign-in (non-blocking). Returns a promise. */

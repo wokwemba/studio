@@ -28,6 +28,7 @@ import {
   Monitor,
   Building,
   Loader,
+  Wand2,
 } from "lucide-react";
 
 import {
@@ -53,6 +54,10 @@ const mainLinks = [
   { href: "/threat-intel", label: "Threat Intel", icon: Globe },
   { href: "/recent-attacks", label: "Recent Attacks", icon: History },
 ];
+
+const trainingLinks = [
+    { href: "/training/module", label: "AI Module Generator", icon: Wand2 },
+]
 
 const adminLinks = [
     { href: "/admin", label: "Admin Dashboard", icon: LayoutDashboard },
@@ -102,6 +107,9 @@ export function SidebarNav() {
     if (href === "/admin" || href === "/admin/users") {
         return pathname.startsWith('/admin');
     }
+     if (href === "/training") {
+        return pathname.startsWith('/training');
+    }
     return pathname === href;
   }
 
@@ -122,6 +130,26 @@ export function SidebarNav() {
           </SidebarMenuButton>
         </SidebarMenuItem>
       ))}
+       <SidebarSeparator />
+        <SidebarGroup>
+            <SidebarGroupLabel>AI Tools</SidebarGroupLabel>
+            {trainingLinks.map((link) => (
+                 <SidebarMenuItem key={link.href}>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={isActive(link.href)}
+                        className="font-headline"
+                        tooltip={link.label}
+                        size="sm"
+                    >
+                        <Link href={link.href}>
+                            <link.icon className="h-4 w-4" />
+                            {state === 'expanded' && <span>{link.label}</span>}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))}
+        </SidebarGroup>
       {(isUserDataLoading || isRoleDataLoading) && state === 'expanded' && (
         <>
         <SidebarSeparator />
