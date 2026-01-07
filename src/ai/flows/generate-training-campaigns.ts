@@ -6,31 +6,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getFirestore, collection, writeBatch } from 'firebase/firestore';
+import { collection, writeBatch } from 'firebase/firestore';
 import { getSdks } from '@/firebase';
-import {
-  ShieldCheck,
-  Target,
-  Banknote,
-  LockKeyhole,
-  Laptop,
-  AlertTriangle,
-} from 'lucide-react';
-
-// Define input schema (currently empty, but allows for future extension)
-const GenerateAndStoreTrainingCampaignsInputSchema = z.object({});
-export type GenerateAndStoreTrainingCampaignsInput = z.infer<
-  typeof GenerateAndStoreTrainingCampaignsInputSchema
->;
-
-// Define output schema for the flow's result
-const GenerateAndStoreTrainingCampaignsOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
-export type GenerateAndStoreTrainingCampaignsOutput = z.infer<
-  typeof GenerateAndStoreTrainingCampaignsOutputSchema
->;
 
 const lucideIcons = [
   'ShieldCheck',
@@ -87,12 +64,21 @@ const AIOutputSchema = z.object({
     .describe('An array of exactly 6 training campaigns.'),
 });
 
-// Export a wrapper function to be called from the client
-export async function generateAndStoreTrainingCampaigns(
-  input: GenerateAndStoreTrainingCampaignsInput
-): Promise<GenerateAndStoreTrainingCampaignsOutput> {
-  return generateAndStoreCampaignsFlow(input);
-}
+
+// Define input schema (currently empty, but allows for future extension)
+export const GenerateAndStoreTrainingCampaignsInputSchema = z.object({});
+export type GenerateAndStoreTrainingCampaignsInput = z.infer<
+  typeof GenerateAndStoreTrainingCampaignsInputSchema
+>;
+
+// Define output schema for the flow's result
+export const GenerateAndStoreTrainingCampaignsOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+export type GenerateAndStoreTrainingCampaignsOutput = z.infer<
+  typeof GenerateAndStoreTrainingCampaignsOutputSchema
+>;
 
 // Define the Genkit prompt
 const generateCampaignsPrompt = ai.definePrompt({
@@ -116,7 +102,7 @@ Ensure the campaigns cover diverse topics such as fundamentals, phishing, data p
 });
 
 // Define the Genkit flow
-const generateAndStoreTrainingCampaignsFlow = ai.defineFlow(
+export const generateAndStoreCampaignsFlow = ai.defineFlow(
   {
     name: 'generateAndStoreTrainingCampaignsFlow',
     inputSchema: GenerateAndStoreTrainingCampaignsInputSchema,
@@ -131,14 +117,16 @@ const generateAndStoreTrainingCampaignsFlow = ai.defineFlow(
       }
 
       // 2. Get Firestore instance
-      const { firestore } = getSdks(undefined as any); // HACK: This needs a proper app instance
-      const campaignsCollection = collection(firestore, 'trainingCampaigns');
+      const { firestore } = getSdks();
+      const campaignsCollectionRef = collection(firestore, 'trainingCampaigns');
       const batch = writeBatch(firestore);
 
       // 3. Prepare batch write to Firestore
       output.campaigns.forEach((campaign) => {
         const docRef = collection(firestore, 'trainingCampaigns').doc(campaign.id);
-        batch.set(docRef, campaign);
+        // Firestore doesn't store functions, so we store the icon name as a string
+        const firestoreCampaign = { ...campaign, icon: campaign.icon.toString() };
+        batch.set(docRef, firestoreCampaign);
       });
 
       // 4. Commit the batch
@@ -157,3 +145,11 @@ const generateAndStoreTrainingCampaignsFlow = ai.defineFlow(
     }
   }
 );
+
+
+// Export a wrapper function to be called from the client
+export async function generateAndStoreTrainingCampaigns(
+  input: GenerateAndStoreTrainingCampaignsInput
+): Promise<GenerateAndStoreTrainingCampaignsOutput> {
+  return generateAndStoreCampaignsFlow(input);
+}

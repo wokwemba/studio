@@ -10,10 +10,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Loader, Wand2 } from 'lucide-react';
-import {
-  generateAndStoreTrainingCampaigns,
-  GenerateAndStoreTrainingCampaignsOutput,
-} from '@/ai/flows/generate-training-campaigns';
+import { generateAndStoreTrainingCampaigns } from '@/ai/flows/generate-training-campaigns';
+import type { GenerateAndStoreTrainingCampaignsOutput } from '@/ai/flows/generate-training-campaigns';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { TrainingCampaign } from '@/app/training/data';

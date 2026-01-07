@@ -25,14 +25,15 @@ export function initializeFirebase() {
       firebaseApp = initializeApp(firebaseConfig);
     }
 
-    return getSdks(firebaseApp);
+    return getSdks();
   }
 
   // If already initialized, return the SDKs with the already initialized App
-  return getSdks(getApp());
+  return getSdks();
 }
 
-export function getSdks(firebaseApp: FirebaseApp) {
+export function getSdks() {
+  const firebaseApp = getApps().length ? getApp() : undefined;
   // If firebaseApp is not defined, we are in a server-side context where we can't initialize it
   // Return stubs to avoid crashing the app
   if (!firebaseApp) {
