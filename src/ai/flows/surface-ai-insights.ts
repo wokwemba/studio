@@ -54,9 +54,15 @@ export async function surfaceAiInsights(
   return surfaceAiInsightsFlow(input);
 }
 
+const PromptInputSchema = z.object({
+  users: z.string().describe('A JSON string of user data.'),
+  trainingModules: z.string().describe('A JSON string of training modules.'),
+  tenantId: z.string().describe('The ID of the tenant.'),
+});
+
 const prompt = ai.definePrompt({
   name: 'surfaceAiInsightsPrompt',
-  input: {schema: SurfaceAiInsightsInputSchema},
+  input: {schema: PromptInputSchema},
   output: {schema: SurfaceAiInsightsOutputSchema},
   prompt: `You are an AI cybersecurity expert providing insights and recommendations to tenant admins.
 
@@ -66,8 +72,8 @@ const prompt = ai.definePrompt({
 
   The output should be an array of insights, each containing a finding and a recommendation.
 
-  Users Data: {{{JSON.stringify(users)}}}
-  Training Modules: {{{JSON.stringify(trainingModules)}}}
+  Users Data: {{{users}}}
+  Training Modules: {{{trainingModules}}}
   Tenant ID: {{{tenantId}}}
 
   Example Output:
@@ -93,7 +99,11 @@ const surfaceAiInsightsFlow = ai.defineFlow(
     outputSchema: SurfaceAiInsightsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt({
+      tenantId: input.tenantId,
+      users: JSON.stringify(input.users),
+      trainingModules: JSON.stringify(input.trainingModules),
+    });
     return output!;
   }
 );
