@@ -6,7 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Globe, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { addPackage } from "firebase/firestore";
 
 type AttackType = 'DDoS' | 'SQL Injection' | 'Cross-Site Scripting' | 'Phishing' | 'Malware';
 type Country = 'China' | 'Russia' | 'USA' | 'Brazil' | 'India' | 'Germany' | 'North Korea' | 'Iran';
