@@ -49,7 +49,21 @@ const explainSimulationFailureFlow = ai.defineFlow({
     outputSchema: ExplainSimulationFailureOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    const maxRetries = 3;
+    let attempt = 0;
+    while (attempt < maxRetries) {
+      try {
+        const {output} = await prompt(input);
+        return output!;
+      } catch (error) {
+        attempt++;
+        if (attempt >= maxRetries) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+    // This part should be unreachable if maxRetries > 0
+    throw new Error('Failed to get explanation after multiple retries.');
   }
 );
