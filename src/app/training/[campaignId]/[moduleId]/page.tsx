@@ -72,7 +72,16 @@ export default function TrainingModulePage({ params }: { params: { campaignId: s
         setSelectedAnswers(new Array(quizWithFallback.length).fill(''));
         setLoading(false);
       }).catch(err => {
-        console.error(err);
+        console.error("Failed to generate training module:", err);
+        // Fallback to a default module if generation fails
+        const fallbackModule: TrainingModuleWithQuiz = {
+            title: `Introduction to ${moduleTitle}`,
+            content: `This module covers the basics of ${moduleTitle}. Because the AI generator is currently unavailable, this is a placeholder content.`,
+            scenario: `Imagine you receive an email about ${moduleTitle}. What should you do?`,
+            quiz: [{ question: 'Is learning about security important?', options: ['Yes', 'No'], correctAnswer: 'Yes' }]
+        };
+        setTrainingModule(fallbackModule);
+        setSelectedAnswers(new Array(fallbackModule.quiz.length).fill(''));
         setLoading(false);
       });
     }
@@ -117,7 +126,7 @@ export default function TrainingModulePage({ params }: { params: { campaignId: s
   }
 
   if (!trainingModule) {
-    return <p>Could not generate training module. Please try again.</p>;
+    return <p>Could not load training module. Please try again.</p>;
   }
 
   if (quizFinished) {
