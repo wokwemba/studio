@@ -57,7 +57,21 @@ const generateTrainingModuleFlow = ai.defineFlow(
     outputSchema: GenerateTrainingModuleOutputSchema,
   },
   async input => {
-    const {output} = await generateTrainingModulePrompt(input);
-    return output!;
+    const maxRetries = 3;
+    let attempt = 0;
+    while (attempt < maxRetries) {
+      try {
+        const {output} = await generateTrainingModulePrompt(input);
+        return output!;
+      } catch (error) {
+        attempt++;
+        if (attempt >= maxRetries) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+    // This part should be unreachable if maxRetries > 0
+    throw new Error('Failed to generate training module after multiple retries.');
   }
 );
