@@ -6,14 +6,24 @@ import {
   fetchSignInMethodsForEmail,
   UserCredential,
 } from 'firebase/auth';
-import { setDoc, doc, getFirestore } from 'firebase/firestore';
+import { setDoc, doc, getDoc, getFirestore } from 'firebase/firestore';
 import { FirestorePermissionError } from './errors';
 import { errorEmitter } from './error-emitter';
 import { ROLES } from '@/lib/roles';
+import type { Role } from '@/app/admin/users/page';
+
 
 // This is a simplification. In a real app, you'd fetch this dynamically
 // or have it configured.
 const DEFAULT_TENANT_ID = 'default-tenant-cyberaegis';
+
+async function setSessionCookie(token: string, role: string) {
+  await fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, role }),
+  });
+}
 
 /**
  * Checks if an email is already registered in Firebase Auth.
@@ -33,7 +43,7 @@ export async function checkEmailExists(auth: Auth, email: string): Promise<boole
   }
 }
 
-const createUserProfile = async (userCredential: UserCredential): Promise<UserCredential> => {
+const createUserProfile = async (userCredential: UserCredential): Promise<string> => {
     const user = userCredential.user;
     const db = getFirestore(user.auth.app);
     const userDocRef = doc(db, 'users', user.uid);
@@ -58,18 +68,17 @@ const createUserProfile = async (userCredential: UserCredential): Promise<UserCr
     };
 
     try {
-        setDoc(userDocRef, newUserProfile).catch(error => {
-            console.error("Non-blocking profile creation failed:", error);
-            const permissionError = new FirestorePermissionError({
-                path: userDocRef.path,
-                operation: 'create',
-                requestResourceData: newUserProfile,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        });
-        return userCredential;
+        await setDoc(userDocRef, newUserProfile);
+        return roleId;
     } catch (error) {
         console.error("Failed to initiate user profile creation:", error);
+        const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'create',
+            requestResourceData: newUserProfile,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        // Re-throw the error to be caught by the calling function
         throw error;
     }
 };
@@ -98,6 +107,15 @@ function mapFirebaseError(error: any): string {
 }
 
 
+const getRoleNameFromId = async (firestore: any, roleId: string): Promise<string> => {
+    const roleDocRef = doc(firestore, 'roles', roleId);
+    const roleDocSnap = await getDoc(roleDocRef);
+    if (roleDocSnap.exists()) {
+        return (roleDocSnap.data() as Role).name || 'User';
+    }
+    return 'User'; // Default role if not found
+}
+
 /**
  * Smart authentication function that either signs a user in if they exist,
  * or creates a new account if they don't.
@@ -116,23 +134,45 @@ export async function smartAuth(
   error?: string;
 }> {
   try {
+    const db = getFirestore(auth.app);
     const exists = await checkEmailExists(auth, email);
+
+    let userCredential: UserCredential;
+    let isNewUser = false;
 
     if (exists) {
       // User exists, so sign them in
-      await signInWithEmailAndPassword(auth, email, password);
-      return { success: true, isNewUser: false };
+      userCredential = await signInWithEmailAndPassword(auth, email, password);
     } else {
       // User does not exist, so create a new account
-      const userCredential = await createUserWithEmailAndPassword(
+      userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
-      // Create the user profile document in Firestore
+      // Create the user profile document in Firestore and get their roleId
       await createUserProfile(userCredential);
-      return { success: true, isNewUser: true };
+      isNewUser = true;
     }
+
+    // Now that user is authenticated, get their token and role
+    const token = await userCredential.user.getIdToken();
+    const userDocRef = doc(db, 'users', userCredential.user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    
+    let roleName = 'User'; // Default role
+    if (userDocSnap.exists()) {
+        const roleId = userDocSnap.data()?.roleId;
+        if (roleId) {
+            roleName = await getRoleNameFromId(db, roleId);
+        }
+    }
+
+    // Set the session cookie with the role
+    await setSessionCookie(token, roleName);
+
+    return { success: true, isNewUser };
+
   } catch (error: any) {
     return {
       success: false,
