@@ -21,8 +21,12 @@ export default function ProfilePage() {
   const { data: userData, isLoading: isUserDataLoading } = useDoc<{name: string; email: string, avatarId?: string}>(userDocRef);
   
   const userAvatar = useMemo(() => {
-    if (!userData?.avatarId) return '';
-    return PlaceHolderImages.find((p) => p.id === userData.avatarId)?.imageUrl || '';
+     if (!userData?.avatarId) {
+        const matchingImage = PlaceHolderImages.find((p) => p.id === 'user-avatar-1');
+        return matchingImage?.imageUrl || '';
+    }
+    const matchingImage = PlaceHolderImages.find((p) => p.id === userData.avatarId);
+    return matchingImage?.imageUrl || '';
   }, [userData]);
 
 
@@ -41,10 +45,10 @@ export default function ProfilePage() {
             <Card>
                 <CardHeader>
                 <CardTitle className="font-headline">User Not Found</CardTitle>
-                <CardDescription>We couldn't find your profile information.</CardDescription>
+                <CardDescription>We couldn't find your profile information. This can happen if your user profile document hasn't been created in the database yet.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p>Please try logging in again.</p>
+                    <p>Please try signing out and signing back in. If the problem persists, contact an administrator.</p>
                 </CardContent>
             </Card>
         </div>

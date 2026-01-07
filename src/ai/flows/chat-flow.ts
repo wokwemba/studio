@@ -33,7 +33,7 @@ You must follow these rules:
 5.  **Welcome Message:** If the user's message is "Start the conversation", you must provide a friendly welcome message, introduce yourself, explain how the chat works (teaching, quizzing, and scoring), and then present the first topic and question.
 6.  **Always Respond with Full History:** Your final output MUST include the entire chat history, including the user's latest message and your new response.
 
-The user's current score is: {{history.filter(m => m.role === 'model').slice(-1)[0]?.content.match(/Score: (\d+)/)?.[1] ?? 0}}
+The user's current score is: {{history.filter(m => m.role === 'model').slice(-1)[0]?.content.match(/Score: (\\d+)/)?.[1] ?? 0}}
 
 Here is the current conversation history:
 {{#each history}}
@@ -45,6 +45,22 @@ User's new message: {{{message}}}
 Based on the rules and the user's message, continue the conversation. If you just asked a question, evaluate the answer. If you just taught something or evaluated an answer, teach a new concept and ask a question. Provide the updated score and full chat history.
 `,
 });
+
+const extractScore = (history: ChatMessage[]): number => {
+    // Look backwards from the last message to find the most recent score.
+    for (let i = history.length - 1; i >= 0; i--) {
+        const message = history[i];
+        if (message.role === 'model') {
+            const scoreMatch = message.content.match(/Score: (\d+)/);
+            if (scoreMatch && scoreMatch[1]) {
+                return parseInt(scoreMatch[1], 10);
+            }
+        }
+    }
+    // If no score is found in the history, default to 0.
+    return 0;
+};
+
 
 // Define the main Genkit flow
 const chatFlow = ai.defineFlow(
@@ -83,9 +99,9 @@ export async function chat(input: ChatInput): Promise<ChatResponse> {
           role: 'model',
           content: "I'm sorry, I'm having trouble responding right now. Please try again in a moment.",
         };
-        const currentScore = input.history.length > 0
-          ? (await chatFlow(input)).score // A bit risky, might fail again. A safer bet is to parse from history.
-          : 0;
+        
+        // Safely extract the last known score from the input history
+        const currentScore = extractScore(input.history);
 
         return {
           history: [...input.history, fallbackMessage],
