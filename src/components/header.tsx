@@ -23,7 +23,9 @@ export default function Header() {
   const router = useRouter();
 
   const handleLogout = () => {
-    auth.signOut();
+    if(auth) {
+      auth.signOut();
+    }
     router.push('/login');
   };
 

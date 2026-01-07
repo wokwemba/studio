@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [user, isUserLoading, router, pathname]);
 
-  if (isUserLoading) {
+  if (isUserLoading && !unauthenticatedRoutes.includes(pathname)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader className="h-16 w-16 animate-spin text-primary" />
