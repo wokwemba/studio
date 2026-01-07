@@ -3,6 +3,7 @@ import {
   Auth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  fetchSignInMethodsForEmail,
   UserCredential,
 } from 'firebase/auth';
 import { setDoc, doc, getFirestore } from 'firebase/firestore';
@@ -13,6 +14,24 @@ import { ROLES } from '@/lib/roles';
 // This is a simplification. In a real app, you'd fetch this dynamically
 // or have it configured.
 const DEFAULT_TENANT_ID = 'default-tenant-cyberaegis';
+
+/**
+ * Checks if an email is already registered in Firebase Auth.
+ * @param auth The Firebase Auth instance.
+ * @param email The email to check.
+ * @returns {Promise<boolean>} True if the email exists, false otherwise.
+ */
+export async function checkEmailExists(auth: Auth, email: string): Promise<boolean> {
+  try {
+    const methods = await fetchSignInMethodsForEmail(auth, email);
+    return methods.length > 0;
+  } catch (error) {
+    console.error("Error checking email existence:", error);
+    // In case of an error, assume the email doesn't exist to allow signup attempt,
+    // which will then be caught by more specific error handling.
+    return false;
+  }
+}
 
 const createUserProfile = async (userCredential: UserCredential): Promise<UserCredential> => {
     const user = userCredential.user;
@@ -39,10 +58,8 @@ const createUserProfile = async (userCredential: UserCredential): Promise<UserCr
     };
 
     try {
-        // Use a non-blocking write for the user profile
         setDoc(userDocRef, newUserProfile).catch(error => {
             console.error("Non-blocking profile creation failed:", error);
-            // Even though it's non-blocking, we can still report the error
             const permissionError = new FirestorePermissionError({
                 path: userDocRef.path,
                 operation: 'create',
@@ -50,36 +67,76 @@ const createUserProfile = async (userCredential: UserCredential): Promise<UserCr
             });
             errorEmitter.emit('permission-error', permissionError);
         });
-        return userCredential; // Return immediately
+        return userCredential;
     } catch (error) {
         console.error("Failed to initiate user profile creation:", error);
-        // This synchronous catch might not be hit if setDoc is fully async,
-        // but it's good practice to keep it.
         throw error;
     }
 };
 
-/** Creates a new user with email and password and sets up their profile. */
-export async function signUpWithEmail(auth: Auth, email: string, password: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await createUserProfile(userCredential);
-    return { success: true };
-  } catch (error: any) {
-    console.error("Email sign-up failed:", error);
-    if (error.code === 'auth/email-already-in-use') {
-        return { success: false, error: 'This email is already registered. Please sign in instead.' };
-    }
-    return { success: false, error: 'An unexpected error occurred during sign up.' };
+/**
+ * Maps common Firebase auth errors to user-friendly messages.
+ * @param error The Firebase error object.
+ * @returns A user-friendly error string.
+ */
+function mapFirebaseError(error: any): string {
+  switch (error.code) {
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return 'Incorrect password. Please try again.';
+    case 'auth/user-not-found':
+      // This case should technically not be hit with our check, but is good for robustness
+      return 'No account found with this email. A new account will be created.';
+    case 'auth/weak-password':
+      return 'Password is too weak. It must be at least 6 characters long.';
+    case 'auth/email-already-in-use':
+       return 'This email is already in use. Please sign in.';
+    default:
+      console.error('Unhandled Firebase Auth Error:', error);
+      return 'An unexpected error occurred. Please try again.';
   }
 }
 
-/** Signs in an existing user with email and password. */
-export async function signInWithEmail(auth: Auth, email: string, password: string): Promise<void> {
+
+/**
+ * Smart authentication function that either signs a user in if they exist,
+ * or creates a new account if they don't.
+ * @param auth The Firebase Auth instance.
+ * @param email The user's email.
+ * @param password The user's password.
+ * @returns An object indicating success, whether the user is new, and any error message.
+ */
+export async function smartAuth(
+  auth: Auth,
+  email: string,
+  password: string
+): Promise<{
+  success: boolean;
+  isNewUser?: boolean;
+  error?: string;
+}> {
   try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (error) {
-    console.error("Email sign-in failed:", error);
-    throw error;
+    const exists = await checkEmailExists(auth, email);
+
+    if (exists) {
+      // User exists, so sign them in
+      await signInWithEmailAndPassword(auth, email, password);
+      return { success: true, isNewUser: false };
+    } else {
+      // User does not exist, so create a new account
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      // Create the user profile document in Firestore
+      await createUserProfile(userCredential);
+      return { success: true, isNewUser: true };
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      error: mapFirebaseError(error),
+    };
   }
 }

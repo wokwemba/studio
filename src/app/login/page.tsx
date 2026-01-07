@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Link from 'next/link';
 import { useAuth } from '@/firebase';
-import { signInWithEmail } from '@/firebase/auth';
+import { smartAuth } from '@/firebase/auth';
 import { ShieldCheck, Loader } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,9 +18,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const auth = useAuth();
+  const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // Prevent double submit
+
     setError(null);
     setLoading(true);
 
@@ -30,14 +33,18 @@ export default function LoginPage() {
         return;
     }
 
-    try {
-      await signInWithEmail(auth, email, password);
-      // The onAuthStateChanged listener in the layout will handle the redirect
-      // after successful login. We can optimistically navigate.
+    const result = await smartAuth(auth, email, password);
+
+    setLoading(false);
+
+    if (result.success) {
+      toast({
+        title: result.isNewUser ? "Account Created!" : "Welcome Back!",
+        description: result.isNewUser ? "You have been successfully signed up." : "You have been successfully logged in.",
+      });
       router.push('/');
-    } catch (err: any) {
-      setError(err.message);
-      setLoading(false);
+    } else {
+      setError(result.error || 'An unexpected error occurred.');
     }
   };
 
@@ -49,16 +56,11 @@ export default function LoginPage() {
        </div>
       <Card className="w-full max-w-md">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl font-headline">Login</CardTitle>
-            <Button asChild variant="outline">
-              <Link href="/signup">Sign Up</Link>
-            </Button>
-          </div>
-          <CardDescription>Enter your email below to login to your account.</CardDescription>
+          <CardTitle className="text-2xl font-headline">Sign In or Sign Up</CardTitle>
+          <CardDescription>Enter your email and password to continue. We'll create an account if you don't have one.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -72,7 +74,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Password (min. 6 characters)</Label>
               <Input
                 id="password"
                 type="password"
@@ -85,15 +87,9 @@ export default function LoginPage() {
             {error && <p className="text-destructive text-sm">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-              Login
+              {loading ? 'Processing...' : 'Continue'}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="underline">
-              Sign up
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>
