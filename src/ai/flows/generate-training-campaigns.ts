@@ -6,79 +6,15 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { collection, writeBatch } from 'firebase/firestore';
+import { collection, writeBatch, getFirestore } from 'firebase/firestore';
 import { getSdks } from '@/firebase';
-
-const lucideIcons = [
-  'ShieldCheck',
-  'Target',
-  'Banknote',
-  'LockKeyhole',
-  'Laptop',
-  'AlertTriangle',
-];
-
-// Define the schema for a single training module
-const TrainingModuleSchema = z.object({
-  id: z
-    .string()
-    .describe('A unique, URL-friendly slug for the module (e.g., "phishing-basics").'),
-  title: z.string().describe('The title of the training module.'),
-  description: z.string().describe('A brief description of the module.'),
-});
-
-// Define the schema for a single training campaign
-const TrainingCampaignSchema = z.object({
-  id: z
-    .string()
-    .describe(
-      'A unique, URL-friendly slug for the campaign (e.g., "cybersecurity-fundamentals").'
-    ),
-  title: z.string().describe('The title of the training campaign.'),
-  description: z.string().describe('A brief description of the campaign.'),
-  duration: z.string().describe('The estimated duration of the campaign (e.g., "30 days").'),
-  audience: z.string().describe('The target audience for the campaign (e.g., "Everyone").'),
-  modules: z
-    .array(TrainingModuleSchema)
-    .min(3)
-    .max(5)
-    .describe('An array of 3 to 5 training modules within the campaign.'),
-  activities: z
-    .array(z.string())
-    .describe('A list of activities included in the campaign (e.g., "Phishing simulations").'),
-  kpis: z
-    .string()
-    .describe(
-      'Key Performance Indicators to measure campaign success (e.g., "Phish click rate ↓").'
-    ),
-  icon: z
-    .enum(lucideIcons as [string, ...string[]])
-    .describe('The name of a lucide-react icon for the campaign.'),
-});
-
-// Define the schema for the AI model's output
-const AIOutputSchema = z.object({
-  campaigns: z
-    .array(TrainingCampaignSchema)
-    .length(6)
-    .describe('An array of exactly 6 training campaigns.'),
-});
-
-
-// Define input schema (currently empty, but allows for future extension)
-export const GenerateAndStoreTrainingCampaignsInputSchema = z.object({});
-export type GenerateAndStoreTrainingCampaignsInput = z.infer<
-  typeof GenerateAndStoreTrainingCampaignsInputSchema
->;
-
-// Define output schema for the flow's result
-export const GenerateAndStoreTrainingCampaignsOutputSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
-export type GenerateAndStoreTrainingCampaignsOutput = z.infer<
-  typeof GenerateAndStoreTrainingCampaignsOutputSchema
->;
+import {
+  GenerateAndStoreTrainingCampaignsInputSchema,
+  GenerateAndStoreTrainingCampaignsOutputSchema,
+  AIOutputSchema,
+  lucideIcons
+} from '@/ai/flows/schemas/training-campaigns-schema';
+import type { GenerateAndStoreTrainingCampaignsInput, GenerateAndStoreTrainingCampaignsOutput } from '@/ai/flows/schemas/training-campaigns-schema';
 
 // Define the Genkit prompt
 const generateCampaignsPrompt = ai.definePrompt({
@@ -118,7 +54,6 @@ export const generateAndStoreCampaignsFlow = ai.defineFlow(
 
       // 2. Get Firestore instance
       const { firestore } = getSdks();
-      const campaignsCollectionRef = collection(firestore, 'trainingCampaigns');
       const batch = writeBatch(firestore);
 
       // 3. Prepare batch write to Firestore
@@ -151,5 +86,27 @@ export const generateAndStoreCampaignsFlow = ai.defineFlow(
 export async function generateAndStoreTrainingCampaigns(
   input: GenerateAndStoreTrainingCampaignsInput
 ): Promise<GenerateAndStoreTrainingCampaignsOutput> {
-  return generateAndStoreCampaignsFlow(input);
+  let attempt = 0;
+  const maxRetries = 3;
+
+  while (attempt < maxRetries) {
+    try {
+      return await generateAndStoreCampaignsFlow(input);
+    } catch (error) {
+      attempt++;
+      if (attempt >= maxRetries) {
+        // If it's the last attempt, re-throw the error to be caught by the caller.
+        throw error;
+      }
+      // Wait for a short period before retrying (e.g., exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+
+  // This should theoretically not be reached if maxRetries > 0,
+  // but as a fallback, return a failure response.
+  return {
+    success: false,
+    message: 'Failed to generate and store campaigns after multiple retries.',
+  };
 }
