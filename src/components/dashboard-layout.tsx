@@ -8,19 +8,19 @@ import { SidebarNav } from "@/components/sidebar-nav";
 import Header from "@/components/header";
 import { ShieldCheck, Loader } from "lucide-react";
 import Link from "next/link";
-import { useUser } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { useEffect } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import type { Role } from "@/app/admin/users/page";
 
-const unauthenticatedRoutes = ["/login", "/signup"];
+const unauthenticatedRoutes = ["/login"];
 const protectedRoutes = ["/admin", "/profile"];
 
-async function setSessionCookie(token: string) {
+async function setSessionCookie(token: string, role: string) {
     await fetch('/api/auth', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, role }),
     });
 }
 
@@ -35,16 +35,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
+  const firestore = useFirestore();
 
   useEffect(() => {
-    if (isUserLoading) {
-      // Do nothing while we are waiting for the auth state
+    if (isUserLoading || !firestore) {
+      // Do nothing while we are waiting for the auth state or firestore
       return;
     }
 
     if (user) {
       // User is logged in
-      user.getIdToken().then(setSessionCookie);
+      const processUser = async () => {
+          const token = await user.getIdToken();
+          
+          // Get user role from Firestore
+          const userDocRef = doc(firestore, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          let roleName = 'User'; // Default role
+          if (userDocSnap.exists()) {
+              const userData = userDocSnap.data();
+              if (userData.roleId) {
+                  const roleDocRef = doc(firestore, 'roles', userData.roleId);
+                  const roleDocSnap = await getDoc(roleDocRef);
+                  if (roleDocSnap.exists()) {
+                      roleName = (roleDocSnap.data() as Role).name || 'User';
+                  }
+              }
+          }
+          await setSessionCookie(token, roleName);
+      }
+      
+      processUser();
+
       if (unauthenticatedRoutes.includes(pathname)) {
         // If on login/signup page, redirect to dashboard
         router.push('/');
@@ -58,7 +81,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         router.push('/login');
       }
     }
-  }, [user, isUserLoading, router, pathname]);
+  }, [user, isUserLoading, router, pathname, firestore]);
 
   // Show a global loader while we are determining the auth state,
   // but not on the login/signup pages themselves.
@@ -75,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return <>{children}</>;
   }
 
-  // If the user is logged in, render the full dashboard layout.
+  // If user is logged in, render the dashboard.
   if (user) {
     return (
         <div className="min-h-screen w-full flex">
@@ -97,8 +120,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
     );
   }
-
-  // If user is not logged in and not on an auth page, it's a public page. Render children without the dashboard shell.
-  // The useEffect above handles redirecting away from protected routes.
+  
+  // For unauthenticated users on public pages (like the landing page)
   return <>{children}</>;
 }
