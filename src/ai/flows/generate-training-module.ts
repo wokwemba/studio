@@ -21,8 +21,11 @@ export type GenerateTrainingModuleInput = z.infer<typeof GenerateTrainingModuleI
 
 const GenerateTrainingModuleOutputSchema = z.object({
   title: z.string().describe('The title of the training module.'),
-  content: z.string().describe('The content of the training module as a series of paragraphs. Use newline characters for separation.'),
-  quiz: z.string().describe(`A multiple-choice quiz with 3-5 questions related to the training module content. 
+  sessions: z.array(z.object({
+    title: z.string().describe('The title of the learning session.'),
+    content: z.string().describe('The content of the learning session as a paragraph.'),
+  })).length(10).describe('An array of 10 learning sessions.'),
+  quiz: z.string().describe(`A multiple-choice quiz with 5 questions related to the training module content. 
     Each question must be separated by '---'. 
     For each question, provide the question, 3-4 options prefixed with '-', and the correct answer prefixed with 'Correct Answer: '.
     Example:
@@ -38,7 +41,6 @@ const GenerateTrainingModuleOutputSchema = z.object({
     - A complex combination of letters, numbers, and symbols
     Correct Answer: A complex combination of letters, numbers, and symbols
     `),
-  scenario: z.string().describe('A realistic scenario related to the training module. Use newline characters for separation.'),
 });
 
 export type GenerateTrainingModuleOutput = z.infer<typeof GenerateTrainingModuleOutputSchema>;
@@ -60,10 +62,9 @@ Difficulty: {{{difficulty}}}
 Target Role: {{{targetRole}}}
 
 Generate the following sections:
-- Module Title: A clear and descriptive title.
-- Module Content: 2-3 paragraphs explaining the core concepts.
-- Scenario: A short, realistic scenario illustrating the topic.
-- Quiz: A 3-question multiple-choice quiz based on the content and scenario.
+- Module Title: A clear and descriptive title for the whole module.
+- Sessions: An array of exactly 10 learning sessions. Each session should have a title and a paragraph of content, breaking down the main topic into smaller, digestible parts.
+- Quiz: A 5-question multiple-choice quiz based on the content of all 10 sessions.
 `,
 });
 

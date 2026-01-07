@@ -7,7 +7,7 @@ import {
   generateTrainingModule,
   GenerateTrainingModuleOutput,
 } from '@/ai/flows/generate-training-module';
-import { Loader, Check, X as Wrong } from 'lucide-react';
+import { Loader, Check, X as Wrong, ArrowLeft, ArrowRight } from 'lucide-react';
 import { trainingCampaigns } from '@/app/training/data';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,12 @@ type QuizQuestion = {
   correctAnswer: string;
 };
 
-type TrainingModuleWithQuiz = GenerateTrainingModuleOutput & {
+type TrainingSession = {
+  title: string;
+  content: string;
+};
+
+type TrainingModuleWithSessions = Omit<GenerateTrainingModuleOutput, 'quiz'> & {
   quiz: QuizQuestion[];
 };
 
@@ -47,9 +52,9 @@ function formatIdToTitle(id: string) {
 
 export default function TrainingModulePage({ params: paramsProp }: { params: { campaignId: string; moduleId: string } }) {
   const params = use(paramsProp);
-  const [trainingModule, setTrainingModule] = useState<TrainingModuleWithQuiz | null>(null);
+  const [trainingModule, setTrainingModule] = useState<TrainingModuleWithSessions | null>(null);
   const [loading, setLoading] = useState(true);
-  const [quizStarted, setQuizStarted] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0); // 0-9 for sessions, 10 for quiz
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [quizFinished, setQuizFinished] = useState(false);
@@ -66,7 +71,6 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
         targetRole: 'Employee',
       }).then((module) => {
         const parsedQuiz = parseQuiz(module.quiz);
-        // Quick fix for when parsing fails.
         const quizWithFallback = parsedQuiz.length > 0 ? parsedQuiz : [{question: 'Is security important?', options: ['Yes', 'No'], correctAnswer: 'Yes'}];
         
         setTrainingModule({ ...module, quiz: quizWithFallback });
@@ -74,11 +78,12 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
         setLoading(false);
       }).catch(err => {
         console.error("Failed to generate training module:", err);
-        // Fallback to a default module if generation fails
-        const fallbackModule: TrainingModuleWithQuiz = {
+        const fallbackModule: TrainingModuleWithSessions = {
             title: `Introduction to ${moduleTitle}`,
-            content: `This module covers the basics of ${moduleTitle}. Because the AI generator is currently unavailable, this is a placeholder content.`,
-            scenario: `Imagine you receive an email about ${moduleTitle}. What should you do?`,
+            sessions: Array.from({length: 10}, (_, i) => ({
+                title: `Session ${i+1}: Placeholder`,
+                content: `This is placeholder content for session ${i+1} of ${moduleTitle} as the AI generator is currently unavailable.`
+            })),
             quiz: [{ question: 'Is learning about security important?', options: ['Yes', 'No'], correctAnswer: 'Yes' }]
         };
         setTrainingModule(fallbackModule);
@@ -88,8 +93,16 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
     }
   }, [params.moduleId, moduleTitle]);
 
-  const handleStartQuiz = () => {
-    setQuizStarted(true);
+  const handleNext = () => {
+    if (currentStep < 10) { // 10 sessions + 1 quiz start
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
   };
 
   const handleAnswerChange = (value: string) => {
@@ -114,8 +127,10 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
     }
   };
 
+  const isQuiz = currentStep === 10;
+  const currentSession = trainingModule?.sessions[currentStep];
   const currentQuestion = trainingModule?.quiz[currentQuestionIndex];
-  const progress = quizStarted ? ((currentQuestionIndex + 1) / (trainingModule?.quiz.length || 1)) * 100 : 0;
+  const progress = isQuiz ? ((currentQuestionIndex + 1) / (trainingModule?.quiz.length || 1)) * 100 : ((currentStep + 1) / 10) * 100;
 
   if (loading) {
     return (
@@ -179,32 +194,28 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
           <CardDescription>From the "{campaign?.title}" campaign.</CardDescription>
         </CardHeader>
         <CardContent>
-          {!quizStarted ? (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold mb-2 font-headline">Module Content</h2>
-                <p className="text-muted-foreground whitespace-pre-line">{trainingModule.content}</p>
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold mb-2 font-headline">Scenario</h2>
-                <p className="text-muted-foreground whitespace-pre-line">{trainingModule.scenario}</p>
-              </div>
-              <Button onClick={handleStartQuiz}>Start Quiz</Button>
-            </div>
-          ) : (
             <div className="space-y-6">
                 <div>
                     <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-xl font-semibold font-headline">Quiz in Progress</h2>
+                        <h2 className="text-xl font-semibold font-headline">
+                          {isQuiz ? `Quiz` : `Session ${currentStep + 1} of 10`}
+                        </h2>
                         <span className="text-sm text-muted-foreground">
-                        Question {currentQuestionIndex + 1} of {trainingModule.quiz.length}
+                         {isQuiz ? `Question ${currentQuestionIndex + 1} of ${trainingModule.quiz.length}` : `Step ${currentStep + 1} of 11`}
                         </span>
                     </div>
                     <Progress value={progress} className="w-full" />
                 </div>
 
-              {currentQuestion && (
-                <div className="space-y-4">
+              {!isQuiz && currentSession && (
+                <div className="space-y-4 min-h-[200px]">
+                    <h3 className="text-lg font-semibold">{currentSession.title}</h3>
+                    <p className="text-muted-foreground whitespace-pre-line">{currentSession.content}</p>
+                </div>
+              )}
+              
+              {isQuiz && currentQuestion && (
+                <div className="space-y-4 min-h-[200px]">
                   <p className="font-semibold text-lg">{currentQuestion.question}</p>
                   <RadioGroup value={selectedAnswers[currentQuestionIndex]} onValueChange={handleAnswerChange}>
                     {currentQuestion.options.map((option, index) => (
@@ -216,11 +227,25 @@ export default function TrainingModulePage({ params: paramsProp }: { params: { c
                   </RadioGroup>
                 </div>
               )}
-              <Button onClick={handleNextQuestion} disabled={!selectedAnswers[currentQuestionIndex]}>
-                {currentQuestionIndex < trainingModule.quiz.length - 1 ? 'Next Question' : 'Finish Quiz'}
-              </Button>
+
+              <div className="flex justify-between items-center pt-4 border-t">
+                  <Button onClick={handlePrev} disabled={currentStep === 0} variant="outline">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+                  </Button>
+                  
+                  {isQuiz ? (
+                     <Button onClick={handleNextQuestion} disabled={!selectedAnswers[currentQuestionIndex]}>
+                        {currentQuestionIndex < trainingModule.quiz.length - 1 ? 'Next Question' : 'Finish Quiz'}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                  ) : (
+                    <Button onClick={handleNext}>
+                      {currentStep < 9 ? 'Next Session' : 'Start Quiz'}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  )}
+              </div>
             </div>
-          )}
         </CardContent>
       </Card>
     </div>
