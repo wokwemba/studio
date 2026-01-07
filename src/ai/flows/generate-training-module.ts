@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {retry} from 'genkit/experimental/retries';
 
 const GenerateTrainingModuleInputSchema = z.object({
   topic: z.string().describe('The topic of the training module.'),
@@ -55,6 +56,9 @@ const generateTrainingModuleFlow = ai.defineFlow(
     name: 'generateTrainingModuleFlow',
     inputSchema: GenerateTrainingModuleInputSchema,
     outputSchema: GenerateTrainingModuleOutputSchema,
+    experimental: {
+      retry: retry(),
+    },
   },
   async input => {
     const {output} = await generateTrainingModulePrompt(input);
