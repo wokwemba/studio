@@ -1,3 +1,4 @@
+
 export type Simulation = {
   id: string;
   type: string;
