@@ -8,11 +8,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/firebase';
-import { signInWithEmail } from '@/firebase/auth';
+import { signUpWithEmail } from '@/firebase/auth';
 import { ShieldCheck, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +21,7 @@ export default function LoginPage() {
   const auth = useAuth();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
 
@@ -34,14 +34,14 @@ export default function LoginPage() {
         return;
     }
 
-    const result = await signInWithEmail(auth, email, password);
+    const result = await signUpWithEmail(auth, email, password);
 
     setLoading(false);
 
     if (result.success) {
       toast({
-        title: "Welcome Back!",
-        description: "You have been successfully logged in.",
+        title: "Account Created!",
+        description: "You have been successfully signed up.",
       });
       if (result.role === 'Admin' || result.role === 'SuperAdmin') {
         router.push('/admin');
@@ -61,11 +61,11 @@ export default function LoginPage() {
        </div>
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-headline">Sign In</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
+          <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
+          <CardDescription>Enter your details to get started.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -79,7 +79,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Password (min. 6 characters)</Label>
               <Input
                 id="password"
                 type="password"
@@ -92,12 +92,12 @@ export default function LoginPage() {
             {error && <p className="text-destructive text-sm">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-              {loading ? 'Signing In...' : 'Sign In'}
+              {loading ? 'Creating Account...' : 'Sign Up'}
             </Button>
           </form>
         </CardContent>
         <CardFooter className='text-sm text-center flex justify-center'>
-            <p>Don't have an account? <Link href="/signup" className='text-primary hover:underline'>Sign Up</Link></p>
+            <p>Already have an account? <Link href="/login" className='text-primary hover:underline'>Sign In</Link></p>
         </CardFooter>
       </Card>
     </div>

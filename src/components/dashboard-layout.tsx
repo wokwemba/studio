@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
@@ -11,15 +9,18 @@ import Link from "next/link";
 import { useUser } from "@/firebase";
 import { useEffect } from "react";
 
-const unauthenticatedRoutes = ["/login"];
-const protectedRoutes = ["/admin", "/profile"];
+const unauthenticatedRoutes = ["/login", "/signup"];
+const publicRoutes = ["/"]; // Add other public routes here if needed
 
 async function clearSessionCookie() {
-    await fetch('/api/auth', {
-        method: 'DELETE',
-    });
+    try {
+        await fetch('/api/auth', {
+            method: 'DELETE',
+        });
+    } catch (error) {
+        console.error("Failed to clear session cookie:", error);
+    }
 }
-
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
@@ -28,43 +29,42 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (isUserLoading) {
-      // Do nothing while we are waiting for the auth state
-      return;
+      return; // Wait until auth state is determined
     }
 
     if (user) {
-      // User is logged in.
+      // User is logged in
       if (unauthenticatedRoutes.includes(pathname)) {
-        // If on login/signup page, redirect to dashboard
         router.push('/');
       }
     } else {
       // User is not logged in
       clearSessionCookie();
-      const isProtectedRoute = protectedRoutes.some(p => pathname.startsWith(p));
+      const isProtectedRoute = !unauthenticatedRoutes.includes(pathname) && !publicRoutes.includes(pathname);
       if (isProtectedRoute) {
-        // If on a protected route, redirect to login
         router.push('/login');
       }
     }
   }, [user, isUserLoading, router, pathname]);
-
-  // Show a global loader while we are determining the auth state,
-  // but not on the login/signup pages themselves.
-  if (isUserLoading && !unauthenticatedRoutes.includes(pathname)) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader className="h-16 w-16 animate-spin text-primary" />
-      </div>
-    );
+  
+  const isAuthPage = unauthenticatedRoutes.includes(pathname);
+  
+  if (isUserLoading && !isAuthPage && !publicRoutes.includes(pathname)) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <Loader className="h-16 w-16 animate-spin text-primary" />
+        </div>
+      );
   }
 
-  // If the user is on a public auth page (login), just render the content.
-  if (unauthenticatedRoutes.includes(pathname) && !user) {
+  if (isAuthPage && !user) {
     return <>{children}</>;
   }
 
-  // If user is logged in, render the dashboard.
+  if (!user && publicRoutes.includes(pathname)) {
+    return <>{children}</>;
+  }
+  
   if (user) {
     return (
         <div className="min-h-screen w-full flex">
@@ -86,7 +86,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
     );
   }
-  
-  // For unauthenticated users on public pages (like the landing page)
-  return <>{children}</>;
+
+  return null; // Avoid showing anything if state is indeterminate
 }
