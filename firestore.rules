@@ -33,6 +33,8 @@ service cloud.firestore {
     
     // This function is specifically for list operations where getRole() might fail.
     function isUserInAdminRoles() {
+        // We can't use getRole() in a list rule, but we can check the roleId
+        // from the requesting user's own document. This is allowed.
         return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleId in ['L1A4b6Y2y1l9p3R0c2V1', 'S2V1b2l1R1dsa2FqZGZtYWxza2Rq'];
     }
 
