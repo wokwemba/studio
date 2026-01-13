@@ -25,8 +25,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { collection, query, where, limit, doc } from 'firebase/firestore';
 import { Loader } from 'lucide-react';
 import { AiInsights } from '@/components/dashboard/ai-insights';
 import { useMemo } from 'react';
@@ -65,15 +65,29 @@ export default function AdminPage() {
   const { user } = useUser();
   const tenantId = (user as any)?.tenantId;
 
+  const userDocRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
+  const { data: currentUserData } = useDoc<{ roleId: string; tenantId: string }>(userDocRef);
+
+  const userRoleDocRef = useMemoFirebase(
+    () => (firestore && currentUserData?.roleId ? doc(firestore, 'roles', currentUserData.roleId) : null),
+    [firestore, currentUserData]
+  );
+  const { data: roleData } = useDoc<{ name: 'User' | 'Admin' | 'SuperAdmin' }>(userRoleDocRef);
+
+  const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin';
+  
   const usersQuery = useMemoFirebase(
-    () => (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null, 
-    [firestore, tenantId]
+    () => (firestore && tenantId && userIsAdmin) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null, 
+    [firestore, tenantId, userIsAdmin]
   );
   const { data: users, isLoading: usersLoading } = useCollection(usersQuery);
   
   const highRiskUsersQuery = useMemoFirebase(
-    () => (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId), where('risk', '==', 'High')) : null, 
-    [firestore, tenantId]
+    () => (firestore && tenantId && userIsAdmin) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId), where('risk', '==', 'High')) : null, 
+    [firestore, tenantId, userIsAdmin]
   );
   const { data: highRiskUsers, isLoading: highRiskUsersLoading } = useCollection(highRiskUsersQuery);
 
