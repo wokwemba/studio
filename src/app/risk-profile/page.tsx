@@ -10,12 +10,28 @@ import { Button } from '@/components/ui/button';
 import { Loader, Wand2 } from 'lucide-react';
 import { RiskTrendChart } from '@/components/dashboard/risk-trend-chart';
 import { MetricCard } from '@/components/dashboard/metric-card';
-import { metrics } from '@/app/data';
+import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+
+type UserData = {
+  risk: 'Low' | 'Medium' | 'High';
+  trainingResults?: any[];
+  name?: string;
+  email?: string;
+};
 
 export default function RiskProfilePage() {
   const [advice, setAdvice] = useState<ProvideAiRiskAdviceOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const userDocRef = useMemoFirebase(
+    () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
+  const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userDocRef);
 
   const riskProfile =
     'This user has a high phishing detection failure rate and low multi-factor authentication (MFA) awareness. They have completed only 50% of their assigned training modules.';
@@ -36,6 +52,24 @@ export default function RiskProfilePage() {
         setLoading(false);
       });
   };
+
+  const metrics = [
+    {
+      label: 'Risk Score',
+      value: userData?.risk || 'N/A',
+      subValue: 'Current Risk Level',
+    },
+    {
+      label: 'Training Completed',
+      value: `${userData?.trainingResults?.length || 0} modules`,
+      subValue: 'All time',
+    },
+    {
+      label: 'Global Rank',
+      value: 'N/A', // This would require a more complex query or pre-calculated ranks
+      subValue: 'Coming soon',
+    },
+  ];
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
