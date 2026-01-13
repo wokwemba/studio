@@ -85,14 +85,14 @@ export function SidebarNav() {
   
   const isActive = (href: string) => {
     // For nested routes, we want to match the parent
-    if (href.startsWith('/admin') && pathname.startsWith('/admin')) {
+    if (href === "/admin" && pathname.startsWith('/admin')) {
       return true;
-    }
-    if (href.startsWith('/training') && pathname.startsWith('/training') && href !== '/training') {
-        return pathname === href;
     }
      if (href === "/training" && pathname.startsWith('/training')) {
       return true;
+    }
+    if (href !== "/" && pathname.startsWith(href)) {
+        return true;
     }
 
     // Exact match for all other links

@@ -32,7 +32,7 @@ export function AiInsights() {
   );
   const { data: users, isLoading: usersLoading } = useCollection(usersQuery, { skip: !usersQuery });
 
-  const modulesQuery = useMemoFirebase(() => firestore && query(collection(firestore, 'trainingModules')), [firestore]);
+  const modulesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'trainingModules')) : null, [firestore]);
   const { data: trainingModules, isLoading: modulesLoading } = useCollection(modulesQuery);
 
 
@@ -61,7 +61,7 @@ export function AiInsights() {
 
 
     surfaceAiInsights({
-      tenantId: 'default-tenant-cyber-up',
+      tenantId: tenantId || 'default-tenant-cyber-up',
       users: insightUsers,
       trainingModules: insightModules,
     })
