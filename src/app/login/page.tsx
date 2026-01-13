@@ -8,22 +8,34 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/firebase';
-import { signInWithEmail } from '@/firebase/auth';
+import { signInWithEmail, signInWithGoogle } from '@/firebase/auth';
 import { ShieldCheck, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Separator } from '@/components/ui/separator';
+
+const GoogleIcon = () => (
+  <svg className="mr-2 h-4 w-4" viewBox="0 0 48 48">
+    <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
+    <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z" />
+    <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.223 0-9.655-3.544-11.141-8.234l-6.573 4.817C9.656 39.663 16.318 44 24 44z" />
+    <path fill="#1976D2" d="M43.611 20.083H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.012 36.49 44 30.861 44 24c0-1.341-.138-2.65-.389-3.917z" />
+  </svg>
+);
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
   const auth = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return;
+    if (loading || googleLoading) return;
 
     setError(null);
     setLoading(true);
@@ -53,6 +65,36 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    if (loading || googleLoading) return;
+
+    setError(null);
+    setGoogleLoading(true);
+
+    if (!auth) {
+      setError("Authentication service is not available. Please try again later.");
+      setGoogleLoading(false);
+      return;
+    }
+
+    const result = await signInWithGoogle(auth);
+    setGoogleLoading(false);
+
+    if (result.success) {
+      toast({
+        title: "Welcome!",
+        description: "You have been successfully logged in with Google.",
+      });
+      if (result.role === 'Admin' || result.role === 'SuperAdmin') {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
+    } else {
+      setError(result.error || 'An unexpected error occurred during Google sign-in.');
+    }
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
        <div className="flex items-center gap-2 mb-6">
@@ -75,7 +117,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
+                disabled={loading || googleLoading}
               />
             </div>
             <div className="space-y-2">
@@ -86,15 +128,27 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
+                disabled={loading || googleLoading}
               />
             </div>
             {error && <p className="text-destructive text-sm">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || googleLoading}>
               {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
+          <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              </div>
+          </div>
+          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={loading || googleLoading}>
+              {googleLoading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+              {googleLoading ? 'Signing In...' : 'Sign in with Google'}
+          </Button>
         </CardContent>
         <CardFooter className='text-sm text-center flex justify-center'>
             <p>Don't have an account? <Link href="/signup" className='text-primary hover:underline'>Sign Up</Link></p>

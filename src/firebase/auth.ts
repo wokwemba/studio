@@ -3,7 +3,10 @@ import {
   Auth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   UserCredential,
+  User,
 } from 'firebase/auth';
 import { setDoc, doc, getDoc, getFirestore, Firestore } from 'firebase/firestore';
 import { FirestorePermissionError } from './errors';
@@ -40,10 +43,16 @@ const getRoleNameFromId = async (firestore: Firestore, roleId: string): Promise<
     }
 };
 
-const createUserProfile = async (userCredential: UserCredential): Promise<string> => {
-    const user = userCredential.user;
+const createUserProfile = async (user: User): Promise<string> => {
     const db = getFirestore(user.auth.app);
     const userDocRef = doc(db, 'users', user.uid);
+
+    // Check if user profile already exists
+    const docSnap = await getDoc(userDocRef);
+    if (docSnap.exists()) {
+        const roleId = docSnap.data().roleId || ROLES.USER;
+        return await getRoleNameFromId(db, roleId);
+    }
 
     let roleId = ROLES.USER; // Default to 'User'
     if (user.email === 'wokwemba@safaricom.co.ke') {
@@ -95,6 +104,8 @@ function mapFirebaseError(error: any): string {
       return 'Password is too weak. It must be at least 6 characters long.';
     case 'auth/email-already-in-use':
        return 'This email is already registered. Please sign in instead.';
+    case 'auth/popup-closed-by-user':
+      return 'Sign-in window was closed. Please try again.';
     default:
       console.error('Unhandled Firebase Auth Error:', error);
       return 'An unexpected error occurred. Please try again.';
@@ -136,9 +147,25 @@ export async function signUpWithEmail(
 ): Promise<{ success: boolean; role?: string; error?: string }> {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const roleName = await createUserProfile(userCredential);
+    const roleName = await createUserProfile(userCredential.user);
     const token = await userCredential.user.getIdToken();
 
+    await setSessionCookie(token, roleName);
+    return { success: true, role: roleName };
+  } catch (error: any) {
+    return { success: false, error: mapFirebaseError(error) };
+  }
+}
+
+export async function signInWithGoogle(
+  auth: Auth
+): Promise<{ success: boolean; role?: string; error?: string }> {
+  try {
+    const provider = new GoogleAuthProvider();
+    const userCredential = await signInWithPopup(auth, provider);
+    const roleName = await createUserProfile(userCredential.user);
+    const token = await userCredential.user.getIdToken();
+    
     await setSessionCookie(token, roleName);
     return { success: true, role: roleName };
   } catch (error: any) {
