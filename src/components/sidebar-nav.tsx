@@ -1,4 +1,3 @@
-
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -63,29 +62,6 @@ const trainingLinks = [
     { href: "/training/history", label: "Training History", icon: History },
 ]
 
-const adminLinks = [
-    { href: "/admin/users", label: "Users & Roles", icon: Users },
-    { href: "/admin/campaigns", label: "Training Campaigns", icon: GitPullRequest },
-    { href: "/admin/content", label: "Courses & Content", icon: BookCopy },
-    { href: "/admin/simulations", label: "Simulation Requests", icon: FlaskConical },
-    { href: "/admin/phishing", label: "Phishing Sims", icon: Mail },
-    { href: "/admin/fraud", label: "Fraud Sims", icon: Zap },
-    { href: "/admin/incidents", label: "Incident Mgmt", icon: ShieldAlert },
-    { href: "/admin/vulnerabilities", label: "Vulnerability Mgmt", icon: ShieldOff },
-    { href: "/admin/analytics", label: "Risk & Analytics", icon: BarChart3 },
-    { href: "/admin/compliance", label: "Compliance & Audit", icon: FileBadge },
-    { href: "/admin/certifications", label: "Certifications", icon: BadgeCheck },
-    { href: "/admin/policies", label: "Policies", icon: BookCopy },
-    { href: "/admin/integrations", label: "Integrations", icon: Blocks },
-    { href: "/admin/notifications", label: "Notifications", icon: Bell },
-    { href: "/admin/monitoring", label: "Logs & Monitoring", icon: Monitor },
-    { href: "/admin/settings", label: "System Settings", icon: Settings },
-];
-
-const superAdminLinks = [
-    { href: "/admin/tenants", label: "Tenants", icon: Building },
-]
-
 export function SidebarNav() {
   const pathname = usePathname();
   const { state } = useSidebar();
@@ -105,9 +81,7 @@ export function SidebarNav() {
   const { data: roleData, isLoading: isRoleDataLoading } = useDoc<{name: 'User' | 'Admin' | 'SuperAdmin'}>(userRoleDocRef);
 
   const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin' || user?.email === 'wokwemba1@gmail.com';
-  const userIsSuperAdmin = roleData?.name === 'SuperAdmin';
-
-
+  
   const isActive = (href: string) => {
     // Exact match for the root dashboard
     if (href === "/") {
@@ -192,41 +166,6 @@ export function SidebarNav() {
                 </Link>
             </SidebarMenuButton>
         </SidebarMenuItem>
-        <SidebarGroup>
-            <SidebarGroupLabel>Admin Console</SidebarGroupLabel>
-              {adminLinks.map((link) => (
-                <SidebarMenuItem key={link.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(link.href)}
-                    className="font-headline"
-                    tooltip={link.label}
-                    size="sm"
-                  >
-                    <Link href={link.href}>
-                      <link.icon className="h-4 w-4" />
-                      {state === 'expanded' && <span>{link.label}</span>}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              {userIsSuperAdmin && superAdminLinks.map((link) => (
-                  <SidebarMenuItem key={link.href}>
-                      <SidebarMenuButton
-                          asChild
-                          isActive={isActive(link.href)}
-                          className="font-headline"
-                          tooltip={link.label}
-                          size="sm"
-                      >
-                          <Link href={link.href}>
-                              <link.icon className="h-4 w-4" />
-                              {state === 'expanded' && <span>{link.label}</span>}
-                          </Link>
-                      </SidebarMenuButton>
-                  </SidebarMenuItem>
-              ))}
-          </SidebarGroup>
         </>
         )}
     </SidebarMenu>

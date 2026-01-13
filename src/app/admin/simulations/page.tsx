@@ -1,151 +1,173 @@
+"use client";
 
-'use client';
-import { useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
-import { Loader, FlaskConical, MoreHorizontal, Check, Clock } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
+  BookUser,
+  ShieldCheck,
+  Trophy,
+  LayoutDashboard,
+  Target,
+  FileText,
+  User,
+  Globe,
+  History,
+  Settings,
+  Copy,
+  Users,
+  GitPullRequest,
+  Mail,
+  Zap,
+  ShieldAlert,
+  BarChart3,
+  FileBadge,
+  BadgeCheck,
+  BookCopy,
+  Blocks,
+  Bell,
+  Monitor,
+  Building,
+  Loader,
+  Wand2,
+  ShieldOff,
+  BookOpenCheck,
+  FlaskConical,
+} from "lucide-react";
 
-type Simulation = {
-    type: string;
-    details: string;
-}
+import {
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  useSidebar,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarSeparator,
+} from "@/components/ui/sidebar";
+import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
 
-type SimulationRequest = {
-    id: string;
-    userId: string;
-    userName: string;
-    simulations: Simulation[];
-    status: 'Pending' | 'In Progress' | 'Completed' | 'Cancelled';
-    requestedAt: string; // ISO Date string
-}
+const mainLinks = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/training", label: "My Training", icon: BookOpenCheck },
+  { href: "/training/achievements", label: "Achievements", icon: Trophy },
+  { href: "/flashcards", label: "Flashcards", icon: Copy },
+  { href: "/simulations", label: "Simulations", icon: Target },
+  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/profile", label: "My Profile", icon: User },
+  { href: "/certificates", label: "Certificates", icon: FileText },
+];
 
-const statusVariant: Record<SimulationRequest['status'], 'secondary' | 'outline' | 'success' | 'destructive'> = {
-  Pending: 'secondary',
-  'In Progress': 'outline',
-  Completed: 'success',
-  Cancelled: 'destructive',
-};
+const trainingLinks = [
+    { href: "/training/module", label: "Training Generator", icon: Wand2 },
+    { href: "/training/history", label: "Training History", icon: History },
+]
 
-const statusIcon: Record<SimulationRequest['status'], React.ReactNode> = {
-    Pending: <Clock className="h-3 w-3" />,
-    'In Progress': <Loader className="h-3 w-3 animate-spin" />,
-    Completed: <Check className="h-3 w-3" />,
-    Cancelled: <XCircle className="h-3 w-3" />,
-};
+export function SidebarNav() {
+  const pathname = usePathname();
+  const { state } = useSidebar();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
 
-export default function AdminSimulationsPage() {
-    const { user } = useUser();
-    const firestore = useFirestore();
-    const tenantId = (user as any)?.tenantId;
-
-    const simulationRequestsQuery = useMemoFirebase(
-        () => (firestore && tenantId) 
-            ? query(
-                collection(firestore, `tenants/${tenantId}/simulationRequests`), 
-                orderBy('requestedAt', 'desc')
-              ) 
-            : null,
-        [firestore, tenantId]
-    );
-    const { data: requests, isLoading } = useCollection<SimulationRequest>(simulationRequestsQuery);
-
-    return (
-        <Card>
-        <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2">
-            <FlaskConical />
-            <span>Simulation Requests</span>
-            </CardTitle>
-            <CardDescription>
-            Review and manage simulation requests submitted by users in your tenant.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                    <Loader className="w-8 h-8 animate-spin" />
-                </div>
-            ) : !requests || requests.length === 0 ? (
-                 <div className="text-center text-muted-foreground py-16">
-                    <p>No simulation requests found.</p>
-                    <p className="text-sm">When users request simulations, they will appear here.</p>
-                </div>
-            ) : (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>User</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead># of Sims</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead><span className="sr-only">Actions</span></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {requests.map(req => (
-                            <TableRow key={req.id}>
-                                <TableCell className="font-medium">{req.userName}</TableCell>
-                                <TableCell>{format(new Date(req.requestedAt), 'MMM d, yyyy')}</TableCell>
-                                <TableCell className="text-center">{req.simulations.length}</TableCell>
-                                <TableCell>
-                                    <Badge variant={statusVariant[req.status]}>
-                                        {req.status}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                     <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                        <Button size="icon" variant="ghost">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                            <DropdownMenuItem>View Details</DropdownMenuItem>
-                                            <DropdownMenuItem>Set to 'In Progress'</DropdownMenuItem>
-                                            <DropdownMenuItem>Mark as Completed</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            )}
-        </CardContent>
-        </Card>
-    );
-}
-
-// Add XCircle icon for the status map
-const XCircle = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="15" y1="9" x2="9" y2="15" />
-      <line x1="9" y1="9" x2="15" y2="15" />
-    </svg>
+  const userDocRef = useMemoFirebase(
+    () => (user ? doc(firestore, "users", user.uid) : null),
+    [user, firestore]
   );
+  const { data: userData, isLoading: isUserDataLoading } = useDoc<{roleId: string}>(userDocRef);
 
+  const userRoleDocRef = useMemoFirebase(
+    () => (firestore && userData?.roleId ? doc(firestore, "roles", userData.roleId) : null),
+    [firestore, userData]
+  );
+  const { data: roleData, isLoading: isRoleDataLoading } = useDoc<{name: 'User' | 'Admin' | 'SuperAdmin'}>(userRoleDocRef);
+
+  const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin' || user?.email === 'wokwemba1@gmail.com';
+  
+  const isActive = (href: string) => {
+    // Exact match for the root dashboard
+    if (href === "/") {
+        return pathname === href;
+    }
+    // For nested routes, we want to match the parent
+    if (href === "/admin" && pathname.startsWith('/admin')) {
+      return true;
+    }
+    if (href === "/training" && pathname.startsWith('/training')) {
+      return true;
+    }
+    // For other main links, check for exact match
+    if (mainLinks.some(l => l.href === href && l.href !== '/')) {
+      return pathname === href;
+    }
+    // For all other cases, an exact match is required
+    return pathname === href;
+  };
+  
+  const isLoading = isUserLoading || isUserDataLoading || isRoleDataLoading;
+
+  return (
+    <SidebarMenu>
+      {mainLinks.map((link) => (
+        <SidebarMenuItem key={link.href}>
+          <SidebarMenuButton
+            asChild
+            isActive={isActive(link.href)}
+            className="font-headline"
+            tooltip={link.label}
+          >
+            <Link href={link.href}>
+              <link.icon className="h-5 w-5" />
+              {state === 'expanded' && <span>{link.label}</span>}
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+       <SidebarSeparator />
+        <SidebarGroup>
+            <SidebarGroupLabel>AI Tools</SidebarGroupLabel>
+            {trainingLinks.map((link) => (
+                 <SidebarMenuItem key={link.href}>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={isActive(link.href)}
+                        className="font-headline"
+                        tooltip={link.label}
+                        size="sm"
+                    >
+                        <Link href={link.href}>
+                            <link.icon className="h-4 w-4" />
+                            {state === 'expanded' && <span>{link.label}</span>}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))}
+        </SidebarGroup>
+      {isLoading && state === 'expanded' && (
+        <>
+        <SidebarSeparator />
+          <div className="p-2 flex items-center gap-2 text-xs text-muted-foreground">
+            <Loader className="w-4 h-4 animate-spin" />
+            <span>Loading Admin Console...</span>
+          </div>
+        </>
+      )}
+      {userIsAdmin && (
+      <>
+        <SidebarSeparator />
+         <SidebarMenuItem>
+            <SidebarMenuButton
+                asChild
+                isActive={isActive('/admin')}
+                className="font-headline"
+                tooltip="Admin Panel"
+            >
+                <Link href="/admin">
+                    <ShieldCheck className="h-5 w-5" />
+                    {state === 'expanded' && <span>Admin Panel</span>}
+                </Link>
+            </SidebarMenuButton>
+        </SidebarMenuItem>
+        </>
+        )}
+    </SidebarMenu>
+  );
+}
