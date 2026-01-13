@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -83,22 +84,18 @@ export function SidebarNav() {
   const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin' || user?.email === 'wokwemba1@gmail.com';
   
   const isActive = (href: string) => {
-    // Exact match for the root dashboard
-    if (href === "/") {
+    // For nested routes, we want to match the parent
+    if (href.startsWith('/admin') && pathname.startsWith('/admin')) {
+      return true;
+    }
+    if (href.startsWith('/training') && pathname.startsWith('/training') && href !== '/training') {
         return pathname === href;
     }
-    // For nested routes, we want to match the parent
-    if (href === "/admin" && pathname.startsWith('/admin')) {
+     if (href === "/training" && pathname.startsWith('/training')) {
       return true;
     }
-    if (href === "/training" && pathname.startsWith('/training')) {
-      return true;
-    }
-    // For other main links, check for exact match
-    if (mainLinks.some(l => l.href === href && l.href !== '/')) {
-      return pathname === href;
-    }
-    // For all other cases, an exact match is required
+
+    // Exact match for all other links
     return pathname === href;
   };
   

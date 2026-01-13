@@ -1,173 +1,185 @@
-"use client";
 
-import { usePathname } from "next/navigation";
-import Link from "next/link";
+'use client';
+
+import { useState } from 'react';
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
-  BookUser,
-  ShieldCheck,
-  Trophy,
-  LayoutDashboard,
-  Target,
-  FileText,
-  User,
-  Globe,
-  History,
-  Settings,
-  Copy,
-  Users,
-  GitPullRequest,
-  Mail,
-  Zap,
-  ShieldAlert,
-  BarChart3,
-  FileBadge,
-  BadgeCheck,
-  BookCopy,
-  Blocks,
-  Bell,
-  Monitor,
-  Building,
-  Loader,
-  Wand2,
-  ShieldOff,
-  BookOpenCheck,
-  FlaskConical,
-} from "lucide-react";
-
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  useSidebar,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarSeparator,
-} from "@/components/ui/sidebar";
-import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Loader, Users, MoreVertical, PlusCircle, UserCog, Trash2, Send } from 'lucide-react';
+import { AddUserDialog } from '@/components/admin/add-user-dialog';
+import { EditUserRoleDialog } from '@/components/admin/edit-user-role-dialog';
 
-const mainLinks = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/training", label: "My Training", icon: BookOpenCheck },
-  { href: "/training/achievements", label: "Achievements", icon: Trophy },
-  { href: "/flashcards", label: "Flashcards", icon: Copy },
-  { href: "/simulations", label: "Simulations", icon: Target },
-  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/profile", label: "My Profile", icon: User },
-  { href: "/certificates", label: "Certificates", icon: FileText },
-];
+export type Role = {
+  id: string;
+  name: 'User' | 'Admin' | 'SuperAdmin';
+};
 
-const trainingLinks = [
-    { href: "/training/module", label: "Training Generator", icon: Wand2 },
-    { href: "/training/history", label: "Training History", icon: History },
-]
+export type UserProfile = {
+  id: string;
+  name: string;
+  email: string;
+  roleId: string;
+  avatarId?: string;
+  photoURL?: string;
+  status: 'Active' | 'Invited' | 'Suspended';
+  risk: 'Low' | 'Medium' | 'High';
+  tenantId: string;
+};
 
-export function SidebarNav() {
-  const pathname = usePathname();
-  const { state } = useSidebar();
-  const { user, isUserLoading } = useUser();
+const statusVariant: Record<UserProfile['status'], 'success' | 'secondary' | 'destructive'> = {
+  Active: 'success',
+  Invited: 'secondary',
+  Suspended: 'destructive',
+};
+
+function UserTableRow({ user, roles, onEditRole, onResendInvite, onDeleteUser }: { user: UserProfile, roles: Role[], onEditRole: (user: UserProfile) => void, onResendInvite: (user: UserProfile) => void, onDeleteUser: (user: UserProfile) => void }) {
+  const roleName = roles.find(r => r.id === user.roleId)?.name || 'Unknown';
+  const userAvatar = user.photoURL || PlaceHolderImages.find(p => p.id === user.avatarId)?.imageUrl || '';
+  
+  return (
+    <TableRow>
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={userAvatar} alt={user.name} data-ai-hint="person avatar" />
+            <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-medium">{user.name}</p>
+            <p className="text-xs text-muted-foreground">{user.email}</p>
+          </div>
+        </div>
+      </TableCell>
+      <TableCell>
+        <Badge variant={statusVariant[user.status]}>{user.status}</Badge>
+      </TableCell>
+      <TableCell>{roleName}</TableCell>
+      <TableCell className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" variant="ghost">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => onEditRole(user)}>
+              <UserCog className="mr-2 h-4 w-4" /> Edit Role
+            </DropdownMenuItem>
+             {user.status === 'Invited' && (
+                <DropdownMenuItem onSelect={() => onResendInvite(user)}>
+                    <Send className="mr-2 h-4 w-4" /> Resend Invite
+                </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onSelect={() => onDeleteUser(user)} className="text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" /> Delete User
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+export default function AdminUsersPage() {
+  const { user: currentUser } = useUser();
   const firestore = useFirestore();
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<UserProfile | null>(null);
 
-  const userDocRef = useMemoFirebase(
-    () => (user ? doc(firestore, "users", user.uid) : null),
-    [user, firestore]
+  const tenantId = (currentUser as any)?.tenantId;
+
+  const usersQuery = useMemoFirebase(
+    () => (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null,
+    [firestore, tenantId]
   );
-  const { data: userData, isLoading: isUserDataLoading } = useDoc<{roleId: string}>(userDocRef);
+  const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery, { skip: !usersQuery });
 
-  const userRoleDocRef = useMemoFirebase(
-    () => (firestore && userData?.roleId ? doc(firestore, "roles", userData.roleId) : null),
-    [firestore, userData]
-  );
-  const { data: roleData, isLoading: isRoleDataLoading } = useDoc<{name: 'User' | 'Admin' | 'SuperAdmin'}>(userRoleDocRef);
-
-  const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin' || user?.email === 'wokwemba1@gmail.com';
+  const rolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'roles') : null, [firestore]);
+  const { data: roles, isLoading: rolesLoading } = useCollection<Role>(rolesQuery);
   
-  const isActive = (href: string) => {
-    // Exact match for the root dashboard
-    if (href === "/") {
-        return pathname === href;
-    }
-    // For nested routes, we want to match the parent
-    if (href === "/admin" && pathname.startsWith('/admin')) {
-      return true;
-    }
-    if (href === "/training" && pathname.startsWith('/training')) {
-      return true;
-    }
-    // For other main links, check for exact match
-    if (mainLinks.some(l => l.href === href && l.href !== '/')) {
-      return pathname === href;
-    }
-    // For all other cases, an exact match is required
-    return pathname === href;
-  };
-  
-  const isLoading = isUserLoading || isUserDataLoading || isRoleDataLoading;
+  const isLoading = usersLoading || rolesLoading;
 
   return (
-    <SidebarMenu>
-      {mainLinks.map((link) => (
-        <SidebarMenuItem key={link.href}>
-          <SidebarMenuButton
-            asChild
-            isActive={isActive(link.href)}
-            className="font-headline"
-            tooltip={link.label}
-          >
-            <Link href={link.href}>
-              <link.icon className="h-5 w-5" />
-              {state === 'expanded' && <span>{link.label}</span>}
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-       <SidebarSeparator />
-        <SidebarGroup>
-            <SidebarGroupLabel>AI Tools</SidebarGroupLabel>
-            {trainingLinks.map((link) => (
-                 <SidebarMenuItem key={link.href}>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={isActive(link.href)}
-                        className="font-headline"
-                        tooltip={link.label}
-                        size="sm"
-                    >
-                        <Link href={link.href}>
-                            <link.icon className="h-4 w-4" />
-                            {state === 'expanded' && <span>{link.label}</span>}
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            ))}
-        </SidebarGroup>
-      {isLoading && state === 'expanded' && (
-        <>
-        <SidebarSeparator />
-          <div className="p-2 flex items-center gap-2 text-xs text-muted-foreground">
-            <Loader className="w-4 h-4 animate-spin" />
-            <span>Loading Admin Console...</span>
-          </div>
-        </>
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <Users />
+                    <span>Users & Roles</span>
+                </CardTitle>
+                <CardDescription>Manage users and their assigned roles in your organization.</CardDescription>
+            </div>
+            <Button onClick={() => setIsAddUserOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add User
+            </Button>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64"><Loader className="w-8 h-8 animate-spin" /></div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead><span className="sr-only">Actions</span></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users && roles && users.map(user => (
+                  <UserTableRow 
+                    key={user.id} 
+                    user={user} 
+                    roles={roles}
+                    onEditRole={setUserToEdit}
+                    onResendInvite={(u) => alert(`Resend invite for ${u.name}`)}
+                    onDeleteUser={(u) => alert(`Delete user ${u.name}`)}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+      
+      {tenantId && (
+        <AddUserDialog 
+          isOpen={isAddUserOpen} 
+          onOpenChange={setIsAddUserOpen} 
+          tenantId={tenantId}
+        />
       )}
-      {userIsAdmin && (
-      <>
-        <SidebarSeparator />
-         <SidebarMenuItem>
-            <SidebarMenuButton
-                asChild
-                isActive={isActive('/admin')}
-                className="font-headline"
-                tooltip="Admin Panel"
-            >
-                <Link href="/admin">
-                    <ShieldCheck className="h-5 w-5" />
-                    {state === 'expanded' && <span>Admin Panel</span>}
-                </Link>
-            </SidebarMenuButton>
-        </SidebarMenuItem>
-        </>
-        )}
-    </SidebarMenu>
+      
+      {userToEdit && (
+        <EditUserRoleDialog
+          isOpen={!!userToEdit}
+          onOpenChange={(isOpen) => !isOpen && setUserToEdit(null)}
+          user={{ id: userToEdit.id, name: userToEdit.name }}
+          currentRoleId={userToEdit.roleId}
+        />
+      )}
+    </>
   );
 }
