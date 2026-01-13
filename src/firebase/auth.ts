@@ -198,4 +198,3 @@ export async function signInWithGoogle(
 }
 
 export { getRoleNameFromId }; // Export for use in other components if needed
-import { updateDocumentNonBlocking } from './non-blocking-updates';
