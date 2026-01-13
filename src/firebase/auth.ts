@@ -22,8 +22,6 @@ async function setSessionCookie(token: string, role: string) {
     });
   } catch (error) {
     console.error("Failed to set session cookie:", error);
-    // This part runs on the client, so we can't fix headers.
-    // We can show an error to the user if needed.
     throw new Error("Session setup failed. Please try again.");
   }
 }
@@ -47,7 +45,7 @@ const createUserProfile = async (userCredential: UserCredential): Promise<string
     const db = getFirestore(user.auth.app);
     const userDocRef = doc(db, 'users', user.uid);
 
-    let roleId = ROLES.USER;
+    let roleId = ROLES.USER; // Default to 'User'
     if (user.email === 'wokwemba@safaricom.co.ke') {
         roleId = ROLES.ADMIN;
     } else if (user.email === 'super@admin.com') {
@@ -65,7 +63,14 @@ const createUserProfile = async (userCredential: UserCredential): Promise<string
     };
 
     try {
-        await setDoc(userDocRef, newUserProfile);
+        setDoc(userDocRef, newUserProfile).catch(error => {
+          const permissionError = new FirestorePermissionError({
+              path: userDocRef.path,
+              operation: 'create',
+              requestResourceData: newUserProfile,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
         return await getRoleNameFromId(db, roleId);
     } catch (error) {
         console.error("Failed to create user profile:", error);
