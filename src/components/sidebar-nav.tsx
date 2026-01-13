@@ -46,6 +46,7 @@ import { doc } from "firebase/firestore";
 const mainLinks = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/training", label: "My Training", icon: BookUser },
+  { href: "/training/achievements", label: "Achievements", icon: Trophy },
   { href: "/flashcards", label: "Flashcards", icon: Copy },
   { href: "/simulations", label: "Simulations", icon: Target },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
@@ -102,14 +103,14 @@ export function SidebarNav() {
 
 
   const isActive = (href: string) => {
-    if (href === "/admin" || href === "/admin/users") {
-        return pathname.startsWith('/admin');
+    if (href === "/admin") {
+      return pathname === href || pathname.startsWith('/admin/');
     }
-     if (href === "/training") {
-        return pathname.startsWith('/training');
+    if (href === "/training") {
+       return pathname === href || pathname.startsWith('/training/');
     }
     return pathname === href;
-  }
+  };
 
   return (
     <SidebarMenu>
