@@ -48,14 +48,14 @@ const createUserProfile = async (user: User): Promise<string> => {
     const db = getFirestore(user.auth.app);
     const userDocRef = doc(db, 'users', user.uid);
 
-    let roleId = ROLES.USER;
     const isAdminEmail = user.email === 'wokwemba1@gmail.com';
     const isSuperAdminEmail = user.email === 'super@admin.com';
-
+    
+    let targetRoleId = ROLES.USER;
     if (isAdminEmail) {
-        roleId = ROLES.ADMIN;
+        targetRoleId = ROLES.ADMIN;
     } else if (isSuperAdminEmail) {
-        roleId = ROLES.SUPER_ADMIN;
+        targetRoleId = ROLES.SUPER_ADMIN;
     }
 
     const docSnap = await getDoc(userDocRef);
@@ -65,21 +65,30 @@ const createUserProfile = async (user: User): Promise<string> => {
         
         const updates: Record<string, any> = {};
 
-        // If user should be admin/superadmin but isn't, promote them.
-        if ((isAdminEmail || isSuperAdminEmail) && existingRoleId !== roleId) {
-            updates.roleId = roleId;
+        // If the user's role needs to be elevated, update it.
+        if (targetRoleId !== existingRoleId && (isAdminEmail || isSuperAdminEmail)) {
+            updates.roleId = targetRoleId;
         }
 
         // If user logs in with google and has no photo, update it.
         if (user.photoURL && !existingData.photoURL) {
             updates.photoURL = user.photoURL;
         }
-
+        
         if (Object.keys(updates).length > 0) {
-            updateDocumentNonBlocking(userDocRef, updates);
+           // This time we await the update to ensure it completes before proceeding
+           await updateDoc(userDocRef, updates).catch(error => {
+                const permissionError = new FirestorePermissionError({
+                    path: userDocRef.path,
+                    operation: 'update',
+                    requestResourceData: updates,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                // Even if it fails, we continue, but the role won't be updated.
+           });
         }
-
-        // Return the potentially updated role name
+        
+        // Return the role that should be correct after the update
         return await getRoleNameFromId(db, updates.roleId || existingRoleId);
 
     } else {
@@ -88,7 +97,7 @@ const createUserProfile = async (user: User): Promise<string> => {
             email: user.email,
             name: user.displayName || user.email?.split('@')[0] || 'New User',
             tenantId: DEFAULT_TENANT_ID,
-            roleId: roleId,
+            roleId: targetRoleId,
             status: 'Active',
             risk: 'Low',
             photoURL: user.photoURL || null,
@@ -96,7 +105,7 @@ const createUserProfile = async (user: User): Promise<string> => {
         };
 
         try {
-            setDoc(userDocRef, newUserProfile).catch(error => {
+            await setDoc(userDocRef, newUserProfile).catch(error => {
               const permissionError = new FirestorePermissionError({
                   path: userDocRef.path,
                   operation: 'create',
@@ -104,7 +113,7 @@ const createUserProfile = async (user: User): Promise<string> => {
               });
               errorEmitter.emit('permission-error', permissionError);
             });
-            return await getRoleNameFromId(db, roleId);
+            return await getRoleNameFromId(db, targetRoleId);
         } catch (error) {
             console.error("Failed to create user profile:", error);
             const permissionError = new FirestorePermissionError({
@@ -144,20 +153,9 @@ export async function signInWithEmail(
   password: string
 ): Promise<{ success: boolean; role?: string; error?: string }> {
   try {
-    const db = getFirestore(auth.app);
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const roleName = await createUserProfile(userCredential.user); // Await profile creation/update
     const token = await userCredential.user.getIdToken();
-    
-    const userDocRef = doc(db, 'users', userCredential.user.uid);
-    const userDocSnap = await getDoc(userDocRef);
-    
-    let roleName = 'User';
-    if (userDocSnap.exists()) {
-        const roleId = userDocSnap.data()?.roleId;
-        if (roleId) {
-            roleName = await getRoleNameFromId(db, roleId);
-        }
-    }
 
     await setSessionCookie(token, roleName);
     return { success: true, role: roleName };
@@ -189,7 +187,7 @@ export async function signInWithGoogle(
   try {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
-    const roleName = await createUserProfile(userCredential.user);
+    const roleName = await createUserProfile(userCredential.user); // Await profile creation/update
     const token = await userCredential.user.getIdToken();
     
     await setSessionCookie(token, roleName);
