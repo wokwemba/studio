@@ -30,6 +30,11 @@ service cloud.firestore {
         }
         return 'User'; // Default to least privileged role
     }
+    
+    // This function is specifically for list operations where getRole() might fail.
+    function isUserInAdminRoles() {
+        return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleId in ['L1A4b6Y2y1l9p3R0c2V1', 'S2V1b2l1R1dsa2FqZGZtYWxza2Rq'];
+    }
 
     function isSuperAdmin() {
       return isSignedIn() && getRole() == 'SuperAdmin';
@@ -122,7 +127,7 @@ service cloud.firestore {
     // User management
     match /users/{userId} {
       allow get: if isOwner(userId) || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) || isSuperAdmin();
-      allow list: if isSignedIn() && getRole() in ['Admin', 'SuperAdmin'];
+      allow list: if isUserInAdminRoles();
       allow create: if isOwner(userId) || isTenantAdmin(request.resource.data.tenantId) || isSuperAdmin();
       allow update(writeFields): 
         if isOwner(userId) 
