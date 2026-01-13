@@ -1,4 +1,4 @@
-import { BookUser, Star, Shield, Fish, BrainCircuit, Target, type LucideIcon } from 'lucide-react';
+import { BookUser, Star, Shield, Fish, BrainCircuit, Target, Users, type LucideIcon } from 'lucide-react';
 
 export type Badge = {
   id: string;
