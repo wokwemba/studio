@@ -1,270 +1,206 @@
 'use client';
 
-import { useState, useEffect, useCallback, type ElementType } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import {
-  Loader,
-  BrainCircuit,
-  ShieldCheck,
-  Zap,
-  Bot,
-  Search,
-  CheckCircle,
-  XCircle,
-  RotateCw,
-} from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import {
-  generateAiToolsTraining,
-} from '@/ai/flows/chat-flow';
-import { type TrainingCard } from '@/ai/flows/schemas/chat-schema';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from '@/components/ui/carousel';
-import { useToast } from '@/hooks/use-toast';
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
+import { Loader, BarChart, History, TrendingUp, TrendingDown, Star } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { format } from 'date-fns';
 
-const iconMap: { [key: string]: ElementType } = {
-  brain: BrainCircuit,
-  shield: ShieldCheck,
-  zap: Zap,
-  bot: Bot,
-  search: Search,
+type TrainingResult = {
+  id: string;
+  moduleId: string; // This is the topic, e.g., "Recognizing Phishing Emails"
+  score: number;
+  completedAt: string; // ISO String
 };
 
-export default function TrainingInfographicPage() {
-  const [cards, setCards] = useState<TrainingCard[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+type TopicPerformance = {
+  topic: string;
+  averageScore: number;
+  attempts: number;
+};
 
-  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
-  const [submittedAnswers, setSubmittedAnswers] = useState<Record<number, boolean>>({});
-  const [score, setScore] = useState(0);
+const PASSING_SCORE = 80;
 
-  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
-  const [currentSlide, setCurrentSlide] = useState(0);
+const MetricCard = ({ title, value, icon: Icon }: { title: string; value: string | number; icon: React.ElementType }) => (
+    <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{value}</div>
+        </CardContent>
+    </Card>
+);
 
-  const { toast } = useToast();
+export default function MyTrainingPage() {
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
 
-  const fetchTraining = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    setCards([]);
-    setUserAnswers({});
-    setSubmittedAnswers({});
-    setScore(0);
-    try {
-      const response = await generateAiToolsTraining();
-      setCards(response.cards);
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const trainingResultsQuery = useMemoFirebase(
+    () => (user ? query(collection(firestore, `users/${user.uid}/trainingResults`)) : null),
+    [user, firestore]
+  );
+  const { data: trainingResults, isLoading: isResultsLoading } = useCollection<TrainingResult>(trainingResultsQuery);
 
-  useEffect(() => {
-    fetchTraining();
-  }, [fetchTraining]);
+  const isLoading = isUserLoading || isResultsLoading;
 
-  useEffect(() => {
-    if (!carouselApi) return;
-    setCurrentSlide(carouselApi.selectedScrollSnap());
-    carouselApi.on('select', () => {
-      setCurrentSlide(carouselApi.selectedScrollSnap());
-    });
-  }, [carouselApi]);
+  // --- Data Processing ---
+  const totalModules = trainingResults?.length || 0;
+  const averageScore = totalModules > 0 
+    ? (trainingResults!.reduce((acc, r) => acc + r.score, 0) / totalModules)
+    : 0;
 
-  const handleAnswerChange = (cardIndex: number, answer: string) => {
-    setUserAnswers((prev) => ({ ...prev, [cardIndex]: answer }));
-  };
+  const bestScore = totalModules > 0
+    ? Math.max(...trainingResults!.map(r => r.score))
+    : 0;
+  
+  const topicPerformance = trainingResults
+    ? Object.values(
+        trainingResults.reduce((acc, result) => {
+          const { moduleId, score } = result;
+          if (!acc[moduleId]) {
+            acc[moduleId] = { topic: moduleId, totalScore: 0, attempts: 0 };
+          }
+          acc[moduleId].totalScore += score;
+          acc[moduleId].attempts++;
+          return acc;
+        }, {} as Record<string, { topic: string; totalScore: number; attempts: number }>)
+      ).map(({ topic, totalScore, attempts }) => ({
+        topic,
+        averageScore: totalScore / attempts,
+        attempts,
+      })).sort((a, b) => a.averageScore - b.averageScore) // Sort from worst to best
+    : [];
 
-  const handleSubmitAnswer = (cardIndex: number) => {
-    const card = cards[cardIndex];
-    const userAnswer = userAnswers[cardIndex];
+  const topWeakestTopic = topicPerformance.length > 0 ? topicPerformance[0] : null;
+  const topStrongestTopic = topicPerformance.length > 0 ? topicPerformance[topicPerformance.length - 1] : null;
 
-    if (!userAnswer) {
-      toast({
-        variant: 'destructive',
-        title: 'No Answer Selected',
-        description: 'Please select an answer before submitting.',
-      });
-      return;
-    }
-
-    setSubmittedAnswers((prev) => ({ ...prev, [cardIndex]: true }));
-
-    if (userAnswer === card.correctAnswer) {
-      setScore((prev) => prev + 20);
-      toast({
-        title: 'Correct!',
-        description: 'You earned 20 points.',
-        className: 'border-green-500',
-      });
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Incorrect',
-        description: 'Nice try! Review the content and try to find the correct answer.',
-      });
-    }
-  };
-
-  const progress = (Object.keys(submittedAnswers).length / (cards.length || 1)) * 100;
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-6">
-        <Loader className="h-12 w-12 animate-spin text-primary mb-4" />
-        <h2 className="text-xl font-semibold font-headline">
-          Generating Your AI Training Module...
-        </h2>
-        <p className="text-muted-foreground">
-          The AI is preparing your interactive learning experience.
-        </p>
+      <div className="flex items-center justify-center h-full">
+        <Loader className="w-12 h-12 animate-spin text-primary" />
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive font-headline">
-            Failed to Generate Training
-          </CardTitle>
-          <CardDescription>
-            There was an error while trying to create your training module.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm">{error}</p>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={fetchTraining}>
-            <RotateCw className="mr-2 h-4 w-4" />
-            Try Again
-          </Button>
-        </CardFooter>
-      </Card>
-    );
+  
+  if (!user) {
+    return <p>Please log in to see your training console.</p>
+  }
+  
+  if (totalModules === 0) {
+      return (
+          <Card>
+            <CardHeader>
+                <CardTitle className='font-headline'>My Training Console</CardTitle>
+                <CardDescription>Your personal cybersecurity learning dashboard.</CardDescription>
+            </CardHeader>
+            <CardContent className='text-center py-12'>
+                <p className='text-lg text-muted-foreground'>You haven't completed any training modules yet.</p>
+                <p className='text-sm mt-2'>Start your learning journey by generating an AI module or taking an assigned course.</p>
+            </CardContent>
+          </Card>
+      )
   }
 
   return (
     <div className="space-y-6">
+      <h1 className="text-3xl font-bold font-headline">My Training Console</h1>
+
+      {/* Core Metrics */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <MetricCard title="Modules Completed" value={totalModules} icon={BarChart} />
+        <MetricCard title="Average Score" value={`${averageScore.toFixed(0)}%`} icon={TrendingUp} />
+        <MetricCard title="Best Score" value={`${bestScore.toFixed(0)}%`} icon={Star} />
+      </div>
+
+       {/* Topic Performance */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <TrendingDown className="text-destructive" />
+                    <span>Area for Improvement</span>
+                </CardTitle>
+                <CardDescription>Based on your average scores, focus on this topic to boost your security skills.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {topWeakestTopic ? (
+                    <div>
+                        <p className="text-lg font-semibold">{topWeakestTopic.topic}</p>
+                        <div className='flex items-center gap-4 mt-2'>
+                           <Progress value={topWeakestTopic.averageScore} className="w-full" />
+                           <span className='font-mono font-bold'>{topWeakestTopic.averageScore.toFixed(0)}%</span>
+                        </div>
+                        <p className='text-xs text-muted-foreground mt-1'>Across {topWeakestTopic.attempts} attempt(s)</p>
+                    </div>
+                ): <p className="text-muted-foreground">Not enough data.</p>}
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <TrendingUp className="text-success" />
+                    <span>Strongest Area</span>
+                </CardTitle>
+                <CardDescription>You've consistently performed well in this topic. Keep it up!</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 {topStrongestTopic ? (
+                    <div>
+                        <p className="text-lg font-semibold">{topStrongestTopic.topic}</p>
+                        <div className='flex items-center gap-4 mt-2'>
+                           <Progress value={topStrongestTopic.averageScore} className="w-full bg-success/20" />
+                           <span className='font-mono font-bold text-success'>{topStrongestTopic.averageScore.toFixed(0)}%</span>
+                        </div>
+                        <p className='text-xs text-muted-foreground mt-1'>Across {topStrongestTopic.attempts} attempt(s)</p>
+                    </div>
+                ): <p className="text-muted-foreground">Not enough data.</p>}
+            </CardContent>
+        </Card>
+      </div>
+
+      {/* Completed Quizzes/Modules */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline flex items-center justify-between">
-            <span>AI in Cybersecurity</span>
-            <div className="text-lg font-mono rounded-md bg-primary text-primary-foreground px-3 py-1">
-              Score: {score}
-            </div>
-          </CardTitle>
-          <CardDescription>
-            An interactive overview of how AI is shaping the future of digital defense.
-          </CardDescription>
+            <CardTitle className="font-headline flex items-center gap-2">
+                <History />
+                <span>Training History</span>
+            </CardTitle>
+            <CardDescription>A log of all your completed training modules and quiz results.</CardDescription>
         </CardHeader>
         <CardContent>
-           <Progress value={progress} className="mb-4" />
-           <p className="text-center text-sm text-muted-foreground mb-6">
-             Card {currentSlide + 1} of {cards.length}
-           </p>
-          <Carousel setApi={setCarouselApi} className="w-full">
-            <CarouselContent>
-              {cards.map((card, index) => {
-                const Icon = iconMap[card.icon] || BrainCircuit;
-                const isSubmitted = submittedAnswers[index];
-
-                return (
-                  <CarouselItem key={index}>
-                    <div className="p-1">
-                      <Card className="bg-muted/30">
-                        <CardHeader className="items-center text-center">
-                          <Icon className="w-12 h-12 text-primary mb-2" />
-                          <CardTitle className="font-headline">{card.title}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6 text-center">
-                          <p className="text-muted-foreground max-w-prose mx-auto">
-                            {card.content}
-                          </p>
-                          <div className="w-full max-w-md mx-auto p-4 border rounded-lg bg-background text-left">
-                            <p className="font-semibold mb-4">{card.question}</p>
-                            <RadioGroup
-                              value={userAnswers[index]}
-                              onValueChange={(value) => handleAnswerChange(index, value)}
-                              disabled={isSubmitted}
-                              className="space-y-2"
-                            >
-                              {card.options.map((opt, i) => {
-                                const isCorrect = opt === card.correctAnswer;
-                                const isSelected = userAnswers[index] === opt;
-
-                                return (
-                                  <div key={i} className="flex items-center space-x-3">
-                                    <RadioGroupItem value={opt} id={`q${index}-opt${i}`} />
-                                    <Label
-                                      htmlFor={`q${index}-opt${i}`}
-                                      className={`flex items-center gap-2 cursor-pointer ${
-                                        isSubmitted && isCorrect ? 'text-green-500' : ''
-                                      } ${
-                                        isSubmitted && isSelected && !isCorrect ? 'text-red-500' : ''
-                                      }`}
-                                    >
-                                      <span>{opt}</span>
-                                      {isSubmitted && isCorrect && <CheckCircle className="h-4 w-4" />}
-                                      {isSubmitted && isSelected && !isCorrect && <XCircle className="h-4 w-4" />}
-                                    </Label>
-                                  </div>
-                                );
-                              })}
-                            </RadioGroup>
-                            {isSubmitted && (
-                               <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  className="w-full mt-4"
-                                  onClick={() => carouselApi?.scrollNext()}
-                                >
-                                  Next Card
-                                </Button>
-                            )}
-                          </div>
-                        </CardContent>
-                        <CardFooter className="justify-center">
-                          {!isSubmitted && (
-                            <Button
-                              onClick={() => handleSubmitAnswer(index)}
-                              disabled={!userAnswers[index]}
-                            >
-                              Submit Answer
-                            </Button>
-                          )}
-                        </CardFooter>
-                      </Card>
-                    </div>
-                  </CarouselItem>
-                );
-              })}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Module / Topic</TableHead>
+                        <TableHead className="text-center">Score</TableHead>
+                        <TableHead className="text-center">Status</TableHead>
+                        <TableHead className="text-right">Completion Date</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {trainingResults?.map(result => (
+                        <TableRow key={result.id}>
+                            <TableCell className="font-medium">{result.moduleId}</TableCell>
+                            <TableCell className="text-center font-mono">{result.score.toFixed(0)}%</TableCell>
+                            <TableCell className="text-center">
+                                <Badge variant={result.score >= PASSING_SCORE ? 'success' : 'destructive'}>
+                                    {result.score >= PASSING_SCORE ? 'Pass' : 'Fail'}
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">{format(new Date(result.completedAt), 'MMM d, yyyy')}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
         </CardContent>
       </Card>
+
     </div>
   );
 }
