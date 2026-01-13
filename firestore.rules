@@ -18,35 +18,17 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
-    // Get role from roleId stored on user document
-    function getRole() {
-        let roleId = requestingUserData().roleId;
-        // Ensure roleId is not null or empty before trying to access it
-        if (roleId != null && roleId != '') {
-          let roleDoc = get(/databases/$(database)/documents/roles/$(roleId));
-          if (roleDoc.data != null) {
-            return roleDoc.data.name;
-          }
-        }
-        return 'User'; // Default to least privileged role
-    }
-    
-    // This function is specifically for list operations where getRole() might fail.
-    function isUserInAdminRoles() {
-        // We can't use getRole() in a list rule, but we can check the roleId
-        // from the requesting user's own document. This is allowed.
-        return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleId in ['L1A4b6Y2y1l9p3R0c2V1', 'S2V1b2l1R1dsa2FqZGZtYWxza2Rq'];
-    }
-
     function isSuperAdmin() {
-      return isSignedIn() && getRole() == 'SuperAdmin';
+      return request.auth.token.superadmin == true;
     }
 
     function isAdmin() {
-      return isSignedIn() && (getRole() == 'Admin' || isSuperAdmin());
+      return request.auth.token.admin == true || isSuperAdmin();
     }
 
     function isTenantAdmin(tenantId) {
+      // This function may need re-evaluation in a custom claims model
+      // For now, it assumes an admin of a tenant has the 'admin' claim and matches tenantId
       return isAdmin() && requestingUserData().tenantId == tenantId;
     }
 
@@ -68,44 +50,39 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
 
       // Tenant-specific collections
-      // Admins of a tenant can manage sub-collections within their tenant.
-      // SuperAdmins have full access.
       match /campaigns/{campaignId} {
         allow read: if isMemberOfTenant(tenantId);
-        allow write: if isTenantAdmin(tenantId) || isSuperAdmin();
+        allow write: if isAdmin();
       }
       match /courses/{courseId} {
         allow read: if isMemberOfTenant(tenantId);
-        allow write: if isTenantAdmin(tenantId) || isSuperAdmin();
+        allow write: if isAdmin();
       }
       match /phishing_simulations/{simId} {
         allow read: if isMemberOfTenant(tenantId);
-        allow write: if isTenantAdmin(tenantId) || isSuperAdmin();
+        allow write: if isAdmin();
       }
        match /fraud_scenarios/{scenarioId} {
         allow read: if isMemberOfTenant(tenantId);
-        allow write: if isTenantAdmin(tenantId) || isSuperAdmin();
+        allow write: if isAdmin();
       }
       match /incidents/{incidentId} {
         allow read: if isMemberOfTenant(tenantId);
-        // Any signed-in member of a tenant can create an incident report
         allow create: if isMemberOfTenant(tenantId); 
-        allow update, delete: if isTenantAdmin(tenantId) || isSuperAdmin();
+        allow update, delete: if isAdmin();
       }
       match /certifications/{certId} {
         allow read: if isMemberOfTenant(tenantId);
-        allow write: if isTenantAdmin(tenantId) || isSuperAdmin();
+        allow write: if isAdmin();
       }
       match /audit_logs/{logId} {
-        // Audit logs are sensitive and should only be readable by admins of that tenant or super admins
-        allow read: if isTenantAdmin(tenantId) || isSuperAdmin();
-        // Audit logs should be immutable, only allow create
-        allow create: if isSignedIn(); // System/user actions create logs
+        allow read: if isAdmin();
+        allow create: if isSignedIn();
         allow update, delete: if false;
       }
       match /simulationRequests/{requestId} {
         allow create: if isMemberOfTenant(tenantId) && request.resource.data.userId == request.auth.uid;
-        allow read, update, delete: if isTenantAdmin(tenantId) || isSuperAdmin();
+        allow read, update, delete: if isAdmin();
       }
     }
     
@@ -128,20 +105,19 @@ service cloud.firestore {
 
     // User management
     match /users/{userId} {
-      allow get: if isOwner(userId) || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) || isSuperAdmin();
-      allow list: if isUserInAdminRoles();
-      allow create: if isOwner(userId) || isTenantAdmin(request.resource.data.tenantId) || isSuperAdmin();
-      allow update(writeFields): 
-        if isOwner(userId) 
-        || (isTenantAdmin(resource.data.tenantId) && !('roleId' in writeFields)) // Tenant admins can't change roles
-        || isSuperAdmin();
-      allow delete: if documentExists() && (isTenantAdmin(resource.data.tenantId) || isSuperAdmin());
+      // A user can read/write their own document
+      allow get, update: if isOwner(userId);
 
-      // User-specific subcollections (e.g., trainingResults)
-      match /trainingResults/{trainingResultId} {
-        allow read: if isOwner(userId) || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) || isSuperAdmin();
-        allow write: if isOwner(userId);
-      }
+      // Admins can get/update any user document
+      allow get, update, delete: if isAdmin();
+      
+      // Anyone can create their own user document on signup
+      allow create: if isOwner(userId);
+    }
+
+    // Admins can list the entire users collection
+    match /users {
+       allow list: if isAdmin();
     }
 
     // Global training modules are readable by all, writable by admins.
