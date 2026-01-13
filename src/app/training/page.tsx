@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { RiskTrendChart } from '@/components/dashboard/risk-trend-chart';
 
 type TrainingResult = {
   id: string;
@@ -262,15 +263,17 @@ export default function MyTrainingPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-5">
-        <div className="md:col-span-3 space-y-6">
-            <IncompleteQuizCard />
+      <div className="grid gap-6 lg:grid-cols-5">
+        <div className="lg:col-span-3">
+            <RiskTrendChart />
+        </div>
+        <div className="lg:col-span-2 space-y-6">
+            <RecommendedActions topic={topWeakestTopic} />
             <UpcomingQuizCard />
         </div>
-        <div className="md:col-span-2">
-            <RecommendedActions topic={topWeakestTopic} />
-        </div>
       </div>
+
+        <IncompleteQuizCard />
 
 
       {/* Completed Quizzes/Modules */}
