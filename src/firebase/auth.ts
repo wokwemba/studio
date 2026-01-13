@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Auth,
@@ -59,7 +60,7 @@ const createUserProfile = async (user: User): Promise<string> => {
     }
 
     let roleId = ROLES.USER; // Default to 'User'
-    if (user.email === 'wokwemba@safaricom.co.ke') {
+    if (user.email === 'wokwemba1@gmail.com') {
         roleId = ROLES.ADMIN;
     } else if (user.email === 'super@admin.com') {
         roleId = ROLES.SUPER_ADMIN;
@@ -181,3 +182,5 @@ export async function signInWithGoogle(
 
 export { getRoleNameFromId }; // Export for use in other components if needed
 import { updateDocumentNonBlocking } from './non-blocking-updates';
+
+    
