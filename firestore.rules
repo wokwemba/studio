@@ -6,10 +6,6 @@ service cloud.firestore {
     // ------------------------------------------------------------------------
     // Helper Functions
     // ------------------------------------------------------------------------
-    function requestingUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
     function isSignedIn() {
       return request.auth != null;
     }
@@ -18,26 +14,11 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
-    function isSuperAdmin() {
-      return request.auth.token.superadmin == true;
-    }
-
-    function isAdmin() {
-      return request.auth.token.admin == true || isSuperAdmin();
-    }
-
-    function isTenantAdmin(tenantId) {
-      // This function may need re-evaluation in a custom claims model
-      // For now, it assumes an admin of a tenant has the 'admin' claim and matches tenantId
-      return isAdmin() && requestingUserData().tenantId == tenantId;
-    }
-
-    function isMemberOfTenant(tenantId) {
-      return isSignedIn() && requestingUserData().tenantId == tenantId;
-    }
-
-    function documentExists() {
-      return resource != null;
+    // Check if the requesting user's role name is in a given list.
+    function isUserInRole(roleNames) {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      let roleDoc = get(/databases/$(database)/documents/roles/$(userDoc.roleId)).data;
+      return roleDoc.name in roleNames;
     }
 
     // ------------------------------------------------------------------------
@@ -46,64 +27,60 @@ service cloud.firestore {
 
     // SuperAdmins can manage tenants
     match /tenants/{tenantId} {
-      allow read: if isMemberOfTenant(tenantId) || isSuperAdmin();
-      allow write: if isSuperAdmin();
+      allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
+      allow write: if isUserInRole(['SuperAdmin']);
 
       // Tenant-specific collections
       match /campaigns/{campaignId} {
-        allow read: if isMemberOfTenant(tenantId);
-        allow write: if isAdmin();
+        allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
+        allow write: if isUserInRole(['Admin', 'SuperAdmin']);
       }
       match /courses/{courseId} {
-        allow read: if isMemberOfTenant(tenantId);
-        allow write: if isAdmin();
+        allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
+        allow write: if isUserInRole(['Admin', 'SuperAdmin']);
       }
       match /phishing_simulations/{simId} {
-        allow read: if isMemberOfTenant(tenantId);
-        allow write: if isAdmin();
+        allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
+        allow write: if isUserInRole(['Admin', 'SuperAdmin']);
       }
        match /fraud_scenarios/{scenarioId} {
-        allow read: if isMemberOfTenant(tenantId);
-        allow write: if isAdmin();
+        allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
+        allow write: if isUserInRole(['Admin', 'SuperAdmin']);
       }
       match /incidents/{incidentId} {
-        allow read: if isMemberOfTenant(tenantId);
-        allow create: if isMemberOfTenant(tenantId); 
-        allow update, delete: if isAdmin();
+        allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
+        allow create: if isSignedIn(); 
+        allow update, delete: if isUserInRole(['Admin', 'SuperAdmin']);
       }
       match /certifications/{certId} {
-        allow read: if isMemberOfTenant(tenantId);
-        allow write: if isAdmin();
+        allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
+        allow write: if isUserInRole(['Admin', 'SuperAdmin']);
       }
       match /audit_logs/{logId} {
-        allow read: if isAdmin();
+        allow read: if isUserInRole(['Admin', 'SuperAdmin']);
         allow create: if isSignedIn();
         allow update, delete: if false;
       }
       match /simulationRequests/{requestId} {
-        allow create: if isMemberOfTenant(tenantId) && request.resource.data.userId == request.auth.uid;
-        allow read, update, delete: if isAdmin();
+        allow create: if request.resource.data.userId == request.auth.uid;
+        allow read, update, delete: if isUserInRole(['Admin', 'SuperAdmin']);
       }
     }
     
-    // Roles are read-only for authenticated users, writable only by SuperAdmins
+    // Roles can be read by any signed-in user, but only listed/written by Admins.
     match /roles/{roleId} {
       allow get: if isSignedIn();
-      allow write: if isSuperAdmin();
-    }
-
-    match /roles {
-        allow list: if isAdmin();
+      allow list, write: if isUserInRole(['Admin', 'SuperAdmin']);
     }
     
     // Permissions are managed only by SuperAdmins
     match /permissions/{permissionId} {
-        allow read, write: if isSuperAdmin();
+        allow read, write: if isUserInRole(['SuperAdmin']);
     }
     
     // Role-permission mappings are managed only by SuperAdmins
     match /role_permissions/{rolePermissionId} {
-        allow read, write: if isSuperAdmin();
+        allow read, write: if isUserInRole(['SuperAdmin']);
     }
 
     // User management
@@ -112,21 +89,22 @@ service cloud.firestore {
       allow get, update: if isOwner(userId);
 
       // Admins can get/update any user document
-      allow get, update, delete: if isAdmin();
+      allow get, update, delete: if isUserInRole(['Admin', 'SuperAdmin']);
       
       // Anyone can create their own user document on signup
       allow create: if isOwner(userId);
     }
-
+    
     // Admins can list the entire users collection
     match /users {
-       allow list: if isAdmin();
+       allow list: if isUserInRole(['Admin', 'SuperAdmin']);
     }
+
 
     // Global training modules are readable by all, writable by admins.
     match /trainingModules/{moduleId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if isUserInRole(['Admin', 'SuperAdmin']);
     }
   }
 }
