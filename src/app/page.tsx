@@ -8,6 +8,7 @@ import { Loader, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { doc } from 'firebase/firestore';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 type UserData = {
   risk: 'Low' | 'Medium' | 'High';
@@ -55,9 +56,6 @@ function Dashboard() {
     );
   }
 
-  // Enhance the user object with tenantId for the leaderboard
-  const enhancedUser = user && userData?.tenantId ? { ...user, tenantId: userData.tenantId } : null;
-
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -65,14 +63,15 @@ function Dashboard() {
           <MetricCard key={metric.label} {...metric} />
         ))}
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <Card>
+        <CardHeader>
+            <CardTitle className='font-headline'>Risk Trend</CardTitle>
+            <CardDescription>Your personal risk score evolution over time (demo data).</CardDescription>
+        </CardHeader>
+        <CardContent>
             <RiskTrendChart />
-        </div>
-        <div className="lg:col-span-1">
-             {enhancedUser && <LeaderboardTable currentUser={enhancedUser} />}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
