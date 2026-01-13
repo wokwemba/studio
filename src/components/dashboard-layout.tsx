@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
@@ -28,20 +29,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
 
   useEffect(() => {
+    // Wait until the authentication state is fully determined.
     if (isUserLoading) {
-      return; // Wait until auth state is determined
+      return; 
     }
 
+    const isAuthRoute = unauthenticatedRoutes.includes(pathname);
+    const isPublicRoute = publicRoutes.includes(pathname);
+
     if (user) {
-      // User is logged in
-      if (unauthenticatedRoutes.includes(pathname)) {
+      // User is logged in. If they are on an auth page, redirect them.
+      if (isAuthRoute) {
         router.push('/');
       }
     } else {
-      // User is not logged in
+      // User is not logged in.
       clearSessionCookie();
-      const isProtectedRoute = !unauthenticatedRoutes.includes(pathname) && !publicRoutes.includes(pathname);
-      if (isProtectedRoute) {
+      // If the route is protected (not public and not an auth route), redirect to login.
+      if (!isPublicRoute && !isAuthRoute) {
         router.push('/login');
       }
     }
@@ -49,6 +54,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   
   const isAuthPage = unauthenticatedRoutes.includes(pathname);
   
+  // While loading, if the route is protected, show a loader.
   if (isUserLoading && !isAuthPage && !publicRoutes.includes(pathname)) {
       return (
         <div className="flex items-center justify-center min-h-screen bg-background">
@@ -57,14 +63,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       );
   }
 
+  // If on an auth page and not logged in yet, show the page.
   if (isAuthPage && !user) {
     return <>{children}</>;
   }
 
+  // If on a public page and not logged in, show the page.
   if (!user && publicRoutes.includes(pathname)) {
     return <>{children}</>;
   }
   
+  // If the user is logged in, show the main dashboard layout.
   if (user) {
     return (
         <div className="min-h-screen w-full flex">
@@ -87,5 +96,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  return null; // Avoid showing anything if state is indeterminate
+  // Fallback for indeterminate states, renders nothing to prevent flashes.
+  return null; 
 }
