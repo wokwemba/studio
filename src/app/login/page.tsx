@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/firebase';
-import { signInWithEmail, signInWithGoogle } from '@/firebase/auth';
+import { useAuth, useUser } from '@/firebase';
+import { signInWithEmail, signInWithGoogle, resetInvitedUserPassword } from '@/firebase/auth';
 import { ShieldCheck, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -26,9 +26,12 @@ const GoogleIcon = () => (
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [isInvitedUser, setIsInvitedUser] = useState(false);
+  
   const router = useRouter();
   const auth = useAuth();
   const { toast } = useToast();
@@ -46,22 +49,47 @@ export default function LoginPage() {
         return;
     }
 
-    const result = await signInWithEmail(auth, email, password);
+    if (isInvitedUser) {
+        if (password !== confirmPassword) {
+            setError("Passwords do not match.");
+            setLoading(false);
+            return;
+        }
+        const result = await resetInvitedUserPassword(auth, email, password);
+        setLoading(false);
 
-    setLoading(false);
+        if (result.success) {
+             toast({
+                title: "Account Activated!",
+                description: "Your password has been set and you are now logged in.",
+             });
+             router.push('/');
+        } else {
+            setError(result.error || 'An unexpected error occurred.');
+        }
 
-    if (result.success) {
-      toast({
-        title: "Welcome Back!",
-        description: "You have been successfully logged in.",
-      });
-      if (result.role === 'Admin' || result.role === 'SuperAdmin') {
-        router.push('/admin');
-      } else {
-        router.push('/');
-      }
     } else {
-      setError(result.error || 'An unexpected error occurred.');
+        const result = await signInWithEmail(auth, email, password);
+        setLoading(false);
+
+        if (result.success) {
+            toast({
+                title: "Welcome Back!",
+                description: "You have been successfully logged in.",
+            });
+            if (result.role === 'Admin' || result.role === 'SuperAdmin') {
+                router.push('/admin');
+            } else {
+                router.push('/');
+            }
+        } else {
+             if (result.isInvited) {
+                setIsInvitedUser(true);
+                setError(null); // Clear previous error
+            } else {
+                setError(result.error || 'An unexpected error occurred.');
+            }
+        }
     }
   };
 
@@ -94,6 +122,11 @@ export default function LoginPage() {
       setError(result.error || 'An unexpected error occurred during Google sign-in.');
     }
   }
+  
+  const title = isInvitedUser ? "Activate Your Account" : "Sign In";
+  const description = isInvitedUser 
+    ? "Welcome! Please set a password to activate your account." 
+    : "Enter your credentials to access your account.";
 
   return (
     <div 
@@ -115,8 +148,8 @@ export default function LoginPage() {
        </div>
         <Card className="w-full max-w-md z-10 bg-card/80 backdrop-blur-lg">
         <CardHeader>
-            <CardTitle className="text-2xl font-headline">Sign In</CardTitle>
-            <CardDescription>Enter your credentials to access your account.</CardDescription>
+            <CardTitle className="text-2xl font-headline">{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -129,11 +162,11 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={loading || googleLoading}
+                disabled={loading || googleLoading || isInvitedUser}
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{isInvitedUser ? "New Password" : "Password"}</Label>
                 <Input
                 id="password"
                 type="password"
@@ -143,27 +176,44 @@ export default function LoginPage() {
                 disabled={loading || googleLoading}
                 />
             </div>
+            {isInvitedUser && (
+                <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Input
+                    id="confirmPassword"
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={loading || googleLoading}
+                    />
+                </div>
+            )}
             {error && <p className="text-destructive text-sm">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading || googleLoading}>
                 {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                {loading ? 'Signing In...' : 'Sign In'}
+                {loading ? (isInvitedUser ? 'Activating...' : 'Signing In...') : (isInvitedUser ? 'Set Password & Sign In' : 'Sign In')}
             </Button>
             </form>
-            <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
+            {!isInvitedUser && (
+                <>
+                <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-card/80 px-2 text-muted-foreground backdrop-blur-lg">Or continue with</span>
+                    </div>
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card/80 px-2 text-muted-foreground backdrop-blur-lg">Or continue with</span>
-                </div>
-            </div>
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={loading || googleLoading}>
-                {googleLoading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
-                {googleLoading ? 'Signing In...' : 'Sign in with Google'}
-            </Button>
+                <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={loading || googleLoading}>
+                    {googleLoading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+                    {googleLoading ? 'Signing In...' : 'Sign in with Google'}
+                </Button>
+                </>
+            )}
         </CardContent>
         <CardFooter className='text-sm text-center flex justify-center'>
-            <p>Don't have an account? <Link href="/signup" className='text-primary hover:underline'>Sign Up</Link></p>
+            {!isInvitedUser && <p>Don't have an account? <Link href="/signup" className='text-primary hover:underline'>Sign Up</Link></p>}
         </CardFooter>
         </Card>
     </div>
