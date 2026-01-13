@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useUser, useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
 import { collection, query, orderBy, doc } from 'firebase/firestore';
@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader, BarChart, BookOpenCheck, ChevronRight, Activity, TrendingDown, Star, ListTodo } from 'lucide-react';
+import { Loader, ChevronRight, Activity, TrendingDown, ListTodo } from 'lucide-react';
 import { RiskTrendChart } from '@/components/dashboard/risk-trend-chart';
 import { cn } from '@/lib/utils';
 
@@ -47,22 +47,20 @@ export default function MyTrainingPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const trainingResultsQuery = useMemoFirebase(
-    () => {
-      if (!user) return null;
-      return query(
-        collection(firestore, `users/${user.uid}/trainingResults`), 
-        orderBy('completedAt', 'desc')
-      );
-    },
-    [user, firestore]
-  );
-  
+  // Create query ONLY if user exists, as per the fix instructions.
+  const trainingResultsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(
+      collection(firestore, `users/${user.uid}/trainingResults`),
+      orderBy('completedAt', 'desc')
+    );
+  }, [user, firestore]);
+
+  // Pass query to hook and skip if the query is null.
   const { data: trainingResults, isLoading: isLoadingResults } = useCollection<TrainingResult>(
     trainingResultsQuery,
     { skip: !trainingResultsQuery }
   );
-
 
   const userDocRef = useMemoFirebase(
     () => (user ? doc(firestore, 'users', user.uid) : null),
@@ -279,3 +277,5 @@ export default function MyTrainingPage() {
     </div>
   );
 }
+
+    
