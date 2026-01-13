@@ -30,7 +30,7 @@ export function AiInsights() {
     () => (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null,
     [firestore, tenantId]
   );
-  const { data: users, isLoading: usersLoading } = useCollection(usersQuery);
+  const { data: users, isLoading: usersLoading } = useCollection(usersQuery, { skip: !usersQuery });
 
   const modulesQuery = useMemoFirebase(() => firestore && query(collection(firestore, 'trainingModules')), [firestore]);
   const { data: trainingModules, isLoading: modulesLoading } = useCollection(modulesQuery);
