@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, where } from 'firebase/firestore';
+import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, where, doc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -52,12 +53,12 @@ export default function MyTrainingPage() {
   );
   const { data: trainingResults, isLoading: isLoadingResults } = useCollection<TrainingResult>(trainingResultsQuery);
 
-  const userQuery = useMemoFirebase(
-    () => (user ? query(collection(firestore, 'users'), where('__name__', '==', user.uid)) : null),
+  const userDocRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'users', user.uid) : null),
     [user, firestore]
   );
-  const { data: userDataArr, isLoading: isLoadingUser } = useCollection<{risk: 'Low' | 'Medium' | 'High'}>(userQuery);
-  const userData = userDataArr?.[0];
+  const { data: userData, isLoading: isLoadingUser } = useDoc<{risk: 'Low' | 'Medium' | 'High'}>(userDocRef);
+  
 
   const { metrics, topicPerformance, personalBest, averageScore, weakestTopics } = useMemo(() => {
     if (!trainingResults || !userData) {
