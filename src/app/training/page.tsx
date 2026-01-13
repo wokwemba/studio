@@ -25,8 +25,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import {
   generateAiToolsTraining,
-  type TrainingCard,
 } from '@/ai/flows/chat-flow';
+import { type TrainingCard } from '@/ai/flows/schemas/chat-schema';
 import {
   Carousel,
   CarouselContent,

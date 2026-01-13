@@ -1,37 +1,27 @@
 import { z } from 'genkit';
 
-// Define the schema for a single chat message
-export const ChatMessageSchema = z.object({
-  role: z.enum(['user', 'model']),
-  content: z.string(),
-});
-export type ChatMessage = z.infer<typeof ChatMessageSchema>;
-
-// Define the input schema for the main chat flow
-export const ChatInputSchema = z.object({
-  conversationId: z
+export const TrainingCardSchema = z.object({
+  icon: z
+    .enum(['brain', 'shield', 'zap', 'bot', 'search'])
+    .describe('The name of the icon to display on the card.'),
+  title: z.string().describe('The title of the training card.'),
+  content: z
     .string()
-    .describe('A unique identifier for the conversation session.'),
-  history: z
-    .array(ChatMessageSchema)
-    .describe('The history of the conversation so far.'),
-  message: z.string().describe('The latest message from the user.'),
+    .describe('The educational content for the card, formatted as a single paragraph.'),
+  question: z.string().describe('A multiple-choice question to test understanding.'),
+  options: z
+    .array(z.string())
+    .length(3)
+    .describe('An array of exactly 3 possible answers for the question.'),
+  correctAnswer: z.string().describe('The correct answer from the options array.'),
 });
-export type ChatInput = z.infer<typeof ChatInputSchema>;
 
-// Define the output schema from the AI model
-export const ChatResponseSchema = z.object({
-  history: z
-    .array(ChatMessageSchema)
-    .describe(
-      'The full, updated history of the conversation, including the new AI response.'
-    ),
-  score: z
-    .number()
-    .min(0)
-    .max(100)
-    .describe(
-      "The user's live score (0-100), adjusted based on their last answer."
-    ),
+export type TrainingCard = z.infer<typeof TrainingCardSchema>;
+
+export const AiToolsTrainingResponseSchema = z.object({
+  cards: z
+    .array(TrainingCardSchema)
+    .length(5)
+    .describe('An array of exactly 5 training cards.'),
 });
-export type ChatResponse = z.infer<typeof ChatResponseSchema>;
+export type AiToolsTrainingResponse = z.infer<typeof AiToolsTrainingResponseSchema>;
