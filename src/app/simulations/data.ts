@@ -20,6 +20,7 @@ export type FormField = {
       type: 'Phishing Email Attack',
       description: 'Simulates a phishing campaign to test user awareness and reporting.',
       fields: [
+        { name: 'orgName', label: 'Organization Name', type: 'text', placeholder: 'e.g., Acme Corporation' },
         { name: 'targetGroup', label: 'Target Group', type: 'select', options: ['All Employees', 'IT Staff', 'Executives', 'Finance'] },
         { name: 'numAccounts', label: 'Number of Test Accounts', type: 'text', placeholder: 'e.g., 50' },
         { name: 'emailDomains', label: 'Email Domain(s) to Target', type: 'text', placeholder: 'e.g., acme.com' },
@@ -35,6 +36,7 @@ export type FormField = {
         { name: 'environmentType', label: 'Test Environment', type: 'select', options: ['Virtual Machine', 'Sandbox', 'Isolated Server'] },
         { name: 'filesToEncrypt', label: 'Files to Encrypt (Description)', type: 'textarea', placeholder: 'Describe the types of files or directories to be targeted.' },
         { name: 'recoveryPlan', label: 'Recovery Plan Document', type: 'file' },
+        { name: 'monitoringTools', label: 'Monitoring Tools in Place', type: 'text', placeholder: 'e.g., EDR, SIEM, Backups' },
         { name: 'irContact', label: 'Incident Response Contact', type: 'text', placeholder: 'ir-team@example.com' },
         { name: 'consent', label: 'I confirm this is a controlled test in a non-production environment.', type: 'checkbox' },
       ],
@@ -46,6 +48,7 @@ export type FormField = {
       fields: [
         { name: 'targetUrl', label: 'Target Server/Application URL/IP', type: 'text', placeholder: 'e.g., 192.168.1.100 or app.example.com' },
         { name: 'trafficThreshold', label: 'Traffic Threshold (Gbps or RPS)', type: 'text', placeholder: 'e.g., 10 Gbps' },
+        { name: 'monitoringTools', label: 'Monitoring Tools', type: 'text', placeholder: 'e.g., Cloudflare, Akamai' },
         { name: 'mitigationPlan', label: 'Mitigation Plan Overview', type: 'textarea', placeholder: 'Describe the steps to be taken during the simulation.' },
         { name: 'consent', label: 'I confirm this is a planned and authorized test.', type: 'checkbox' },
       ],
@@ -56,8 +59,9 @@ export type FormField = {
       description: 'Attempts to exploit SQL vulnerabilities in a target web application.',
       fields: [
         { name: 'webAppUrl', label: 'Web Application URL', type: 'text', placeholder: 'https://test-app.example.com' },
-        { name: 'inputFields', label: 'Input Fields to Test', type: 'textarea', placeholder: 'e.g., login form, search bar, contact form' },
         { name: 'dbSchema', label: 'Database Schema (Test Only)', type: 'file' },
+        { name: 'inputFields', label: 'Input Fields to Test', type: 'textarea', placeholder: 'e.g., login form, search bar, contact form' },
+        { name: 'loggingSetup', label: 'Logging Setup Details', type: 'text', placeholder: 'e.g., ELK Stack, Splunk' },
         { name: 'consent', label: 'I confirm this test is against a non-production environment.', type: 'checkbox' },
       ],
     },
@@ -69,6 +73,7 @@ export type FormField = {
         { name: 'webAppUrl', label: 'Web Application URL', type: 'text', placeholder: 'https://test-app.example.com' },
         { name: 'inputFields', label: 'User Input Fields to Test', type: 'textarea', placeholder: 'e.g., comment sections, user profiles' },
         { name: 'browser', label: 'Target Browser Environment', type: 'text', placeholder: 'e.g., Chrome, Firefox (latest)' },
+        { name: 'loggingSetup', label: 'Logging Setup Details', type: 'text', placeholder: 'e.g., ELK Stack, Splunk' },
         { name: 'consent', label: 'I confirm this test is against a non-production environment.', type: 'checkbox' },
       ],
     },
@@ -89,6 +94,8 @@ export type FormField = {
         fields: [
             { name: 'networkSetup', label: 'Network Setup Description', type: 'textarea', placeholder: 'Describe the test network segment (e.g., specific Wi-Fi SSID).' },
             { name: 'testDevices', label: 'Test Devices', type: 'text', placeholder: 'e.g., 1 laptop, 2 mobile phones' },
+            { name: 'trafficSamples', label: 'Encrypted Traffic Samples', type: 'file' },
+            { name: 'monitoringTools', label: 'Monitoring Tools', type: 'text', placeholder: 'e.g., Wireshark, IDS' },
             { name: 'consent', label: 'I confirm this test will be on a controlled network.', type: 'checkbox' },
         ]
     },
@@ -98,6 +105,7 @@ export type FormField = {
         description: 'Tests for vulnerabilities that would allow a user to gain elevated permissions.',
         fields: [
             { name: 'testAccounts', label: 'Test Accounts with Roles', type: 'textarea', placeholder: 'e.g., user1 (guest), user2 (editor)' },
+            { name: 'systemLogs', label: 'System Logs (for analysis)', type: 'file' },
             { name: 'escalationPaths', label: 'Potential Escalation Paths to Test', type: 'textarea', placeholder: 'Describe any known or suspected paths.' },
             { name: 'consent', label: 'I confirm this is a non-production environment.', type: 'checkbox' },
         ]
@@ -119,6 +127,7 @@ export type FormField = {
         description: 'Simulates malicious actions from an insider to test monitoring and alerting.',
         fields: [
             { name: 'userRoles', label: 'User Roles to Simulate', type: 'textarea', placeholder: 'e.g., Disgruntled employee in Finance' },
+            { name: 'accessLogs', label: 'Access Logs (for analysis)', type: 'file' },
             { name: 'simulatedActions', label: 'Simulated Malicious Actions', type: 'textarea', placeholder: 'e.g., Accessing sensitive files, attempting data exfiltration.' },
             { name: 'irContact', label: 'Incident Response Contact', type: 'text', placeholder: 'ir-team@example.com' },
             { name: 'consent', label: 'I confirm this is a planned exercise with full authorization.', type: 'checkbox' },
@@ -198,6 +207,7 @@ export type FormField = {
             { name: 'emailAccounts', label: 'Target Email Accounts', type: 'textarea', placeholder: 'e.g., Finance department lead.' },
             { name: 'domainSetup', label: 'Domain Setup for Spoofing', type: 'text', placeholder: 'e.g., acme-corp.com (similar to acme.com)' },
             { name: 'approvalWorkflow', label: 'Approval Workflow to Test', type: 'textarea', placeholder: 'Describe the payment approval process.' },
+            { name: 'irContact', label: 'Incident Response Contact', type: 'text', placeholder: 'ir-team@example.com' },
             { name: 'consent', label: 'I confirm this is an authorized test with stakeholder approval.', type: 'checkbox' },
         ]
     },
@@ -237,3 +247,4 @@ export type FormField = {
   ];
   
   
+
