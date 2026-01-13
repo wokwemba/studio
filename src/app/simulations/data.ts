@@ -174,7 +174,7 @@ export type FormField = {
             { name: 'deviceType', label: 'IoT Device Type', type: 'text', placeholder: 'e.g., Smart Camera, Temperature Sensor' },
             { name: 'firmwareVersion', label: 'Firmware Version', type: 'text', placeholder: 'e.g., 1.2.3' },
             { name: 'networkAccess', label: 'Network Access Details', type: 'textarea', placeholder: 'How is the device connected? (Wi-Fi, Ethernet, etc.)' },
-            { name: 'consent', label: 'I confirm I own the device and network being tested.', type: 'checkbox' },
+            { name: 'consent', label: 'I own the device and network being tested.', type: 'checkbox' },
         ]
     },
     {
@@ -230,7 +230,7 @@ export type FormField = {
             { name: 'mobileApp', label: 'Mobile App APK/IPA', type: 'file' },
             { name: 'testDevices', label: 'Test Devices and OS Versions', type: 'text', placeholder: 'e.g., Pixel 6 (Android 13), iPhone 14 (iOS 16)' },
             { name: 'loggingSetup', label: 'Logging Setup Details', type: 'textarea', placeholder: 'Where to send logs from the mobile app during testing.' },
-            { name: 'consent', label: 'I confirm I have authorization to test this application.', type: 'checkbox' },
+            { name: 'consent', label: 'I have authorization to test this application.', type: 'checkbox' },
         ]
     },
     {
@@ -244,7 +244,51 @@ export type FormField = {
             { name: 'consent', label: 'I confirm this is a scheduled tabletop exercise.', type: 'checkbox' },
         ]
     },
+    {
+      id: 'vapt-1',
+      type: 'Vulnerability Assessment & Penetration Testing (VAPT)',
+      description: 'A comprehensive security assessment to identify and exploit vulnerabilities in a defined scope.',
+      fields: [
+        { name: 'testName', label: 'Project / Test Name', type: 'text', placeholder: 'e.g., Q3 Web App VAPT' },
+        { name: 'testObjective', label: 'Primary Objective', type: 'textarea', placeholder: 'e.g., Achieve PCI-DSS compliance, Identify critical API vulnerabilities, Simulate external threat actor.' },
+        { name: 'targetScope', label: 'Target Scope (URLs, IPs)', type: 'textarea', placeholder: 'Provide a list of URLs, IP addresses, or application names to be tested.' },
+        { name: 'testType', label: 'Type of Test', type: 'select', options: ['Black Box (No prior knowledge)', 'Grey Box (Limited user credentials)', 'White Box (Full source code & admin access)'] },
+        { name: 'environment', label: 'Test Environment', type: 'select', options: ['Production', 'Staging', 'Development/Test'] },
+        { name: 'outOfScope', label: 'Out of Scope', type: 'textarea', placeholder: 'Specify any assets, techniques, or times that are explicitly forbidden. e.g., "No social engineering, no testing between 1-5 AM UTC."' },
+        { name: 'technicalContact', label: 'Primary Technical Contact', type: 'text', placeholder: 'Email of the person to contact for technical issues during the test.' },
+        { name: 'emergencyContact', label: 'Emergency Contact', type: 'text', placeholder: 'Email or phone for urgent issues (e.g., system outage).' },
+        { name: 'testWindow', label: 'Preferred Testing Window', type: 'text', placeholder: 'e.g., "Oct 1 - Oct 15, business hours only."' },
+        { name: 'consent', label: 'I confirm that I am authorized to request this security assessment on the specified scope.', type: 'checkbox' },
+      ],
+    },
+    {
+      id: 'training-1',
+      type: 'Customized Training Request',
+      description: 'Request a new, specific training module or campaign to be created.',
+      fields: [
+        { name: 'trainingTopic', label: 'Training Topic', type: 'text', placeholder: 'e.g., "Advanced Kubernetes Security"' },
+        { name: 'learningObjectives', label: 'Key Learning Objectives', type: 'textarea', placeholder: 'List 3-5 things the learners should be able to do after the training.' },
+        { name: 'targetAudience', label: 'Target Audience', type: 'text', placeholder: 'e.g., "Senior DevOps Engineers"' },
+        { name: 'format', label: 'Preferred Format', type: 'select', options: ['Live Workshop', 'Self-Paced e-Learning Module', 'Series of short videos', 'Informational Document'] },
+        { name: 'requestedBy', label: 'Requesting Department/Team', type: 'text', placeholder: 'e.g., "Platform Engineering"' },
+        { name: 'consent', label: 'I confirm this is a formal request for new training content.', type: 'checkbox' },
+      ],
+    },
+    {
+      id: 'audit-1',
+      type: 'System Audit Request',
+      description: 'Request a formal audit of a system, application, or process against a specific framework.',
+      fields: [
+        { name: 'systemToAudit', label: 'System/Application/Process to Audit', type: 'text', placeholder: 'e.g., "Customer Authentication Service"' },
+        { name: 'auditFramework', label: 'Audit Framework', type: 'select', options: ['ISO 27001', 'SOC 2 (Type II)', 'HIPAA', 'PCI-DSS', 'Internal Security Policy'] },
+        { name: 'auditObjective', label: 'Primary Objective of Audit', type: 'textarea', placeholder: 'e.g., "Verify compliance for annual certification", "Assess data handling processes for PII."' },
+        { name: 'systemOwner', label: 'System Owner/Primary Contact', type: 'text', placeholder: 'Email of the main point of contact for the system.' },
+        { name: 'accessRequirements', label: 'Auditor Access Requirements', type: 'textarea', placeholder: 'Describe the level of access auditors will need (e.g., read-only access to production database, access to code repository).' },
+        { name: 'consent', label: 'I confirm I am authorized to request an audit of this system.', type: 'checkbox' },
+      ],
+    },
   ];
   
   
+
 
