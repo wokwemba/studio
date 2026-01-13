@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -96,12 +97,24 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-       <div className="flex items-center gap-2 mb-6">
+    <div 
+        className="relative min-h-screen w-full flex flex-col items-center justify-center bg-background p-4"
+    >
+        <div 
+            className="absolute inset-0 bg-cover bg-center z-0" 
+            style={{
+                backgroundImage: "url('https://picsum.photos/seed/cybersec/1920/1080')",
+            }}
+            data-ai-hint="cyber security abstract"
+        >
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        </div>
+
+       <div className="relative z-10 flex items-center gap-2 mb-6">
             <ShieldCheck className="w-10 h-10 text-primary" />
-            <h1 className="text-3xl font-headline font-semibold">Cyber-UP</h1>
+            <h1 className="text-3xl font-headline font-semibold text-white">Cyber-UP</h1>
        </div>
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md z-10 bg-card/80 backdrop-blur-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-headline">Sign In</CardTitle>
           <CardDescription>Enter your credentials to access your account.</CardDescription>
@@ -142,7 +155,7 @@ export default function LoginPage() {
                   <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                  <span className="bg-card/80 px-2 text-muted-foreground backdrop-blur-lg">Or continue with</span>
               </div>
           </div>
           <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={loading || googleLoading}>
