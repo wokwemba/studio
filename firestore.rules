@@ -117,7 +117,8 @@ service cloud.firestore {
       // Admins can read profiles in their tenant.
       // SuperAdmins have full access.
       allow get: if isOwner(userId) || isTenantAdmin(resource.data.tenantId) || isSuperAdmin();
-      allow list: if isAdmin();
+      // Any signed-in user can list all users.
+      allow list: if isSignedIn();
       allow create: if isOwner(userId) || isTenantAdmin(request.resource.data.tenantId) || isSuperAdmin();
       allow update(writeFields): 
         if isOwner(userId) 
