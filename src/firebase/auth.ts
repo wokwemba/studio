@@ -105,6 +105,7 @@ function mapFirebaseError(error: any): string {
     case 'auth/email-already-in-use':
        return 'This email is already registered. Please sign in instead.';
     case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request':
       return 'Sign-in window was closed. Please try again.';
     default:
       console.error('Unhandled Firebase Auth Error:', error);
