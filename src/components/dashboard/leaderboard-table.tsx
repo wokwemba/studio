@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -53,17 +52,20 @@ export function LeaderboardTable({ currentUser }: { currentUser: AuthUser & { te
   const firestore = useFirestore();
   
   // Only query for users within the same tenant.
-  const usersQuery = useMemoFirebase(() => 
-    (firestore && currentUser?.tenantId) ? query(
+  const usersQuery = useMemoFirebase(() => {
+    if (!firestore || !currentUser?.tenantId) return null; // <-- CRITICAL FIX: Return null if tenantId is not ready
+    return query(
         collection(firestore, 'users'), 
         where('tenantId', '==', currentUser.tenantId),
         orderBy('risk', 'desc'), 
         limit(10)
-    ) : null,
+    )
+  },
     [firestore, currentUser]
   );
 
-  const { data: users, isLoading } = useCollection<User>(usersQuery);
+  // CRITICAL FIX: Skip the query if it's not ready
+  const { data: users, isLoading } = useCollection<User>(usersQuery, { skip: !usersQuery });
 
   const getImage = (id?: string) => {
     if (!id) return PlaceHolderImages.find((p) => p.id === 'user-avatar-1')?.imageUrl || '';
@@ -86,6 +88,10 @@ export function LeaderboardTable({ currentUser }: { currentUser: AuthUser & { te
             <div className="flex justify-center items-center h-64">
                 <Loader className="w-8 h-8 animate-spin" />
             </div>
+        ) : !users || users.length === 0 ? (
+          <div className="flex justify-center items-center h-40 text-muted-foreground text-sm">
+            No user data available for the leaderboard.
+          </div>
         ) : (
         <Table>
           <TableHeader>
