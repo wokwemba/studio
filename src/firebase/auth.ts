@@ -9,7 +9,7 @@ import {
   UserCredential,
   User,
 } from 'firebase/auth';
-import { setDoc, doc, getDoc, getFirestore, Firestore } from 'firebase/firestore';
+import { setDoc, doc, getDoc, getFirestore, Firestore, updateDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from './errors';
 import { errorEmitter } from './error-emitter';
 import { ROLES } from '@/lib/roles';
@@ -48,54 +48,73 @@ const createUserProfile = async (user: User): Promise<string> => {
     const db = getFirestore(user.auth.app);
     const userDocRef = doc(db, 'users', user.uid);
 
-    // Check if user profile already exists
-    const docSnap = await getDoc(userDocRef);
-    if (docSnap.exists()) {
-        const roleId = docSnap.data().roleId || ROLES.USER;
-        // If user logs in with google and has no photo, update it.
-        if (user.photoURL && !docSnap.data().photoURL) {
-            updateDocumentNonBlocking(userDocRef, { photoURL: user.photoURL });
-        }
-        return await getRoleNameFromId(db, roleId);
-    }
+    let roleId = ROLES.USER;
+    const isAdminEmail = user.email === 'wokwemba1@gmail.com';
+    const isSuperAdminEmail = user.email === 'super@admin.com';
 
-    let roleId = ROLES.USER; // Default to 'User'
-    if (user.email === 'wokwemba1@gmail.com') {
+    if (isAdminEmail) {
         roleId = ROLES.ADMIN;
-    } else if (user.email === 'super@admin.com') {
+    } else if (isSuperAdminEmail) {
         roleId = ROLES.SUPER_ADMIN;
     }
 
-    const newUserProfile = {
-        email: user.email,
-        name: user.displayName || user.email?.split('@')[0] || 'New User',
-        tenantId: DEFAULT_TENANT_ID,
-        roleId: roleId,
-        status: 'Active',
-        risk: 'Low',
-        photoURL: user.photoURL || null, // Save Google photo URL
-        avatarId: user.photoURL ? null : `user-avatar-${Math.floor(Math.random() * 5) + 1}`, // Fallback for email signup
-    };
+    const docSnap = await getDoc(userDocRef);
+    if (docSnap.exists()) {
+        const existingData = docSnap.data();
+        const existingRoleId = existingData.roleId || ROLES.USER;
+        
+        const updates: Record<string, any> = {};
 
-    try {
-        setDoc(userDocRef, newUserProfile).catch(error => {
-          const permissionError = new FirestorePermissionError({
-              path: userDocRef.path,
-              operation: 'create',
-              requestResourceData: newUserProfile,
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        });
-        return await getRoleNameFromId(db, roleId);
-    } catch (error) {
-        console.error("Failed to create user profile:", error);
-        const permissionError = new FirestorePermissionError({
-            path: userDocRef.path,
-            operation: 'create',
-            requestResourceData: newUserProfile,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw error;
+        // If user should be admin/superadmin but isn't, promote them.
+        if ((isAdminEmail || isSuperAdminEmail) && existingRoleId !== roleId) {
+            updates.roleId = roleId;
+        }
+
+        // If user logs in with google and has no photo, update it.
+        if (user.photoURL && !existingData.photoURL) {
+            updates.photoURL = user.photoURL;
+        }
+
+        if (Object.keys(updates).length > 0) {
+            updateDocumentNonBlocking(userDocRef, updates);
+        }
+
+        // Return the potentially updated role name
+        return await getRoleNameFromId(db, updates.roleId || existingRoleId);
+
+    } else {
+        // User profile does not exist, create it.
+        const newUserProfile = {
+            email: user.email,
+            name: user.displayName || user.email?.split('@')[0] || 'New User',
+            tenantId: DEFAULT_TENANT_ID,
+            roleId: roleId,
+            status: 'Active',
+            risk: 'Low',
+            photoURL: user.photoURL || null,
+            avatarId: user.photoURL ? null : `user-avatar-${Math.floor(Math.random() * 5) + 1}`,
+        };
+
+        try {
+            setDoc(userDocRef, newUserProfile).catch(error => {
+              const permissionError = new FirestorePermissionError({
+                  path: userDocRef.path,
+                  operation: 'create',
+                  requestResourceData: newUserProfile,
+              });
+              errorEmitter.emit('permission-error', permissionError);
+            });
+            return await getRoleNameFromId(db, roleId);
+        } catch (error) {
+            console.error("Failed to create user profile:", error);
+            const permissionError = new FirestorePermissionError({
+                path: userDocRef.path,
+                operation: 'create',
+                requestResourceData: newUserProfile,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw error;
+        }
     }
 };
 
@@ -182,5 +201,3 @@ export async function signInWithGoogle(
 
 export { getRoleNameFromId }; // Export for use in other components if needed
 import { updateDocumentNonBlocking } from './non-blocking-updates';
-
-    
