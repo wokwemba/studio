@@ -16,8 +16,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 export default function GenerateTrainingModulePage() {
   const [formData, setFormData] = useState<GenerateTrainingModuleInput>({
@@ -89,7 +89,8 @@ export default function GenerateTrainingModulePage() {
     setIsSaving(true);
     try {
       const resultsCollection = collection(firestore, `users/${user.uid}/trainingResults`);
-      await addDoc(resultsCollection, {
+      
+      addDocumentNonBlocking(resultsCollection, {
         moduleId: formData.topic, // using topic as a pseudo-id
         userId: user.uid,
         score: quizScore,
@@ -97,6 +98,7 @@ export default function GenerateTrainingModulePage() {
         completedAt: new Date().toISOString(),
         riskImpact: 100 - quizScore, // Example calculation
       });
+
       toast({
         title: 'Results Saved',
         description: 'Your quiz results have been saved to your profile.',
