@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { type GenerateTrainingModuleOutput } from '@/ai/flows/generate-training-module';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, BookOpen, Lightbulb, CheckCircle, XCircle } from 'lucide-react';
+import { Loader, BookOpen, Lightbulb, CheckCircle, XCircle, Share2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
@@ -111,6 +111,13 @@ export default function GenerateTrainingModulePage() {
     }
   };
 
+  const handleShare = () => {
+    if (typeof window === 'undefined' || !module) return;
+    const subject = `Check out this Cybersecurity Training Module: ${module.title}`;
+    const body = `I generated a training module on CyberAegis about "${topic}". You can check it out here:\n\n${window.location.href}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
   const isQuizComplete = module ? Object.keys(userAnswers).length === module.quiz.length : false;
 
 
@@ -211,7 +218,11 @@ export default function GenerateTrainingModulePage() {
               )}
             </div>
           </CardContent>
-          <CardFooter className='flex gap-2'>
+          <CardFooter className='flex-wrap gap-2'>
+            <Button variant="outline" onClick={handleShare}>
+                <Share2 className="mr-2 h-4 w-4" />
+                Share Module
+            </Button>
             <Button disabled={isQuizSubmitted}>Save Module to Library</Button>
             {isQuizSubmitted && (
                 <Button onClick={handleSaveResults} disabled={isSaving}>
