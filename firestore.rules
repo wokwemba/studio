@@ -14,11 +14,16 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
-    // Check if the requesting user's role name is in a given list.
-    function isUserInRole(roleNames) {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      let roleDoc = get(/databases/$(database)/documents/roles/$(userDoc.roleId)).data;
-      return roleDoc.name in roleNames;
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleId;
+    }
+    
+    function isSuperAdmin() {
+        return getUserRole() == 'L1A4b6Y2y1l9p3R0c2V1'; // ROLES.SUPER_ADMIN
+    }
+
+    function isAdmin() {
+        return getUserRole() in ['S2V1b2l1R1dsa2FqZGZtYWxza2Rq', 'L1A4b6Y2y1l9p3R0c2V1']; // ROLES.ADMIN, ROLES.SUPER_ADMIN
     }
 
     // ------------------------------------------------------------------------
@@ -27,60 +32,55 @@ service cloud.firestore {
 
     // SuperAdmins can manage tenants
     match /tenants/{tenantId} {
-      allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
-      allow write: if isUserInRole(['SuperAdmin']);
+      allow read: if isAdmin() || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
+      allow write: if isSuperAdmin();
 
       // Tenant-specific collections
       match /campaigns/{campaignId} {
-        allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
-        allow write: if isUserInRole(['Admin', 'SuperAdmin']);
+        allow read, write: if isAdmin();
       }
       match /courses/{courseId} {
-        allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
-        allow write: if isUserInRole(['Admin', 'SuperAdmin']);
+        allow read, write: if isAdmin();
       }
       match /phishing_simulations/{simId} {
-        allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
-        allow write: if isUserInRole(['Admin', 'SuperAdmin']);
+        allow read, write: if isAdmin();
       }
        match /fraud_scenarios/{scenarioId} {
-        allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
-        allow write: if isUserInRole(['Admin', 'SuperAdmin']);
+        allow read, write: if isAdmin();
       }
       match /incidents/{incidentId} {
-        allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
+        allow read: if isAdmin();
         allow create: if isSignedIn(); 
-        allow update, delete: if isUserInRole(['Admin', 'SuperAdmin']);
+        allow update, delete: if isAdmin();
       }
       match /certifications/{certId} {
-        allow read: if isUserInRole(['Admin', 'SuperAdmin']) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
-        allow write: if isUserInRole(['Admin', 'SuperAdmin']);
+        allow read, write: if isAdmin();
       }
       match /audit_logs/{logId} {
-        allow read: if isUserInRole(['Admin', 'SuperAdmin']);
+        allow read: if isAdmin();
         allow create: if isSignedIn();
         allow update, delete: if false;
       }
       match /simulationRequests/{requestId} {
         allow create: if request.resource.data.userId == request.auth.uid;
-        allow read, update, delete: if isUserInRole(['Admin', 'SuperAdmin']);
+        allow read, update, delete: if isAdmin();
       }
     }
     
     // Roles can be read by any signed-in user, but only listed/written by Admins.
     match /roles/{roleId} {
       allow get: if isSignedIn();
-      allow list, write: if isUserInRole(['Admin', 'SuperAdmin']);
+      allow list, write: if isAdmin();
     }
     
     // Permissions are managed only by SuperAdmins
     match /permissions/{permissionId} {
-        allow read, write: if isUserInRole(['SuperAdmin']);
+        allow read, write: if isSuperAdmin();
     }
     
     // Role-permission mappings are managed only by SuperAdmins
     match /role_permissions/{rolePermissionId} {
-        allow read, write: if isUserInRole(['SuperAdmin']);
+        allow read, write: if isSuperAdmin();
     }
 
     // User management
@@ -89,22 +89,23 @@ service cloud.firestore {
       allow get, update: if isOwner(userId);
 
       // Admins can get/update any user document
-      allow get, update, delete: if isUserInRole(['Admin', 'SuperAdmin']);
+      allow get, update, delete: if isAdmin();
       
-      // Anyone can create their own user document on signup
-      allow create: if isOwner(userId);
+      // Anyone can create their own user document on signup.
+      // inviting a user also uses this
+      allow create: if isSignedIn();
     }
     
     // Admins can list the entire users collection
-    match /users {
-       allow list: if isUserInRole(['Admin', 'SuperAdmin']);
+    match /users/{userId} {
+       allow list: if isAdmin();
     }
 
 
     // Global training modules are readable by all, writable by admins.
     match /trainingModules/{moduleId} {
       allow read: if isSignedIn();
-      allow write: if isUserInRole(['Admin', 'SuperAdmin']);
+      allow write: if isAdmin();
     }
   }
 }
