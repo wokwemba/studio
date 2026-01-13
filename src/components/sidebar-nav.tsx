@@ -64,7 +64,6 @@ const trainingLinks = [
 ]
 
 const adminLinks = [
-    { href: "/admin", label: "Admin Dashboard", icon: LayoutDashboard },
     { href: "/admin/users", label: "Users & Roles", icon: Users },
     { href: "/admin/campaigns", label: "Training Campaigns", icon: GitPullRequest },
     { href: "/admin/content", label: "Courses & Content", icon: BookCopy },
@@ -175,6 +174,19 @@ export function SidebarNav() {
       {userIsAdmin && (
       <>
         <SidebarSeparator />
+         <SidebarMenuItem>
+            <SidebarMenuButton
+                asChild
+                isActive={isActive('/admin')}
+                className="font-headline"
+                tooltip="Admin Panel"
+            >
+                <Link href="/admin">
+                    <ShieldCheck className="h-5 w-5" />
+                    {state === 'expanded' && <span>Admin Panel</span>}
+                </Link>
+            </SidebarMenuButton>
+        </SidebarMenuItem>
         <SidebarGroup>
             <SidebarGroupLabel>Admin Console</SidebarGroupLabel>
               {adminLinks.map((link) => (
