@@ -2,12 +2,13 @@
 
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { Loader, BarChart, History, TrendingUp, TrendingDown, Star } from 'lucide-react';
+import { Loader, BarChart, History, TrendingUp, TrendingDown, Star, BookOpenCheck, Edit, Calendar, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
 
 type TrainingResult = {
   id: string;
@@ -35,6 +36,103 @@ const MetricCard = ({ title, value, icon: Icon }: { title: string; value: string
         </CardContent>
     </Card>
 );
+
+const IncompleteQuizCard = () => (
+    <Card>
+        <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2">
+                <Edit />
+                <span>Incomplete Quizzes</span>
+            </CardTitle>
+            <CardDescription>Pick up where you left off.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            {/* Placeholder Data */}
+            <div className='p-4 border rounded-lg bg-muted/50'>
+                <div className='flex justify-between items-start'>
+                    <div>
+                        <p className='font-semibold'>Secure Software Development</p>
+                        <p className='text-xs text-muted-foreground'>Completed: 40%</p>
+                    </div>
+                    <Button size="sm" variant="secondary">Resume</Button>
+                </div>
+                <Progress value={40} className="mt-2 h-2" />
+            </div>
+             <div className='p-4 border rounded-lg bg-muted/50'>
+                <div className='flex justify-between items-start'>
+                    <div>
+                        <p className='font-semibold'>Cloud Security Basics</p>
+                        <p className='text-xs text-muted-foreground'>Completed: 80%</p>
+                    </div>
+                    <Button size="sm" variant="secondary">Resume</Button>
+                </div>
+                <Progress value={80} className="mt-2 h-2" />
+            </div>
+        </CardContent>
+    </Card>
+);
+
+const UpcomingQuizCard = () => (
+    <Card>
+        <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2">
+                <Calendar />
+                <span>Upcoming Quizzes</span>
+            </CardTitle>
+            <CardDescription>Get ready for your next assessments.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+             {/* Placeholder Data */}
+             <div className='flex items-center justify-between p-3 bg-muted/50 rounded-lg'>
+                <div>
+                    <p className='font-semibold'>Annual Compliance Training</p>
+                    <p className='text-xs text-muted-foreground'>Due: {format(new Date(), 'MMM dd, yyyy')}</p>
+                </div>
+                <Badge variant="destructive">Required</Badge>
+             </div>
+             <div className='flex items-center justify-between p-3 bg-muted/50 rounded-lg'>
+                <div>
+                    <p className='font-semibold'>Advanced Phishing Simulation</p>
+                    <p className='text-xs text-muted-foreground'>Due: {format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 'MMM dd, yyyy')}</p>
+                </div>
+                <Badge variant="outline">Optional</Badge>
+             </div>
+        </CardContent>
+    </Card>
+)
+
+const RecommendedActions = ({ topic }: { topic: TopicPerformance | null }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="font-headline flex items-center gap-2">
+        <Star />
+        <span>Recommended Next Actions</span>
+      </CardTitle>
+      <CardDescription>
+        Your personalized path to a better security posture.
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-3">
+        {topic && (
+            <div className="flex items-center gap-3 p-3 bg-accent/20 border-l-4 border-accent rounded-r-lg">
+                <AlertTriangle className="h-6 w-6 text-accent" />
+                <div>
+                    <p className="font-semibold text-sm">Focus Area: {topic.topic}</p>
+                    <p className="text-xs text-muted-foreground">Your average score is {topic.averageScore.toFixed(0)}%. Retake this module to improve.</p>
+                </div>
+            </div>
+        )}
+        <div className="flex items-center gap-3 p-3 bg-muted/50">
+            <BookOpenCheck className="h-6 w-6 text-muted-foreground" />
+             <div>
+                <p className="font-semibold text-sm">Explore New Topics</p>
+                <p className="text-xs text-muted-foreground">Check out the AI module generator to learn something new.</p>
+            </div>
+        </div>
+    </CardContent>
+  </Card>
+);
+
 
 export default function MyTrainingPage() {
   const { user, isUserLoading } = useUser();
@@ -76,7 +174,7 @@ export default function MyTrainingPage() {
       })).sort((a, b) => a.averageScore - b.averageScore) // Sort from worst to best
     : [];
 
-  const topWeakestTopic = topicPerformance.length > 0 ? topicPerformance[0] : null;
+  const topWeakestTopic = topicPerformance.find(t => t.averageScore < PASSING_SCORE) || null;
   const topStrongestTopic = topicPerformance.length > 0 ? topicPerformance[topicPerformance.length - 1] : null;
 
 
@@ -112,7 +210,7 @@ export default function MyTrainingPage() {
       <h1 className="text-3xl font-bold font-headline">My Training Console</h1>
 
       {/* Core Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <MetricCard title="Modules Completed" value={totalModules} icon={BarChart} />
         <MetricCard title="Average Score" value={`${averageScore.toFixed(0)}%`} icon={TrendingUp} />
         <MetricCard title="Best Score" value={`${bestScore.toFixed(0)}%`} icon={Star} />
@@ -138,7 +236,7 @@ export default function MyTrainingPage() {
                         </div>
                         <p className='text-xs text-muted-foreground mt-1'>Across {topWeakestTopic.attempts} attempt(s)</p>
                     </div>
-                ): <p className="text-muted-foreground">Not enough data.</p>}
+                ): <p className="text-muted-foreground">Great job! No topics are below the passing score.</p>}
             </CardContent>
         </Card>
         <Card>
@@ -164,6 +262,17 @@ export default function MyTrainingPage() {
         </Card>
       </div>
 
+      <div className="grid gap-6 md:grid-cols-5">
+        <div className="md:col-span-3 space-y-6">
+            <IncompleteQuizCard />
+            <UpcomingQuizCard />
+        </div>
+        <div className="md:col-span-2">
+            <RecommendedActions topic={topWeakestTopic} />
+        </div>
+      </div>
+
+
       {/* Completed Quizzes/Modules */}
       <Card>
         <CardHeader>
@@ -184,7 +293,7 @@ export default function MyTrainingPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {trainingResults?.map(result => (
+                    {trainingResults?.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()).map(result => (
                         <TableRow key={result.id}>
                             <TableCell className="font-medium">{result.moduleId}</TableCell>
                             <TableCell className="text-center font-mono">{result.score.toFixed(0)}%</TableCell>

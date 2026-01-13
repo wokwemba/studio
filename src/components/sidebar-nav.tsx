@@ -30,6 +30,7 @@ import {
   Loader,
   Wand2,
   ShieldOff,
+  BookOpenCheck,
 } from "lucide-react";
 
 import {
