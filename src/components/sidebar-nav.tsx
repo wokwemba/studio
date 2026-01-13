@@ -47,7 +47,7 @@ import { doc } from "firebase/firestore";
 
 const mainLinks = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/training", label: "My Training", icon: BookUser },
+  { href: "/training", label: "My Training", icon: BookOpenCheck },
   { href: "/training/achievements", label: "Achievements", icon: Trophy },
   { href: "/flashcards", label: "Flashcards", icon: Copy },
   { href: "/simulations", label: "Simulations", icon: Target },
@@ -57,7 +57,8 @@ const mainLinks = [
 ];
 
 const trainingLinks = [
-    { href: "/training/module", label: "Training", icon: Wand2 },
+    { href: "/training/module", label: "Training Generator", icon: Wand2 },
+    { href: "/training/history", label: "Training History", icon: History },
 ]
 
 const adminLinks = [
@@ -96,8 +97,8 @@ export function SidebarNav() {
   const { data: userData, isLoading: isUserDataLoading } = useDoc<{roleId: string}>(userDocRef);
 
   const userRoleDocRef = useMemoFirebase(
-    () => (userData?.roleId ? doc(firestore, "roles", userData.roleId) : null),
-    [userData]
+    () => (firestore && userData?.roleId ? doc(firestore, "roles", userData.roleId) : null),
+    [firestore, userData]
   );
   const { data: roleData, isLoading: isRoleDataLoading } = useDoc<{name: 'User' | 'Admin' | 'SuperAdmin'}>(userRoleDocRef);
 
@@ -106,14 +107,18 @@ export function SidebarNav() {
 
 
   const isActive = (href: string) => {
-    if (href === "/admin") {
-      return pathname === href || pathname.startsWith('/admin/');
+    if (href === "/admin" && pathname.startsWith('/admin')) {
+      return true;
     }
-    if (href === "/training") {
-       return pathname === href || pathname.startsWith('/training/');
+     if (href === "/training" && pathname.startsWith('/training')) {
+      return true;
     }
     if (href === "/") {
         return pathname === href;
+    }
+    // For other main links, check for exact match to avoid highlighting /training when on /training/module
+    if (mainLinks.some(l => l.href === href)) {
+      return pathname === href;
     }
     return pathname.startsWith(href) && href !== '/';
   };
