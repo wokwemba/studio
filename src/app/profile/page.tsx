@@ -18,7 +18,13 @@ export default function ProfilePage() {
     () => (user ? doc(firestore, "users", user.uid) : null),
     [user, firestore]
   );
-  const { data: userData, isLoading: isUserDataLoading } = useDoc<{name: string; email: string; photoURL?: string; avatarId?: string}>(userDocRef);
+  const { data: userData, isLoading: isUserDataLoading } = useDoc<{name: string; email: string; photoURL?: string; avatarId?: string; roleId?: string}>(userDocRef);
+
+  const roleDocRef = useMemoFirebase(
+    () => (firestore && userData?.roleId ? doc(firestore, 'roles', userData.roleId) : null),
+    [firestore, userData]
+  );
+  const { data: roleData, isLoading: isRoleLoading } = useDoc<{ name: string }>(roleDocRef);
   
   const userAvatar = useMemo(() => {
     if (userData?.photoURL) {
@@ -33,7 +39,7 @@ export default function ProfilePage() {
   }, [userData]);
 
 
-  if (isUserLoading || isUserDataLoading) {
+  if (isUserLoading || isUserDataLoading || isRoleLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader className="h-16 w-16 animate-spin text-primary" />
@@ -75,6 +81,10 @@ export default function ProfilePage() {
               <p className="text-xl font-semibold">{userData.name || 'No display name'}</p>
               <p className="text-muted-foreground">{userData.email}</p>
             </div>
+          </div>
+           <div className="space-y-2">
+            <h3 className="font-semibold text-sm text-muted-foreground">Role</h3>
+            <p className="font-medium">{roleData?.name || 'User'}</p>
           </div>
           <div className="space-y-2">
             <h3 className="font-semibold text-sm text-muted-foreground">User ID</h3>
