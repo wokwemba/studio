@@ -72,7 +72,10 @@ export default function SimulationsPage() {
     
     // Check for consent on all selected simulations
     for (const simId of Array.from(selectedSimulations)) {
-        if (!simulationDetails[simId]?.consent) {
+        const details = simulationDetails[simId] || {};
+        const consentField = simulationData.find(s => s.id === simId)?.fields.find(f => f.name === 'consent');
+        
+        if (consentField && !details.consent) {
             const sim = simulationData.find(s => s.id === simId);
             toast({
                 variant: "destructive",
