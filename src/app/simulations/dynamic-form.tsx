@@ -106,6 +106,30 @@ export function DynamicForm({ fields, formData, onFormChange, isDisabled }: Dyna
             </Label>
           </div>
         );
+      case 'checkbox-group':
+        return (
+            <div className="space-y-2">
+            {field.options?.map((option) => (
+                <div key={option} className="flex items-center space-x-2">
+                <Checkbox
+                    id={`${field.name}-${option}`}
+                    checked={formData[field.name]?.includes(option)}
+                    onCheckedChange={(checked) => {
+                    const currentValues = formData[field.name] || [];
+                    const newValues = checked
+                        ? [...currentValues, option]
+                        : currentValues.filter((v: string) => v !== option);
+                    onFormChange(field.name, newValues);
+                    }}
+                    disabled={isDisabled}
+                />
+                <Label htmlFor={`${field.name}-${option}`} className="font-normal">
+                    {option}
+                </Label>
+                </div>
+            ))}
+            </div>
+        );
       default:
         return null;
     }

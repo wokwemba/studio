@@ -195,7 +195,6 @@ export default function SimulationsPage() {
         return;
     }
     
-    // Check for consent and all mandatory fields on all selected simulations
     for (const simId of Array.from(selectedSimulations)) {
         const sim = simulationData.find(s => s.id === simId);
         if (!sim) continue;
@@ -203,14 +202,14 @@ export default function SimulationsPage() {
         const details = simulationDetails[simId] || {};
 
         for (const field of sim.fields) {
-            // Check if the field is missing or empty (for checkboxes, it must be true)
-            const isMissing = field.type === 'checkbox' ? !details[field.name] : !details[field.name];
+            const value = details[field.name];
+            const isMissing = field.type === 'checkbox' ? !value : !value || (Array.isArray(value) && value.length === 0);
 
             if (isMissing) {
                 toast({
                     variant: "destructive",
                     title: "Incomplete Form",
-                    description: `Please fill out all fields for the "${sim.type}" simulation, including the consent checkbox.`,
+                    description: `Please fill out the "${field.label}" field for the "${sim.type}" simulation.`,
                 });
                 return;
             }
