@@ -70,19 +70,25 @@ export default function SimulationsPage() {
         return;
     }
     
-    // Check for consent on all selected simulations
+    // Check for consent and all mandatory fields on all selected simulations
     for (const simId of Array.from(selectedSimulations)) {
-        const details = simulationDetails[simId] || {};
-        const consentField = simulationData.find(s => s.id === simId)?.fields.find(f => f.name === 'consent');
+        const sim = simulationData.find(s => s.id === simId);
+        if (!sim) continue;
         
-        if (consentField && !details.consent) {
-            const sim = simulationData.find(s => s.id === simId);
-            toast({
-                variant: "destructive",
-                title: "Consent Required",
-                description: `You must provide consent for the "${sim?.type}" simulation to proceed.`,
-            });
-            return;
+        const details = simulationDetails[simId] || {};
+
+        for (const field of sim.fields) {
+            // Check if the field is missing or empty (for checkboxes, it must be true)
+            const isMissing = field.type === 'checkbox' ? !details[field.name] : !details[field.name];
+
+            if (isMissing) {
+                toast({
+                    variant: "destructive",
+                    title: "Incomplete Form",
+                    description: `Please fill out all fields for the "${sim.type}" simulation, including the consent checkbox.`,
+                });
+                return;
+            }
         }
     }
 
