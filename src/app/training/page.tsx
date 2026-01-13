@@ -44,26 +44,24 @@ const incompleteQuizzes = [
 ]
 
 export default function MyTrainingPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  // Create query ONLY if user exists, as per the fix instructions.
   const trainingResultsQuery = useMemoFirebase(() => {
-    if (!user) return null;
+    if (!user || !firestore) return null;
     return query(
       collection(firestore, `users/${user.uid}/trainingResults`),
       orderBy('completedAt', 'desc')
     );
   }, [user, firestore]);
-
-  // Pass query to hook and skip if the query is null.
+  
   const { data: trainingResults, isLoading: isLoadingResults } = useCollection<TrainingResult>(
     trainingResultsQuery,
     { skip: !trainingResultsQuery }
   );
 
   const userDocRef = useMemoFirebase(
-    () => (user ? doc(firestore, 'users', user.uid) : null),
+    () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
     [user, firestore]
   );
   const { data: userData, isLoading: isLoadingUser } = useDoc<{risk: 'Low' | 'Medium' | 'High'}>(userDocRef);
@@ -105,7 +103,7 @@ export default function MyTrainingPage() {
     return { metrics: metricsData, topicPerformance: topicPerf, personalBest: bestScore, averageScore: avgScore, weakestTopics: weakTopics };
   }, [trainingResults, userData]);
   
-  const isLoading = isLoadingResults || isLoadingUser;
+  const isLoading = isLoadingResults || isLoadingUser || isUserLoading;
 
   const ClickableCard = ({ children, href, className }: { children: React.ReactNode, href: string, className?: string }) => (
     <Link href={href} className="block group">
@@ -127,7 +125,7 @@ export default function MyTrainingPage() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {metrics.map((metric) => (
+            {metrics.map((metric: any) => (
               <ClickableCard key={metric.label} href="/risk-profile">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">{metric.label}</CardTitle>
