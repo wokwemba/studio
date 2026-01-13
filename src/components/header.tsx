@@ -12,15 +12,22 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useAuth, useUser } from "@/firebase";
+import { useAuth, useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { doc } from 'firebase/firestore';
 
 export default function Header() {
-  const userAvatar = PlaceHolderImages.find((p) => p.id === 'user-avatar-1')?.imageUrl || '';
   const auth = useAuth();
   const { user } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
+
+  const userDocRef = useMemoFirebase(
+    () => (user ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
+  const { data: userData } = useDoc<{ photoURL?: string; avatarId?: string }>(userDocRef);
 
   const handleLogout = () => {
     if(auth) {
@@ -28,6 +35,10 @@ export default function Header() {
     }
     router.push('/login');
   };
+
+  const userAvatar = userData?.photoURL 
+    || PlaceHolderImages.find((p) => p.id === (userData?.avatarId || 'user-avatar-1'))?.imageUrl 
+    || '';
 
 
   return (

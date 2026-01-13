@@ -51,6 +51,10 @@ const createUserProfile = async (user: User): Promise<string> => {
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) {
         const roleId = docSnap.data().roleId || ROLES.USER;
+        // If user logs in with google and has no photo, update it.
+        if (user.photoURL && !docSnap.data().photoURL) {
+            updateDocumentNonBlocking(userDocRef, { photoURL: user.photoURL });
+        }
         return await getRoleNameFromId(db, roleId);
     }
 
@@ -68,7 +72,8 @@ const createUserProfile = async (user: User): Promise<string> => {
         roleId: roleId,
         status: 'Active',
         risk: 'Low',
-        avatarId: `user-avatar-${Math.floor(Math.random() * 5) + 1}`,
+        photoURL: user.photoURL || null, // Save Google photo URL
+        avatarId: user.photoURL ? null : `user-avatar-${Math.floor(Math.random() * 5) + 1}`, // Fallback for email signup
     };
 
     try {
@@ -173,3 +178,6 @@ export async function signInWithGoogle(
     return { success: false, error: mapFirebaseError(error) };
   }
 }
+
+export { getRoleNameFromId }; // Export for use in other components if needed
+import { updateDocumentNonBlocking } from './non-blocking-updates';

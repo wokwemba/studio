@@ -18,10 +18,13 @@ export default function ProfilePage() {
     () => (user ? doc(firestore, "users", user.uid) : null),
     [user, firestore]
   );
-  const { data: userData, isLoading: isUserDataLoading } = useDoc<{name: string; email: string, avatarId?: string}>(userDocRef);
+  const { data: userData, isLoading: isUserDataLoading } = useDoc<{name: string; email: string; photoURL?: string; avatarId?: string}>(userDocRef);
   
   const userAvatar = useMemo(() => {
-     if (!userData?.avatarId) {
+    if (userData?.photoURL) {
+        return userData.photoURL;
+    }
+    if (!userData?.avatarId) {
         const matchingImage = PlaceHolderImages.find((p) => p.id === 'user-avatar-1');
         return matchingImage?.imageUrl || '';
     }
