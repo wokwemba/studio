@@ -1,117 +1,108 @@
 'use server';
 
 /**
- * @fileOverview A conversational AI tutor for cybersecurity training.
+ * @fileOverview An AI flow to generate an interactive training module on AI in Cybersecurity.
  *
- * - chat: The main function to interact with the AI tutor.
- * - ChatMessage: The type for a single message in the chat history.
- * - ChatResponse: The response from the AI, including the updated history and score.
+ * - generateAiToolsTraining: The main function to generate the training content.
+ * - TrainingCard: The type for a single educational card in the module.
+ * - AiToolsTrainingResponse: The response from the AI, containing an array of training cards.
  */
 
 import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 import {
-  ChatInputSchema,
-  ChatResponseSchema,
-  type ChatInput,
-  type ChatResponse,
-  type ChatMessage,
-} from './schemas/chat-schema';
+  BrainCircuit,
+  ShieldCheck,
+  Zap,
+  Bot,
+  type LucideIcon,
+  Search,
+} from 'lucide-react';
+
+export const TrainingCardSchema = z.object({
+  icon: z
+    .enum(['brain', 'shield', 'zap', 'bot', 'search'])
+    .describe('The name of the icon to display on the card.'),
+  title: z.string().describe('The title of the training card.'),
+  content: z
+    .string()
+    .describe('The educational content for the card, formatted as a single paragraph.'),
+  question: z.string().describe('A multiple-choice question to test understanding.'),
+  options: z
+    .array(z.string())
+    .length(3)
+    .describe('An array of exactly 3 possible answers for the question.'),
+  correctAnswer: z.string().describe('The correct answer from the options array.'),
+});
+
+export type TrainingCard = z.infer<typeof TrainingCardSchema>;
+
+const AiToolsTrainingResponseSchema = z.object({
+  cards: z
+    .array(TrainingCardSchema)
+    .length(5)
+    .describe('An array of exactly 5 training cards.'),
+});
+export type AiToolsTrainingResponse = z.infer<typeof AiToolsTrainingResponseSchema>;
 
 
-// Define the prompt for the AI tutor
-const tutorPrompt = ai.definePrompt({
-  name: 'cybersecurityTutorPrompt',
-  input: { schema: ChatInputSchema },
-  output: { schema: ChatResponseSchema },
-  prompt: `You are an expert AI Cybersecurity Tutor. Your goal is to teach users about cybersecurity in a conversational, interactive way.
+const trainingPrompt = ai.definePrompt({
+  name: 'aiToolsTrainingPrompt',
+  output: { schema: AiToolsTrainingResponseSchema },
+  prompt: `You are an expert AI Cybersecurity Trainer. Your task is to create an interactive, infographic-style training module about the role of AI in cybersecurity.
 
-You must follow these rules:
-1.  **Maintain a Conversation:** Your responses should be natural and conversational, building on the user's messages.
-2.  **Teach, Then Quiz:** Your primary role is to teach. First, explain a concept clearly. AFTER explaining it, you MUST ask a multiple-choice or open-ended question to test the user's understanding of THAT concept.
-3.  **Evaluate and Score:** When the user answers a question, you MUST evaluate if they are correct. Update their score based on their answer. Start the score at 0. Add 10 points for a correct answer. Do not subtract points for wrong answers, but explain why they were wrong and re-teach the concept if needed before moving on.
-4.  **One Question at a Time:** Do not ask a question if you have already asked one in your immediately preceding turn. First, evaluate the user's answer to the previous question.
-5.  **Welcome Message:** If the user's message is "Start the conversation", you must provide a friendly welcome message, introduce yourself, explain how the chat works (teaching, quizzing, and scoring), and then present the first topic and question.
-6.  **Always Respond with Full History:** Your final output MUST include the entire chat history, including the user's latest message and your new response.
+Generate exactly 5 educational "cards". Each card must include:
+1.  An icon name from this list: 'brain', 'shield', 'zap', 'bot', 'search'.
+2.  A concise title.
+3.  A single paragraph of educational content (3-4 sentences).
+4.  A clear, multiple-choice question based *only* on the content of that card.
+5.  Exactly 3 answer options.
+6.  The correct answer.
 
-The user's current score is: {{history.filter(m => m.role === 'model').slice(-1)[0]?.content.match(/Score: (\\d+)/)?.[1] ?? 0}}
+The topics for the 5 cards should be:
+1.  AI for Threat Detection (Use 'search' icon)
+2.  AI in Phishing Simulation (Use 'bot' icon)
+3.  AI for Vulnerability Management (Use 'shield' icon)
+4.  AI-Powered Incident Response (Use 'zap' icon)
+5.  The Future of AI in Cybersecurity (Use 'brain' icon)
 
-Here is the current conversation history:
-{{#each history}}
-- {{role}}: {{content}}
-{{/each}}
-
-User's new message: {{{message}}}
-
-Based on the rules and the user's message, continue the conversation. If you just asked a question, evaluate the answer. If you just taught something or evaluated an answer, teach a new concept and ask a question. Provide the updated score and full chat history.
+Generate the full training module now.
 `,
 });
 
-const extractScore = (history: ChatMessage[]): number => {
-    // Look backwards from the last message to find the most recent score.
-    for (let i = history.length - 1; i >= 0; i--) {
-        const message = history[i];
-        if (message.role === 'model') {
-            const scoreMatch = message.content.match(/Score: (\d+)/);
-            if (scoreMatch && scoreMatch[1]) {
-                return parseInt(scoreMatch[1], 10);
-            }
-        }
-    }
-    // If no score is found in the history, default to 0.
-    return 0;
-};
 
-
-// Define the main Genkit flow
-const chatFlow = ai.defineFlow(
+const generateAiToolsTrainingFlow = ai.defineFlow(
   {
-    name: 'conversationalTutorFlow',
-    inputSchema: ChatInputSchema,
-    outputSchema: ChatResponseSchema,
+    name: 'generateAiToolsTrainingFlow',
+    outputSchema: AiToolsTrainingResponseSchema,
   },
-  async (input) => {
-    // In a real application, you might use the conversationId to persist
-    // the chat history in a database like Firestore.
-    const { output } = await tutorPrompt(input);
-    return output!;
+  async () => {
+    let attempt = 0;
+    const maxRetries = 3;
+    while (attempt < maxRetries) {
+      try {
+        const { output } = await trainingPrompt();
+        if (!output || !output.cards || output.cards.length !== 5) {
+            throw new Error("AI response was incomplete or malformed.");
+        }
+        return output;
+      } catch (error) {
+        console.error(`AI Tools Training generation attempt ${attempt + 1} failed:`, error);
+        attempt++;
+        if (attempt >= maxRetries) {
+          throw new Error(
+            "Failed to generate training module. The AI service may be temporarily unavailable. Please try again."
+          );
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+    // This should not be reachable
+    throw new Error("Exhausted all retries for AI tools training generation.");
   }
 );
 
-// Export a wrapper function to be called from the client
-export async function chat(input: ChatInput): Promise<ChatResponse> {
-  // Adding a simple retry mechanism
-  let attempt = 0;
-  const maxRetries = 3;
-  while (attempt < maxRetries) {
-    try {
-      const result = await chatFlow(input);
-      // Ensure history is not empty and contains at least one model response
-      if (!result.history || result.history.filter(m => m.role === 'model').length === 0) {
-        throw new Error("AI response was empty or invalid.");
-      }
-      return result;
-    } catch (error) {
-      console.error(`Chat flow attempt ${attempt + 1} failed:`, error);
-      attempt++;
-      if (attempt >= maxRetries) {
-        // Fallback response on final failure
-        const fallbackMessage: ChatMessage = {
-          role: 'model',
-          content: "I'm sorry, I'm having trouble responding right now. The AI service may be temporarily overloaded. Please try again in a moment.",
-        };
-        
-        // Safely extract the last known score from the input history
-        const currentScore = extractScore(input.history);
 
-        return {
-          history: [...input.history, fallbackMessage],
-          score: currentScore
-        };
-      }
-      // Wait a moment before retrying
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-    }
-  }
-  // This should not be reached, but satisfies TypeScript
-  throw new Error("Exhausted all retries for chat flow.");
+export async function generateAiToolsTraining(): Promise<AiToolsTrainingResponse> {
+    return generateAiToolsTrainingFlow();
 }
