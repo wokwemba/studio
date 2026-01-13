@@ -1,94 +1,117 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  explainSimulationFailure,
-  ExplainSimulationFailureOutput,
-} from '@/ai/flows/explain-simulation-failure';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, Wand2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { simulationData, type Simulation } from './data';
+import { Target, Send } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-const emailContent = `
-    From: IT Support <it-support@example-corp.com>
-    Subject: Urgent: Action Required - Your account will be suspended
-    
-    Dear Employee,
-    
-    We have detected unusual activity on your account. To protect your account, we need you to verify your login credentials immediately.
-    
-    Please click the link below to verify your account:
-    http://example-corp-login.com/verify
-    
-    If you do not verify your account within 24 hours, it will be permanently suspended.
-    
-    Thank you,
-    IT Support
-  `;
+type SimulationRequest = {
+  id: string;
+  details: string;
+};
 
 export default function SimulationsPage() {
-  const [explanation, setExplanation] =
-    useState<ExplainSimulationFailureOutput | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedSimulations, setSelectedSimulations] = useState<Set<string>>(new Set());
+  const [simulationDetails, setSimulationDetails] = useState<Record<string, string>>({});
+  const { toast } = useToast();
 
-  const handleAnalyze = () => {
-    setLoading(true);
-    setError(null);
-    setExplanation(null);
-
-    explainSimulationFailure({
-      emailContent: emailContent,
-      userDepartment: 'Marketing',
-    })
-      .then((result) => {
-        setExplanation(result);
-      })
-      .catch((err) => {
-        console.error('Simulations Page Error:', err);
-        setError('Could not load AI analysis. The service may be temporarily unavailable due to high demand.');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+  const handleCheckboxChange = (simulationId: string, checked: boolean | 'indeterminate') => {
+    const newSelected = new Set(selectedSimulations);
+    if (checked) {
+      newSelected.add(simulationId);
+    } else {
+      newSelected.delete(simulationId);
+    }
+    setSelectedSimulations(newSelected);
   };
+
+  const handleDetailsChange = (simulationId: string, value: string) => {
+    setSimulationDetails(prev => ({ ...prev, [simulationId]: value }));
+  };
+
+  const handleSubmit = () => {
+    const requests: SimulationRequest[] = Array.from(selectedSimulations).map(id => ({
+      id: simulationData.find(s => s.id === id)?.type || 'Unknown Simulation',
+      details: simulationDetails[id] || 'No details provided.',
+    }));
+
+    console.log('Simulation Requests Submitted:', requests);
+    
+    toast({
+      title: 'Simulations Requested',
+      description: `You have requested ${requests.length} simulation(s).`,
+    });
+
+    // Reset form
+    setSelectedSimulations(new Set());
+    setSimulationDetails({});
+  };
+  
+  const isSubmitDisabled = selectedSimulations.size === 0;
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold mb-6 font-headline">Simulations</h1>
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Phishing Simulation Analysis</CardTitle>
+          <CardTitle className="font-headline flex items-center gap-2">
+            <Target className="h-6 w-6 text-primary" />
+            <span>Cyber Simulation Request Console</span>
+          </CardTitle>
           <CardDescription>
-            Analysis of a failed phishing simulation.
+            Select the simulations you want to run and provide the necessary information for each.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-semibold text-lg font-headline">Phishing Email Content</h3>
-              <pre className="bg-muted p-4 rounded-lg mt-2 font-code text-sm whitespace-pre-wrap">{emailContent}</pre>
-            </div>
-            <div>
-              <h3 className="font-semibold text-lg font-headline">AI Explanation</h3>
-              <div className="min-h-[8rem] mt-2 flex items-center justify-center p-4 border rounded-lg bg-muted/50">
-                {loading ? (
-                  <Loader className="h-8 w-8 animate-spin" />
-                ) : error ? (
-                   <p className="text-destructive text-sm">{error}</p>
-                ) : explanation ? (
-                  <p className="text-muted-foreground text-sm">{explanation.explanation}</p>
-                ) : (
-                   <p className="text-muted-foreground text-sm">Click the button to analyze why this simulation might succeed.</p>
-                )}
-              </div>
-            </div>
-          </div>
+        <CardContent className="space-y-4">
+          <Accordion type="multiple" className="w-full">
+            {simulationData.map((sim) => (
+              <AccordionItem value={sim.id} key={sim.id}>
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-4">
+                    <Checkbox
+                      id={`checkbox-${sim.id}`}
+                      checked={selectedSimulations.has(sim.id)}
+                      onCheckedChange={(checked) => handleCheckboxChange(sim.id, checked)}
+                      onClick={(e) => e.stopPropagation()} // Prevent accordion from toggling when clicking checkbox
+                    />
+                    <Label htmlFor={`checkbox-${sim.id}`} className="font-semibold text-base cursor-pointer">
+                      {sim.type}
+                    </Label>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="pl-12 pr-4 pt-2 pb-4 space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Required Inputs:</h4>
+                      <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">{sim.inputsNeeded}</p>
+                    </div>
+                    {selectedSimulations.has(sim.id) && (
+                       <div>
+                         <Label htmlFor={`textarea-${sim.id}`} className="font-semibold text-sm">Provide Details</Label>
+                         <Textarea
+                           id={`textarea-${sim.id}`}
+                           className="mt-2"
+                           placeholder="Enter details here..."
+                           value={simulationDetails[sim.id] || ''}
+                           onChange={(e) => handleDetailsChange(sim.id, e.target.value)}
+                         />
+                       </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </CardContent>
         <CardFooter>
-            <Button onClick={handleAnalyze} disabled={loading}>
-                {loading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                {loading ? 'Analyzing...' : 'Analyze with AI'}
+            <Button onClick={handleSubmit} disabled={isSubmitDisabled}>
+                <Send className="mr-2 h-4 w-4" />
+                Submit Request ({selectedSimulations.size})
             </Button>
         </CardFooter>
       </Card>
