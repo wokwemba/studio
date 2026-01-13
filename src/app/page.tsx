@@ -56,7 +56,7 @@ function Dashboard() {
   }
 
   // Enhance the user object with tenantId for the leaderboard
-  const enhancedUser = user ? { ...user, tenantId: userData?.tenantId } : null;
+  const enhancedUser = user && userData?.tenantId ? { ...user, tenantId: userData.tenantId } : null;
 
   return (
     <div className="space-y-6">
@@ -70,7 +70,7 @@ function Dashboard() {
             <RiskTrendChart />
         </div>
         <div className="lg:col-span-1">
-             <LeaderboardTable currentUser={enhancedUser} />
+             {enhancedUser && <LeaderboardTable currentUser={enhancedUser} />}
         </div>
       </div>
     </div>
