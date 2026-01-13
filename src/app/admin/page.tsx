@@ -29,7 +29,6 @@ import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@
 import { collection, query, where, limit, doc } from 'firebase/firestore';
 import { Loader } from 'lucide-react';
 import { AiInsights } from '@/components/dashboard/ai-insights';
-import { useMemo } from 'react';
 
 type Campaign = {
     id: string;
@@ -83,13 +82,13 @@ export default function AdminPage() {
     () => (firestore && tenantId && userIsAdmin) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null, 
     [firestore, tenantId, userIsAdmin]
   );
-  const { data: users, isLoading: usersLoading } = useCollection(usersQuery);
+  const { data: users, isLoading: usersLoading } = useCollection(usersQuery, { skip: !userIsAdmin });
   
   const highRiskUsersQuery = useMemoFirebase(
     () => (firestore && tenantId && userIsAdmin) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId), where('risk', '==', 'High')) : null, 
     [firestore, tenantId, userIsAdmin]
   );
-  const { data: highRiskUsers, isLoading: highRiskUsersLoading } = useCollection(highRiskUsersQuery);
+  const { data: highRiskUsers, isLoading: highRiskUsersLoading } = useCollection(highRiskUsersQuery, { skip: !userIsAdmin });
 
   const campaignsQuery = useMemoFirebase(() => firestore && collection(firestore, `tenants/default-tenant-cyber-up/campaigns`), [firestore]);
   const { data: activeCampaigns, isLoading: campaignsLoading } = useCollection<Campaign>(campaignsQuery);
