@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, type FormEvent } from 'react';
 import {
@@ -7,13 +8,13 @@ import {
 } from '@/ai/flows/generate-training-module';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader, Wand2 } from 'lucide-react';
 import { Combobox } from '@/components/ui/combobox';
 import { topics } from '@/app/training/topics';
 import { roles } from '@/app/training/roles';
+import { industries } from '@/app/training/industries';
 
 interface GeneratorFormProps {
     onGenerationStart: () => void;
@@ -95,11 +96,13 @@ export function GeneratorForm({
             </div>
              <div className="space-y-2">
                 <Label htmlFor="industry">Industry</Label>
-                <Input
-                    id="industry"
-                    placeholder="e.g., Finance, Healthcare..."
+                <Combobox
+                    items={industries.map(industry => ({ label: industry, value: industry }))}
                     value={formData.industry}
-                    onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                    onChange={(value) => setFormData({ ...formData, industry: value })}
+                    placeholder="Select or search for an industry..."
+                    searchPlaceholder="Search industries..."
+                    notfoundText="No industries found."
                     disabled={isLoading}
                 />
             </div>
