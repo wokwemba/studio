@@ -4,7 +4,6 @@ import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { RiskTrendChart } from '@/components/dashboard/risk-trend-chart';
 import { LeaderboardTable } from '@/components/dashboard/leaderboard-table';
-import { AiInsights } from '@/components/dashboard/ai-insights';
 import { Loader, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -61,13 +60,8 @@ function Dashboard() {
           <MetricCard key={metric.label} {...metric} />
         ))}
       </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <RiskTrendChart />
-        </div>
-        <div className="lg:col-span-2">
-           <AiInsights />
-        </div>
+      <div className="grid grid-cols-1 gap-6">
+        <RiskTrendChart />
       </div>
       <LeaderboardTable currentUser={user}/>
     </div>

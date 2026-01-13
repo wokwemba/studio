@@ -28,6 +28,7 @@ import {
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import { Loader } from 'lucide-react';
+import { AiInsights } from '@/components/dashboard/ai-insights';
 
 type Campaign = {
     id: string;
@@ -109,8 +110,11 @@ export default function AdminPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+        <div className="lg:col-span-3">
+          <AiInsights />
+        </div>
         {/* Active Campaigns */}
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle className='font-headline'>Active Campaigns</CardTitle>
             <CardDescription>
@@ -144,9 +148,9 @@ export default function AdminPage() {
             )}
           </CardContent>
         </Card>
+      </div>
 
-        {/* Recent Incidents */}
-        <Card className="lg:col-span-4">
+       <Card>
           <CardHeader>
             <CardTitle className='font-headline'>Recent Incidents</CardTitle>
             <CardDescription>
@@ -198,7 +202,6 @@ export default function AdminPage() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }
