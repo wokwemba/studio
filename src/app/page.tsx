@@ -63,15 +63,10 @@ function Dashboard() {
           <MetricCard key={metric.label} {...metric} />
         ))}
       </div>
-      <Card>
-        <CardHeader>
-            <CardTitle className='font-headline'>Risk Trend</CardTitle>
-            <CardDescription>Your personal risk score evolution over time (demo data).</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <RiskTrendChart />
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <RiskTrendChart />
+        <LeaderboardTable />
+      </div>
     </div>
   );
 }

@@ -18,11 +18,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Loader } from "lucide-react";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { collection, query, orderBy, limit, where } from "firebase/firestore";
-import type { User as AuthUser } from "firebase/auth";
 
 type User = {
     id: string;
@@ -48,20 +47,22 @@ const riskBadgeVariant: Record<
   High: "destructive",
 };
 
-export function LeaderboardTable({ currentUser }: { currentUser: AuthUser & { tenantId?: string } | null }) {
+export function LeaderboardTable() {
   const firestore = useFirestore();
+  const { user: currentUser } = useUser();
+  const tenantId = (currentUser as any)?.tenantId;
   
   // Only query for users within the same tenant.
   const usersQuery = useMemoFirebase(() => {
-    if (!firestore || !currentUser?.tenantId) return null;
+    if (!firestore || !tenantId) return null;
     return query(
         collection(firestore, 'users'), 
-        where('tenantId', '==', currentUser.tenantId),
+        where('tenantId', '==', tenantId),
         orderBy('risk', 'desc'), 
         limit(10)
     )
   },
-    [firestore, currentUser]
+    [firestore, tenantId]
   );
 
   // Skip the query if it's not ready (i.e., when currentUser or tenantId is not yet available)
