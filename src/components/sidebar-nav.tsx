@@ -52,7 +52,7 @@ const mainLinks = [
   { href: "/flashcards", label: "Flashcards", icon: Copy },
   { href: "/simulations", label: "Simulations", icon: Target },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/risk-profile", label: "Risk Profile", icon: User },
+  { href: "/profile", label: "My Profile", icon: User },
   { href: "/certificates", label: "Certificates", icon: FileText },
 ];
 
@@ -112,7 +112,10 @@ export function SidebarNav() {
     if (href === "/training") {
        return pathname === href || pathname.startsWith('/training/');
     }
-    return pathname === href;
+    if (href === "/") {
+        return pathname === href;
+    }
+    return pathname.startsWith(href) && href !== '/';
   };
 
   return (
