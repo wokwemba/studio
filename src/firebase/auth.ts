@@ -49,7 +49,7 @@ const createUserProfile = async (user: User): Promise<string> => {
     const db = getFirestore(user.auth.app);
     const userDocRef = doc(db, 'users', user.uid);
 
-    const isAdminEmail = user.email === 'wokwembs@safaricom.co.ke';
+    const isAdminEmail = user.email === 'wokwemba1@gmail.com';
     const isSuperAdminEmail = user.email === 'super@admin.com';
     
     const docSnap = await getDoc(userDocRef);
@@ -153,7 +153,7 @@ export async function signInWithEmail(
 ): Promise<{ success: boolean; role?: string; error?: string; isInvited?: boolean }> {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const roleName = await createUserProfile(userCredential.user); // Await the profile creation/update
+    const roleName = await createUserProfile(userCredential.user);
     const token = await userCredential.user.getIdToken();
 
     await setSessionCookie(token, roleName);
@@ -201,11 +201,6 @@ export async function resetInvitedUserPassword(
         // For this app, we'll try to update the doc if we can, or create a new one with the UID.
         try {
             const tempDocRef = doc(db, 'users', userDoc.id);
-            await updateDoc(tempDocRef, {
-                status: 'Active',
-                // This is tricky because we can't change the doc ID.
-                // A better flow is to delete the placeholder and create a new one.
-            });
             await deleteDoc(tempDocRef); // Remove the old doc
         } catch (e) {
             console.warn("Could not clean up temporary invited user doc:", e);
@@ -258,7 +253,7 @@ export async function signInWithGoogle(
   try {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
-    const roleName = await createUserProfile(userCredential.user); // Await the profile creation/update
+    const roleName = await createUserProfile(userCredential.user);
     const token = await userCredential.user.getIdToken();
     
     await setSessionCookie(token, roleName);
@@ -309,6 +304,35 @@ export async function inviteUserByEmail(
     }
 }
 
-export { getRoleNameFromId };
+export async function updateUserStatus(
+  firestore: Firestore,
+  userId: string,
+  status: 'Active' | 'Suspended'
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const userDocRef = doc(firestore, 'users', userId);
+    await updateDoc(userDocRef, { status });
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating user status:", error);
+    return { success: false, error: "Failed to update user status." };
+  }
+}
 
-    
+export async function deleteUser(
+  firestore: Firestore,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const userDocRef = doc(firestore, 'users', userId);
+    await deleteDoc(userDocRef);
+    // Note: This does NOT delete the user from Firebase Authentication.
+    // That requires a backend function (e.g., Cloud Function) for security reasons.
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting user document:", error);
+    return { success: false, error: "Failed to delete user data." };
+  }
+}
+
+export { getRoleNameFromId };

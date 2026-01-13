@@ -2,8 +2,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useUser, useCollection, useFirestore, useMemoFirebase, updateUserStatus, deleteUser as deleteUserFromDb } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
   Card,
@@ -20,13 +20,25 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Loader, Users, MoreVertical, PlusCircle, UserCog, Trash2, Send } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Loader, Users, MoreVertical, PlusCircle, UserCog, Trash2, Send, ShieldOff, ShieldCheck } from 'lucide-react';
 import { AddUserDialog } from '@/components/admin/add-user-dialog';
 import { EditUserRoleDialog } from '@/components/admin/edit-user-role-dialog';
+import { useToast } from '@/hooks/use-toast';
+
 
 export type Role = {
   id: string;
@@ -51,7 +63,15 @@ const statusVariant: Record<UserProfile['status'], 'success' | 'secondary' | 'de
   Suspended: 'destructive',
 };
 
-function UserTableRow({ user, roles, onEditRole, onResendInvite, onDeleteUser }: { user: UserProfile, roles: Role[], onEditRole: (user: UserProfile) => void, onResendInvite: (user: UserProfile) => void, onDeleteUser: (user: UserProfile) => void }) {
+function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, onReactivateUser, onDeleteUser }: { 
+    user: UserProfile, 
+    roles: Role[], 
+    onEditRole: (user: UserProfile) => void, 
+    onResendInvite: (user: UserProfile) => void,
+    onSuspendUser: (user: UserProfile) => void;
+    onReactivateUser: (user: UserProfile) => void;
+    onDeleteUser: (user: UserProfile) => void;
+}) {
   const roleName = roles.find(r => r.id === user.roleId)?.name || 'Unknown';
   const userAvatar = user.photoURL || PlaceHolderImages.find(p => p.id === user.avatarId)?.imageUrl || '';
   
@@ -89,6 +109,17 @@ function UserTableRow({ user, roles, onEditRole, onResendInvite, onDeleteUser }:
                     <Send className="mr-2 h-4 w-4" /> Resend Invite
                 </DropdownMenuItem>
             )}
+             {user.status === 'Active' && (
+                <DropdownMenuItem onSelect={() => onSuspendUser(user)}>
+                    <ShieldOff className="mr-2 h-4 w-4" /> Suspend User
+                </DropdownMenuItem>
+            )}
+            {user.status === 'Suspended' && (
+                <DropdownMenuItem onSelect={() => onReactivateUser(user)}>
+                    <ShieldCheck className="mr-2 h-4 w-4" /> Reactivate User
+                </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => onDeleteUser(user)} className="text-destructive">
               <Trash2 className="mr-2 h-4 w-4" /> Delete User
             </DropdownMenuItem>
@@ -104,19 +135,67 @@ export default function AdminUsersPage() {
   const firestore = useFirestore();
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<UserProfile | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+  const { toast } = useToast();
+
+  const usersQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'users')) : null),
+    [firestore]
+  );
+  
+  // No longer filtering by tenantId in the query to ensure SuperAdmins see all users.
+  // Filtering is done client-side.
+  const { data: allUsers, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery, { skip: !usersQuery });
 
   const tenantId = (currentUser as any)?.tenantId;
 
-  const usersQuery = useMemoFirebase(
-    () => (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null,
-    [firestore, tenantId]
-  );
-  const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery, { skip: !usersQuery });
+  // Client-side filtering
+  const users = currentUser?.email === 'super@admin.com' 
+    ? allUsers 
+    : allUsers?.filter(u => u.tenantId === tenantId);
+
 
   const rolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'roles') : null, [firestore]);
   const { data: roles, isLoading: rolesLoading } = useCollection<Role>(rolesQuery);
   
   const isLoading = usersLoading || rolesLoading;
+
+  const handleStatusUpdate = async (user: UserProfile, status: 'Active' | 'Suspended') => {
+    if (!firestore) return;
+    const result = await updateUserStatus(firestore, user.id, status);
+    if (result.success) {
+      toast({
+        title: 'User Updated',
+        description: `${user.name} has been ${status.toLowerCase()}.`,
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: result.error,
+      });
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete || !firestore) return;
+    const result = await deleteUserFromDb(firestore, userToDelete.id);
+
+    if (result.success) {
+      toast({
+        title: 'User Deleted',
+        description: `${userToDelete.name} has been permanently deleted.`,
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Deletion Failed',
+        description: result.error,
+      });
+    }
+    setUserToDelete(null);
+  };
+
 
   return (
     <>
@@ -155,7 +234,9 @@ export default function AdminUsersPage() {
                     roles={roles}
                     onEditRole={setUserToEdit}
                     onResendInvite={(u) => alert(`Resend invite for ${u.name}`)}
-                    onDeleteUser={(u) => alert(`Delete user ${u.name}`)}
+                    onSuspendUser={(u) => handleStatusUpdate(u, 'Suspended')}
+                    onReactivateUser={(u) => handleStatusUpdate(u, 'Active')}
+                    onDeleteUser={setUserToDelete}
                   />
                 ))}
               </TableBody>
@@ -180,6 +261,26 @@ export default function AdminUsersPage() {
           currentRoleId={userToEdit.roleId}
           roles={roles}
         />
+      )}
+
+      {userToDelete && (
+        <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the user
+                    account for <span className='font-bold'>{userToDelete.name}</span> and remove their data from our servers.
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90">
+                    Delete
+                </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
       )}
     </>
   );
