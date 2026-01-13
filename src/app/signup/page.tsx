@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { signUpWithEmail } from '@/firebase/auth';
 import { ShieldCheck, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-function SignupForm() {
+export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -54,58 +54,6 @@ function SignupForm() {
     }
   };
   return (
-    <Card className="w-full max-w-md z-10 bg-card/80 backdrop-blur-lg">
-      <CardHeader>
-        <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
-        <CardDescription>Enter your details to get started.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSignup} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="m@example.com"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password (min. 6 characters)</Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-          {error && <p className="text-destructive text-sm">{error}</p>}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-            {loading ? 'Creating Account...' : 'Sign Up'}
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter className='text-sm text-center flex justify-center'>
-          <p>Already have an account? <Link href="/login" className='text-primary hover:underline'>Sign In</Link></p>
-      </CardFooter>
-    </Card>
-  )
-}
-
-export default function SignupPage() {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  return (
      <div 
         className="relative min-h-screen w-full flex flex-col items-center justify-center bg-background p-4"
     >
@@ -123,7 +71,47 @@ export default function SignupPage() {
             <ShieldCheck className="w-10 h-10 text-primary" />
             <h1 className="text-3xl font-headline font-semibold text-white">Cyber-UP</h1>
        </div>
-       {isClient ? <SignupForm /> : null}
+        <Card className="w-full max-w-md z-10 bg-card/80 backdrop-blur-lg">
+        <CardHeader>
+            <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
+            <CardDescription>Enter your details to get started.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="password">Password (min. 6 characters)</Label>
+                <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                />
+            </div>
+            {error && <p className="text-destructive text-sm">{error}</p>}
+            <Button type="submit" className="w-full" disabled={loading}>
+                {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                {loading ? 'Creating Account...' : 'Sign Up'}
+            </Button>
+            </form>
+        </CardContent>
+        <CardFooter className='text-sm text-center flex justify-center'>
+            <p>Already have an account? <Link href="/login" className='text-primary hover:underline'>Sign In</Link></p>
+        </CardFooter>
+        </Card>
     </div>
   );
 }
