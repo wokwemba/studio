@@ -1,11 +1,11 @@
 
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { type GenerateTrainingModuleOutput } from '@/ai/flows/generate-training-module';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, BookOpen, Lightbulb, CheckCircle, XCircle, Share2 } from 'lucide-react';
+import { Loader, BookOpen, Lightbulb, CheckCircle, XCircle, Share2, Award } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
@@ -13,6 +13,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Label } from '@/components/ui/label';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { CertificateTemplate } from '@/components/training/certificate';
+import { format, addYears } from 'date-fns';
 
 // Dynamically import the form component with SSR disabled
 const GeneratorForm = dynamic(() => import('./generator-form').then(mod => mod.GeneratorForm), {
@@ -36,6 +40,8 @@ export default function GenerateTrainingModulePage() {
   const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
+  const certificateRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingCert, setIsGeneratingCert] = useState(false);
 
   const handleModuleGenerated = (generatedModule: GenerateTrainingModuleOutput, selectedTopic: string) => {
     setModule(generatedModule);
@@ -76,7 +82,7 @@ export default function GenerateTrainingModulePage() {
     setIsQuizSubmitted(true);
     toast({
         title: 'Quiz Submitted!',
-        description: `You scored ${finalScore.toFixed(0)}%.`,
+        description: `You scored ${finalScore.toFixed(0)}%. ${finalScore >= 80 ? 'Congratulations, you passed!' : 'Keep practicing!'}`,
     });
   };
   
@@ -118,7 +124,39 @@ export default function GenerateTrainingModulePage() {
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
+  const handleGenerateCertificate = async () => {
+    if (!certificateRef.current || !module) return;
+    setIsGeneratingCert(true);
+    try {
+      const canvas = await html2canvas(certificateRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`CyberAegis_Certificate_${topic.replace(/\s/g, '_')}.pdf`);
+      toast({
+        title: "Certificate Downloaded",
+        description: "Your certificate has been saved."
+      });
+    } catch(err) {
+        console.error("Failed to generate certificate:", err);
+        toast({
+            variant: "destructive",
+            title: "Certificate Generation Failed",
+            description: "There was an error creating your certificate. Please try again."
+        });
+    } finally {
+        setIsGeneratingCert(false);
+    }
+  };
+
   const isQuizComplete = module ? Object.keys(userAnswers).length === module.quiz.length : false;
+  const passedQuiz = quizScore !== null && quizScore >= 80;
 
 
   return (
@@ -129,6 +167,18 @@ export default function GenerateTrainingModulePage() {
         onGenerationError={handleGenerationError}
         isLoading={isLoading}
       />
+      
+      <div style={{ position: 'fixed', left: '-9999px', top: '0' }}>
+         {module && user && (
+            <CertificateTemplate
+                ref={certificateRef}
+                userName={user.displayName || user.email || 'Valued User'}
+                courseName={module.title}
+                completionDate={format(new Date(), 'MMMM d, yyyy')}
+                expiryDate={format(addYears(new Date(), 1), 'MMMM d, yyyy')}
+            />
+         )}
+      </div>
 
       {error && (
         <div className="mt-6 text-center text-destructive bg-destructive/10 p-4 rounded-md">{error}</div>
@@ -229,6 +279,12 @@ export default function GenerateTrainingModulePage() {
                     {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
                     Save Results
                 </Button>
+            )}
+             {passedQuiz && (
+              <Button onClick={handleGenerateCertificate} disabled={isGeneratingCert}>
+                {isGeneratingCert ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Award className="mr-2 h-4 w-4" />}
+                {isGeneratingCert ? 'Generating...' : 'Download Certificate'}
+              </Button>
             )}
           </CardFooter>
         </Card>
