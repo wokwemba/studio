@@ -53,7 +53,7 @@ export function LeaderboardTable({ currentUser }: { currentUser: AuthUser & { te
   
   // Only query for users within the same tenant.
   const usersQuery = useMemoFirebase(() => {
-    if (!firestore || !currentUser?.tenantId) return null; // <-- CRITICAL FIX: Return null if tenantId is not ready
+    if (!firestore || !currentUser?.tenantId) return null;
     return query(
         collection(firestore, 'users'), 
         where('tenantId', '==', currentUser.tenantId),
@@ -64,7 +64,7 @@ export function LeaderboardTable({ currentUser }: { currentUser: AuthUser & { te
     [firestore, currentUser]
   );
 
-  // CRITICAL FIX: Skip the query if it's not ready
+  // Skip the query if it's not ready (i.e., when currentUser or tenantId is not yet available)
   const { data: users, isLoading } = useCollection<User>(usersQuery, { skip: !usersQuery });
 
   const getImage = (id?: string) => {
