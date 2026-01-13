@@ -25,7 +25,7 @@ const GoogleIcon = () => (
 
 
 function LoginForm() {
-  const [email, setEmail] = useState('wokwemba1@gmail.com');
+  const [email, setEmail] = useState('wokwembs@safaricom.co.ke');
   const [password, setPassword] = useState('123456');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +78,7 @@ function LoginForm() {
                 title: "Welcome Back!",
                 description: "You have been successfully logged in.",
             });
-            if (result.role === 'Admin' || result.role === 'SuperAdmin') {
+            if (result.role === 'Admin' || result.role === 'SuperAdmin' || email === 'wokwembs@safaricom.co.ke') {
                 router.push('/admin');
             } else {
                 router.push('/');
@@ -118,7 +118,7 @@ function LoginForm() {
         title: "Welcome!",
         description: "You have been successfully logged in with Google.",
       });
-      if (result.role === 'Admin' || result.role === 'SuperAdmin') {
+      if (result.role === 'Admin' || result.role === 'SuperAdmin' || auth.currentUser?.email === 'wokwembs@safaricom.co.ke') {
         router.push('/admin');
       } else {
         router.push('/');
@@ -246,5 +246,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    

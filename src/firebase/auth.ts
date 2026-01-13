@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Auth,
@@ -11,7 +10,7 @@ import {
   updatePassword,
   getAuth,
 } from 'firebase/auth';
-import { setDoc, doc, getDoc, getDocs, getFirestore, Firestore, updateDoc, collection, query, where, addDoc } from 'firebase/firestore';
+import { setDoc, doc, getDoc, getDocs, getFirestore, Firestore, updateDoc, collection, query, where, addDoc, deleteDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from './errors';
 import { errorEmitter } from './error-emitter';
 import { ROLES } from '@/lib/roles';
@@ -50,7 +49,7 @@ const createUserProfile = async (user: User): Promise<string> => {
     const db = getFirestore(user.auth.app);
     const userDocRef = doc(db, 'users', user.uid);
 
-    const isAdminEmail = user.email === 'wokwemba1@gmail.com';
+    const isAdminEmail = user.email === 'wokwembs@safaricom.co.ke';
     const isSuperAdminEmail = user.email === 'super@admin.com';
     
     const docSnap = await getDoc(userDocRef);
@@ -196,23 +195,32 @@ export async function resetInvitedUserPassword(
         
         // The user now exists in Auth. We need to find the Firestore doc and update it.
         const userDoc = querySnapshot.docs[0]; // The doc we found earlier
-        const userDocRef = doc(db, 'users', userDoc.id);
-
-        // First, we need to delete the placeholder doc and create a new one with the correct UID.
-        await deleteDoc(userDocRef);
+        
+        // We'll update the existing user document with the new UID from authentication
+        // This is a simplified approach. In production, you might want to handle this differently to avoid placeholder docs.
+        // For this app, we'll try to update the doc if we can, or create a new one with the UID.
+        try {
+            const tempDocRef = doc(db, 'users', userDoc.id);
+            await updateDoc(tempDocRef, {
+                status: 'Active',
+                // This is tricky because we can't change the doc ID.
+                // A better flow is to delete the placeholder and create a new one.
+            });
+            await deleteDoc(tempDocRef); // Remove the old doc
+        } catch (e) {
+            console.warn("Could not clean up temporary invited user doc:", e);
+        }
 
         const newProfileRef = doc(db, 'users', user.uid);
         const profileData = userDoc.data();
         await setDoc(newProfileRef, {
-            ...profileData,
+            ...profileData, // Copy data from the invited doc
             status: 'Active',
-            // Ensure other fields are carried over
+            email: user.email, // ensure email is correct
             name: profileData.name || user.displayName,
-            tenantId: profileData.tenantId,
-            roleId: profileData.roleId,
-            risk: profileData.risk,
-            avatarId: profileData.avatarId,
+            // tenantId, roleId, etc., are carried over from profileData
         });
+
 
         const roleName = await getRoleNameFromId(db, profileData.roleId);
         const token = await user.getIdToken();
