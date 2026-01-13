@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -33,8 +33,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useDoc, useUser } from '@/firebase';
+import { collection, doc, query, where } from 'firebase/firestore';
 import { Loader } from 'lucide-react';
 import { EditUserRoleDialog } from '@/components/admin/edit-user-role-dialog';
 
@@ -133,7 +133,16 @@ const UserTableRow = ({ user }: { user: User }) => {
 
 export default function AdminUsersPage() {
   const firestore = useFirestore();
-  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const { user: authUser } = useUser();
+  
+  const userDocRef = useMemoFirebase(() => (firestore && authUser) ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
+  const { data: currentUserData } = useDoc<{ tenantId: string }>(userDocRef);
+  const tenantId = currentUserData?.tenantId;
+
+  const usersQuery = useMemoFirebase(() => 
+    (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null, 
+    [firestore, tenantId]
+  );
   const { data: users, isLoading } = useCollection<User>(usersQuery);
 
   return (
