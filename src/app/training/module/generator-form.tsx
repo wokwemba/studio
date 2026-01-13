@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader, Wand2 } from 'lucide-react';
 import { Combobox } from '@/components/ui/combobox';
 import { topics } from '@/app/training/topics';
+import { roles } from '@/app/training/roles';
 
 interface GeneratorFormProps {
     onGenerationStart: () => void;
@@ -30,6 +31,7 @@ export function GeneratorForm({
   const [formData, setFormData] = useState<GenerateTrainingModuleInput>({
     topic: 'Recognizing Phishing Emails',
     difficulty: 'easy',
+    industry: 'Technology',
     targetRole: 'All Employees',
   });
 
@@ -91,16 +93,28 @@ export function GeneratorForm({
                 </SelectContent>
                 </Select>
             </div>
-            <div className="space-y-2">
-                <Label htmlFor="targetRole">Target Role</Label>
+             <div className="space-y-2">
+                <Label htmlFor="industry">Industry</Label>
                 <Input
-                id="targetRole"
-                placeholder="e.g., Finance Department, Developers..."
-                value={formData.targetRole}
-                onChange={(e) => setFormData({ ...formData, targetRole: e.target.value })}
-                disabled={isLoading}
+                    id="industry"
+                    placeholder="e.g., Finance, Healthcare..."
+                    value={formData.industry}
+                    onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                    disabled={isLoading}
                 />
             </div>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="targetRole">Target Role</Label>
+                 <Combobox
+                    items={roles.map(role => ({ label: role, value: role }))}
+                    value={formData.targetRole}
+                    onChange={(value) => setFormData({ ...formData, targetRole: value })}
+                    placeholder="Select or search for a role..."
+                    searchPlaceholder="Search roles..."
+                    notfoundText="No roles found."
+                    disabled={isLoading}
+                />
             </div>
         </CardContent>
         <CardFooter>

@@ -14,6 +14,7 @@ import {z} from 'genkit';
 const GenerateTrainingModuleInputSchema = z.object({
   topic: z.string().describe('The topic of the training module.'),
   difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of the training module.'),
+  industry: z.string().describe('The industry the training is targeted at.'),
   targetRole: z.string().describe('The target role for the training module.'),
 });
 
@@ -50,6 +51,7 @@ const generateTrainingModulePrompt = ai.definePrompt({
 
 Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}
+Industry: {{{industry}}}
 Target Role: {{{targetRole}}}
 
 Generate the following sections:
