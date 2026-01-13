@@ -89,7 +89,7 @@ const superAdminLinks = [
 export function SidebarNav() {
   const pathname = usePathname();
   const { state } = useSidebar();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
   const userDocRef = useMemoFirebase(
@@ -104,7 +104,7 @@ export function SidebarNav() {
   );
   const { data: roleData, isLoading: isRoleDataLoading } = useDoc<{name: 'User' | 'Admin' | 'SuperAdmin'}>(userRoleDocRef);
 
-  const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin';
+  const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin' || user?.email === 'wokwemba1@gmail.com';
   const userIsSuperAdmin = roleData?.name === 'SuperAdmin';
 
 
@@ -127,6 +127,8 @@ export function SidebarNav() {
     // For all other cases, an exact match is required
     return pathname === href;
   };
+  
+  const isLoading = isUserLoading || isUserDataLoading || isRoleDataLoading;
 
   return (
     <SidebarMenu>
@@ -165,7 +167,7 @@ export function SidebarNav() {
                 </SidebarMenuItem>
             ))}
         </SidebarGroup>
-      {(isUserDataLoading || isRoleDataLoading) && state === 'expanded' && (
+      {isLoading && state === 'expanded' && (
         <>
         <SidebarSeparator />
           <div className="p-2 flex items-center gap-2 text-xs text-muted-foreground">

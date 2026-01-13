@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -23,9 +23,10 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+
+function LoginForm() {
+  const [email, setEmail] = useState('wokwemba1@gmail.com');
+  const [password, setPassword] = useState('123456');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -132,25 +133,8 @@ export default function LoginPage() {
     ? "Welcome! Please set a password to activate your account." 
     : "Enter your credentials to access your account.";
 
-  return (
-    <div 
-        className="relative min-h-screen w-full flex flex-col items-center justify-center bg-background p-4"
-    >
-        <div 
-            className="absolute inset-0 bg-cover bg-center z-0" 
-            style={{
-                backgroundImage: "url('https://images.unsplash.com/photo-1544256718-3b62ff04b2cb?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
-            }}
-            data-ai-hint="cyber security abstract"
-        >
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-        </div>
-
-       <div className="relative z-10 flex items-center gap-2 mb-6">
-            <ShieldCheck className="w-10 h-10 text-primary" />
-            <h1 className="text-3xl font-headline font-semibold text-white">Cyber-UP</h1>
-       </div>
-        <Card className="w-full max-w-md z-10 bg-card/80 backdrop-blur-lg">
+    return (
+         <Card className="w-full max-w-md z-10 bg-card/80 backdrop-blur-lg">
         <CardHeader>
             <CardTitle className="text-2xl font-headline">{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
@@ -220,6 +204,45 @@ export default function LoginPage() {
             {!isInvitedUser && <p>Don't have an account? <Link href="/signup" className='text-primary hover:underline'>Sign Up</Link></p>}
         </CardFooter>
         </Card>
+    )
+}
+
+export default function LoginPage() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  return (
+    <div 
+        className="relative min-h-screen w-full flex flex-col items-center justify-center bg-background p-4"
+    >
+        <div 
+            className="absolute inset-0 bg-cover bg-center z-0" 
+            style={{
+                backgroundImage: "url('https://images.unsplash.com/photo-1510915228340-29c85a43dcfe?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
+            }}
+            data-ai-hint="cyber security abstract"
+        >
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        </div>
+
+       <div className="relative z-10 flex items-center gap-2 mb-6">
+            <ShieldCheck className="w-10 h-10 text-primary" />
+            <h1 className="text-3xl font-headline font-semibold text-white">Cyber-UP</h1>
+       </div>
+       {isClient ? <LoginForm /> : (
+         <Card className="w-full max-w-md z-10 bg-card/80 backdrop-blur-lg">
+            <CardHeader>
+                <CardTitle className="text-2xl font-headline">Sign In</CardTitle>
+                <CardDescription>Enter your credentials to access your account.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center h-48">
+                <Loader className="w-8 h-8 animate-spin" />
+            </CardContent>
+         </Card>
+       )}
     </div>
   );
 }
