@@ -79,7 +79,7 @@ export default function FlashcardsPage() {
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       <div className="flex items-center gap-2 mb-6">
         <Copy className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold font-headline">AI Flashcards</h1>
+        <h1 className="text-3xl font-bold font-headline">Cybersecurity Flashcards</h1>
       </div>
 
       <Card>
