@@ -10,14 +10,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import {
-  BrainCircuit,
-  ShieldCheck,
-  Zap,
-  Bot,
-  type LucideIcon,
-  Search,
-} from 'lucide-react';
 
 export const TrainingCardSchema = z.object({
   icon: z
