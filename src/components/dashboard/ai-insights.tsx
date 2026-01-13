@@ -15,16 +15,21 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader, Wand2 } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 
 export function AiInsights() {
   const [insights, setInsights] = useState<SurfaceAiInsightsOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const firestore = useFirestore();
+  const { user } = useUser();
+  const tenantId = (user as any)?.tenantId;
 
-  const usersQuery = useMemoFirebase(() => firestore && query(collection(firestore, 'users')), [firestore]);
+  const usersQuery = useMemoFirebase(
+    () => (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null,
+    [firestore, tenantId]
+  );
   const { data: users, isLoading: usersLoading } = useCollection(usersQuery);
 
   const modulesQuery = useMemoFirebase(() => firestore && query(collection(firestore, 'trainingModules')), [firestore]);

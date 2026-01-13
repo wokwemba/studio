@@ -25,10 +25,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import { Loader } from 'lucide-react';
 import { AiInsights } from '@/components/dashboard/ai-insights';
+import { useMemo } from 'react';
 
 type Campaign = {
     id: string;
@@ -61,11 +62,19 @@ const statusVariant: Record<Incident['status'], 'destructive' | 'secondary' | 'o
 
 export default function AdminPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
+  const tenantId = (user as any)?.tenantId;
 
-  const usersQuery = useMemoFirebase(() => firestore && collection(firestore, 'users'), [firestore]);
+  const usersQuery = useMemoFirebase(
+    () => (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null, 
+    [firestore, tenantId]
+  );
   const { data: users, isLoading: usersLoading } = useCollection(usersQuery);
   
-  const highRiskUsersQuery = useMemoFirebase(() => firestore && query(collection(firestore, 'users'), where('risk', '==', 'High')), [firestore]);
+  const highRiskUsersQuery = useMemoFirebase(
+    () => (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId), where('risk', '==', 'High')) : null, 
+    [firestore, tenantId]
+  );
   const { data: highRiskUsers, isLoading: highRiskUsersLoading } = useCollection(highRiskUsersQuery);
 
   const campaignsQuery = useMemoFirebase(() => firestore && collection(firestore, `tenants/default-tenant-cyber-up/campaigns`), [firestore]);
