@@ -34,7 +34,7 @@ export default function Header() {
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="md:hidden" />
-        <h1 className="text-lg font-headline font-semibold md:hidden">CyberAegis</h1>
+        <h1 className="text-lg font-headline font-semibold md:hidden">Cyber-UP</h1>
       </div>
 
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">

@@ -23,7 +23,7 @@ export default function TrainingChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [score, setScore] = useState(0);
   const [conversationId] = useState(
-    () => `cyberaegis-chat-${Date.now()}`
+    () => `cyber-up-chat-${Date.now()}`
   );
 
   const chatContainerRef = useRef<HTMLDivElement>(null);

@@ -29,6 +29,7 @@ import {
   Building,
   Loader,
   Wand2,
+  ShieldOff,
 } from "lucide-react";
 
 import {
@@ -66,6 +67,7 @@ const adminLinks = [
     { href: "/admin/phishing", label: "Phishing Sims", icon: Mail },
     { href: "/admin/fraud", label: "Fraud Sims", icon: Zap },
     { href: "/admin/incidents", label: "Incident Mgmt", icon: ShieldAlert },
+    { href: "/admin/vulnerabilities", label: "Vulnerability Mgmt", icon: ShieldOff },
     { href: "/admin/analytics", label: "Risk & Analytics", icon: BarChart3 },
     { href: "/admin/compliance", label: "Compliance & Audit", icon: FileBadge },
     { href: "/admin/certifications", label: "Certifications", icon: BadgeCheck },

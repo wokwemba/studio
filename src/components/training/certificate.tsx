@@ -20,7 +20,7 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
         <div className="flex-1 flex flex-col justify-center items-center text-center border-2 border-secondary p-8">
           <div className="flex items-center gap-3 mb-4">
             <ShieldCheck className="w-16 h-16 text-primary" />
-            <h1 className="text-4xl font-bold tracking-wider" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>CyberAegis</h1>
+            <h1 className="text-4xl font-bold tracking-wider" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>Cyber-UP</h1>
           </div>
 
           <p className="text-xl text-muted-foreground mt-4 mb-8">Certificate of Completion</p>
@@ -37,7 +37,7 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
               <p className="text-xs text-muted-foreground pt-1">Date of Completion</p>
             </div>
             <div className="text-center">
-                <p className="text-2xl font-bold" style={{ fontFamily: '"Source Code Pro", monospace' }}>CyberAegis</p>
+                <p className="text-2xl font-bold" style={{ fontFamily: '"Source Code Pro", monospace' }}>Cyber-UP</p>
                 <p className="text-xs text-muted-foreground pt-1">Issuing Authority</p>
             </div>
             <div className="text-center">

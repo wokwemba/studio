@@ -68,10 +68,10 @@ export default function AdminPage() {
   const highRiskUsersQuery = useMemoFirebase(() => firestore && query(collection(firestore, 'users'), where('risk', '==', 'High')), [firestore]);
   const { data: highRiskUsers, isLoading: highRiskUsersLoading } = useCollection(highRiskUsersQuery);
 
-  const campaignsQuery = useMemoFirebase(() => firestore && collection(firestore, `tenants/default-tenant-cyberaegis/campaigns`), [firestore]);
+  const campaignsQuery = useMemoFirebase(() => firestore && collection(firestore, `tenants/default-tenant-cyber-up/campaigns`), [firestore]);
   const { data: activeCampaigns, isLoading: campaignsLoading } = useCollection<Campaign>(campaignsQuery);
 
-  const incidentsQuery = useMemoFirebase(() => firestore && query(collection(firestore, `tenants/default-tenant-cyberaegis/incidents`), limit(5)), [firestore]);
+  const incidentsQuery = useMemoFirebase(() => firestore && query(collection(firestore, `tenants/default-tenant-cyber-up/incidents`), limit(5)), [firestore]);
   const { data: recentIncidents, isLoading: incidentsLoading } = useCollection<Incident>(incidentsQuery);
 
   const kpiData = [

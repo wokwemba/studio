@@ -57,7 +57,7 @@ export default function LoginPage() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
        <div className="flex items-center gap-2 mb-6">
             <ShieldCheck className="w-10 h-10 text-primary" />
-            <h1 className="text-3xl font-headline font-semibold">CyberAegis</h1>
+            <h1 className="text-3xl font-headline font-semibold">Cyber-UP</h1>
        </div>
       <Card className="w-full max-w-md">
         <CardHeader>

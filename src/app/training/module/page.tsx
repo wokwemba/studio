@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, FormEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { type GenerateTrainingModuleOutput } from '@/ai/flows/generate-training-module';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -69,7 +69,8 @@ export default function GenerateTrainingModulePage() {
     setUserAnswers(prev => ({ ...prev, [questionIndex]: answer }));
   };
 
-  const handleSubmitQuiz = () => {
+  const handleSubmitQuiz = (e: FormEvent) => {
+    e.preventDefault();
     if (!module) return;
     let score = 0;
     module.quiz.forEach((q, index) => {
@@ -120,7 +121,7 @@ export default function GenerateTrainingModulePage() {
   const handleShare = () => {
     if (typeof window === 'undefined' || !module) return;
     const subject = `Check out this Cybersecurity Training Module: ${module.title}`;
-    const body = `I generated a training module on CyberAegis about "${topic}". You can check it out here:\n\n${window.location.href}`;
+    const body = `I generated a training module on Cyber-UP about "${topic}". You can check it out here:\n\n${window.location.href}`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
@@ -138,7 +139,7 @@ export default function GenerateTrainingModulePage() {
       });
 
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save(`CyberAegis_Certificate_${topic.replace(/\s/g, '_')}.pdf`);
+      pdf.save(`Cyber-UP_Certificate_${topic.replace(/\s/g, '_')}.pdf`);
       toast({
         title: "Certificate Downloaded",
         description: "Your certificate has been saved."
@@ -215,7 +216,7 @@ export default function GenerateTrainingModulePage() {
                 ))}
               </Accordion>
             </div>
-            <div>
+            <form onSubmit={handleSubmitQuiz}>
               <h3 className="font-headline text-lg mb-2 flex items-center gap-2"><Lightbulb /> Knowledge Check Quiz</h3>
               {isQuizSubmitted && quizScore !== null && (
                 <div className='mb-6 p-4 border rounded-lg bg-muted/50'>
@@ -262,18 +263,17 @@ export default function GenerateTrainingModulePage() {
                 ))}
               </div>
               {!isQuizSubmitted && (
-                 <Button onClick={handleSubmitQuiz} disabled={!isQuizComplete} className='mt-6'>
+                 <Button type="submit" disabled={!isQuizComplete} className='mt-6'>
                     Submit Quiz
                  </Button>
               )}
-            </div>
+            </form>
           </CardContent>
           <CardFooter className='flex-wrap gap-2'>
             <Button variant="outline" onClick={handleShare}>
                 <Share2 className="mr-2 h-4 w-4" />
                 Share Module
             </Button>
-            <Button disabled={isQuizSubmitted}>Save Module to Library</Button>
             {isQuizSubmitted && (
                 <Button onClick={handleSaveResults} disabled={isSaving}>
                     {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}

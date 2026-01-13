@@ -56,7 +56,7 @@ export function AiInsights() {
 
 
     surfaceAiInsights({
-      tenantId: 'default-tenant-cyberaegis',
+      tenantId: 'default-tenant-cyber-up',
       users: insightUsers,
       trainingModules: insightModules,
     })
