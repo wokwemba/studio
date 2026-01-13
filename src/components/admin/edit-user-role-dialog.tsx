@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc } from 'firebase/firestore';
 import { type Role } from '@/app/admin/users/page';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +27,7 @@ import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 interface EditUserRoleDialogProps {
   user: { id: string; name: string };
   currentRoleId: string;
+  roles: Role[];
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }
@@ -34,6 +35,7 @@ interface EditUserRoleDialogProps {
 export function EditUserRoleDialog({
   user,
   currentRoleId,
+  roles,
   isOpen,
   onOpenChange,
 }: EditUserRoleDialogProps) {
@@ -42,16 +44,12 @@ export function EditUserRoleDialog({
   const { toast } = useToast();
   const firestore = useFirestore();
 
-  const rolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'roles') : null, [firestore]);
-  const { data: roles, isLoading: rolesLoading } = useCollection<Role>(rolesQuery);
-
   const handleSave = async () => {
     if (!firestore) return;
     setIsSaving(true);
     try {
       const userDocRef = doc(firestore, 'users', user.id);
       
-      // Using non-blocking update
       updateDocumentNonBlocking(userDocRef, { roleId: selectedRoleId });
 
       toast({
@@ -84,23 +82,17 @@ export function EditUserRoleDialog({
           <Select
             value={selectedRoleId}
             onValueChange={setSelectedRoleId}
-            disabled={rolesLoading || isSaving}
+            disabled={isSaving}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a role" />
             </SelectTrigger>
             <SelectContent>
-              {rolesLoading ? (
-                <div className='flex items-center justify-center p-2'>
-                    <Loader className='w-4 h-4 animate-spin' />
-                </div>
-              ) : (
-                roles?.map((role) => (
+              {roles.map((role) => (
                   <SelectItem key={role.id} value={role.id}>
                     {role.name}
                   </SelectItem>
-                ))
-              )}
+                ))}
             </SelectContent>
           </Select>
         </div>

@@ -125,7 +125,7 @@ export default function AdminUsersPage() {
             <div>
                 <CardTitle className="font-headline flex items-center gap-2">
                     <Users />
-                    <span>Users & Roles</span>
+                    <span>Users &amp; Roles</span>
                 </CardTitle>
                 <CardDescription>Manage users and their assigned roles in your organization.</CardDescription>
             </div>
@@ -172,12 +172,13 @@ export default function AdminUsersPage() {
         />
       )}
       
-      {userToEdit && (
+      {userToEdit && roles && (
         <EditUserRoleDialog
           isOpen={!!userToEdit}
           onOpenChange={(isOpen) => !isOpen && setUserToEdit(null)}
           user={{ id: userToEdit.id, name: userToEdit.name }}
           currentRoleId={userToEdit.roleId}
+          roles={roles}
         />
       )}
     </>
