@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth } from '@/firebase';
 import { signInWithEmail, signInWithGoogle, resetInvitedUserPassword } from '@/firebase/auth';
 import { ShieldCheck, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -84,6 +84,10 @@ export default function LoginPage() {
             }
         } else {
              if (result.isInvited) {
+                toast({
+                  title: 'Account Activation Required',
+                  description: 'This is an invited account. Please set a password to continue.',
+                });
                 setIsInvitedUser(true);
                 setError(null); // Clear previous error
             } else {
@@ -219,3 +223,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

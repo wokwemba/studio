@@ -9,8 +9,9 @@ import {
   UserCredential,
   User,
   updatePassword,
+  getAuth,
 } from 'firebase/auth';
-import { setDoc, doc, getDoc, getDocs, getFirestore, Firestore, updateDoc, collection, query, where } from 'firebase/firestore';
+import { setDoc, doc, getDoc, getDocs, getFirestore, Firestore, updateDoc, collection, query, where, addDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from './errors';
 import { errorEmitter } from './error-emitter';
 import { ROLES } from '@/lib/roles';
@@ -57,28 +58,24 @@ const createUserProfile = async (user: User): Promise<string> => {
     if (docSnap.exists()) {
         const existingData = docSnap.data();
         let currentRoleId = existingData.roleId || ROLES.USER;
+        let roleIdToUpdate = currentRoleId;
+        
+        if (isAdminEmail && currentRoleId !== ROLES.ADMIN && currentRoleId !== ROLES.SUPER_ADMIN) {
+            roleIdToUpdate = ROLES.ADMIN;
+        } else if (isSuperAdminEmail && currentRoleId !== ROLES.SUPER_ADMIN) {
+            roleIdToUpdate = ROLES.SUPER_ADMIN;
+        }
 
         const updates: Record<string, any> = {};
-        let needsUpdate = false;
-        
-        let targetRoleId = currentRoleId;
-        if (isAdminEmail && currentRoleId !== ROLES.ADMIN && currentRoleId !== ROLES.SUPER_ADMIN) {
-             targetRoleId = ROLES.ADMIN;
-        } else if (isSuperAdminEmail && currentRoleId !== ROLES.SUPER_ADMIN) {
-             targetRoleId = ROLES.SUPER_ADMIN;
+        if (roleIdToUpdate !== currentRoleId) {
+            updates.roleId = roleIdToUpdate;
         }
 
-        if (targetRoleId !== currentRoleId) {
-            updates.roleId = targetRoleId;
-            needsUpdate = true;
-        }
-
-        if (user.photoURL && !existingData.photoURL) {
+        if (user.photoURL && existingData.photoURL !== user.photoURL) {
             updates.photoURL = user.photoURL;
-            needsUpdate = true;
         }
-        
-        if (needsUpdate) {
+
+        if (Object.keys(updates).length > 0) {
            await updateDoc(userDocRef, updates).catch(error => {
                 const permissionError = new FirestorePermissionError({
                     path: userDocRef.path,
@@ -87,9 +84,11 @@ const createUserProfile = async (user: User): Promise<string> => {
                 });
                 errorEmitter.emit('permission-error', permissionError);
            });
-           return await getRoleNameFromId(db, targetRoleId);
+           // Return the name of the role we just updated to
+           return await getRoleNameFromId(db, roleIdToUpdate);
         }
         
+        // If no updates, return name of current role
         return await getRoleNameFromId(db, currentRoleId);
 
     } else {
@@ -155,7 +154,7 @@ export async function signInWithEmail(
 ): Promise<{ success: boolean; role?: string; error?: string; isInvited?: boolean }> {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const roleName = await createUserProfile(userCredential.user);
+    const roleName = await createUserProfile(userCredential.user); // Await the profile creation/update
     const token = await userCredential.user.getIdToken();
 
     await setSessionCookie(token, roleName);
@@ -167,7 +166,7 @@ export async function signInWithEmail(
         const q = query(usersRef, where("email", "==", email), where("status", "==", "Invited"));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-            return { success: false, error: "Invited user flow triggered.", isInvited: true };
+            return { success: false, error: "This looks like an invited account. Please follow the password creation steps.", isInvited: true };
         }
     }
     return { success: false, error: mapFirebaseError(error) };
@@ -179,53 +178,54 @@ export async function resetInvitedUserPassword(
   email: string,
   newPassword: string
 ): Promise<{ success: boolean; role?: string; error?: string }> {
-    // This is a simplified flow. A real app should use a temporary password or a secure link.
-    // We sign the user in with a placeholder, update their password, then update their status.
+    const db = getFirestore(auth.app);
+    // Find the invited user document to get its ID, as we don't know the UID yet
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where("email", "==", email), where("status", "==", "Invited"));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+        return { success: false, error: "No invited user found with this email." };
+    }
+    
+    // In this simplified flow, we assume the user doesn't exist in Auth yet.
+    // We create them, update their profile, and then they are logged in.
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, 'placeholder-password-for-login-flow');
+        const userCredential = await createUserWithEmailAndPassword(auth, email, newPassword);
         const user = userCredential.user;
+        
+        // The user now exists in Auth. We need to find the Firestore doc and update it.
+        const userDoc = querySnapshot.docs[0]; // The doc we found earlier
+        const userDocRef = doc(db, 'users', userDoc.id);
 
-        await updatePassword(user, newPassword);
+        // First, we need to delete the placeholder doc and create a new one with the correct UID.
+        await deleteDoc(userDocRef);
 
-        // Update user status in Firestore
-        const db = getFirestore(auth.app);
-        const userDocRef = doc(db, 'users', user.uid);
-        await updateDoc(userDocRef, { status: 'Active' });
+        const newProfileRef = doc(db, 'users', user.uid);
+        const profileData = userDoc.data();
+        await setDoc(newProfileRef, {
+            ...profileData,
+            status: 'Active',
+            // Ensure other fields are carried over
+            name: profileData.name || user.displayName,
+            tenantId: profileData.tenantId,
+            roleId: profileData.roleId,
+            risk: profileData.risk,
+            avatarId: profileData.avatarId,
+        });
 
-        const roleName = await createUserProfile(user);
+        const roleName = await getRoleNameFromId(db, profileData.roleId);
         const token = await user.getIdToken();
         await setSessionCookie(token, roleName);
-
+        
         return { success: true, role: roleName };
-
     } catch (error: any) {
-         // This is expected because the placeholder password is wrong.
-        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-            // This is a security risk in a real app, but for this demo, we'll proceed.
-            // A real app should have a more secure way to verify the user's identity.
-            // For now, we'll assume if we found an "Invited" user, we can proceed.
-             const tempAuth = getAuth();
-             if (tempAuth.currentUser) {
-                try {
-                    await updatePassword(tempAuth.currentUser, newPassword);
-                    const db = getFirestore(auth.app);
-                    const userDocRef = doc(db, 'users', tempAuth.currentUser.uid);
-                    await updateDoc(userDocRef, { status: 'Active' });
-
-                    const roleName = await createUserProfile(tempAuth.currentUser);
-                    const token = await tempAuth.currentUser.getIdToken();
-                    await setSessionCookie(token, roleName);
-                    return { success: true, role: roleName };
-
-                } catch (updateError: any) {
-                    return { success: false, error: "Failed to update password. Please contact support." };
-                }
-             }
+        if (error.code === 'auth/email-already-in-use') {
+             return { success: false, error: "This account seems to be active already. Please try signing in normally." };
         }
         return { success: false, error: mapFirebaseError(error) };
     }
 }
-
 
 export async function signUpWithEmail(
   auth: Auth,
@@ -250,7 +250,7 @@ export async function signInWithGoogle(
   try {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
-    const roleName = await createUserProfile(userCredential.user);
+    const roleName = await createUserProfile(userCredential.user); // Await the profile creation/update
     const token = await userCredential.user.getIdToken();
     
     await setSessionCookie(token, roleName);
@@ -267,7 +267,6 @@ export async function inviteUserByEmail(
     tenantId: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        // Check if user already exists
         const usersRef = collection(firestore, 'users');
         const q = query(usersRef, where("email", "==", email));
         const querySnapshot = await getDocs(q); 
@@ -276,30 +275,22 @@ export async function inviteUserByEmail(
             return { success: false, error: "A user with this email already exists." };
         }
 
-        // This only creates the Firestore record. Firebase Auth user is not created here.
-        // The user will be created in Auth when they first attempt to log in.
-        const newUserDocRef = doc(collection(firestore, 'users'));
         const newUserProfile = {
-            // Not setting a real UID from auth, which is a problem for the login flow.
-            // This flow is simplified for demonstration.
             email: email,
             name: email.split('@')[0],
             tenantId: tenantId,
             roleId: roleId,
             status: 'Invited',
-            risk: 'Low', // Default risk for invited users
+            risk: 'Low',
             avatarId: `user-avatar-${Math.floor(Math.random() * 5) + 1}`,
         };
-
-        // We can't set the doc with a generated ID and then get that ID.
-        // We will let Firestore auto-generate the ID upon creation.
-        await setDoc(doc(firestore, "users", newUserDocRef.id), newUserProfile);
-
+        
+        // Let firestore auto-generate the ID. This user doc is temporary until the user signs up.
+        await addDoc(collection(firestore, "users"), newUserProfile);
 
         return { success: true };
     } catch (error: any) {
         console.error("Error inviting user:", error);
-        // This is a simplified error handling.
         const permissionError = new FirestorePermissionError({
             path: `users/[new_user_id]`,
             operation: 'create',
@@ -310,5 +301,6 @@ export async function inviteUserByEmail(
     }
 }
 
+export { getRoleNameFromId };
 
-export { getRoleNameFromId }; // Export for use in other components if needed
+    
