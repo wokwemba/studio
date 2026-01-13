@@ -1,77 +1,59 @@
 'use server';
 
 /**
- * @fileOverview An AI flow to generate an interactive training module on AI in Cybersecurity.
+ * @fileOverview An AI flow that acts as a cybersecurity tutor.
  *
- * - generateAiToolsTraining: The main function to generate the training content.
- * - AiToolsTrainingResponse: The response from the AI, containing an array of training cards.
+ * - chatWithTutor - The main function to interact with the AI tutor.
+ * - ChatWithTutorInput - The input type for the chat function.
+ * - ChatWithTutorResponse - The response from the AI.
  */
 
 import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 import {
-  TrainingCardSchema,
-  AiToolsTrainingResponseSchema,
-  type AiToolsTrainingResponse,
-} from './schemas/chat-schema';
+    TutorResponseSchema,
+    type TutorResponse,
+    ChatWithTutorInputSchema,
+    type ChatWithTutorInput,
+} from './schemas/tutor-schema';
+
+export async function chatWithTutor(
+  input: ChatWithTutorInput
+): Promise<TutorResponse> {
+  return chatWithTutorFlow(input);
+}
 
 
-const trainingPrompt = ai.definePrompt({
-  name: 'aiToolsTrainingPrompt',
-  output: { schema: AiToolsTrainingResponseSchema },
-  prompt: `You are an expert AI Cybersecurity Trainer. Your task is to create an interactive, infographic-style training module about the role of AI in cybersecurity.
+const tutorPrompt = ai.definePrompt({
+  name: 'tutorPrompt',
+  input: { schema: ChatWithTutorInputSchema },
+  output: { schema: TutorResponseSchema },
+  prompt: `You are an expert AI Cybersecurity Tutor. Your role is to provide clear, concise, and accurate explanations on cybersecurity topics.
 
-Generate exactly 5 educational "cards". Each card must include:
-1.  An icon name from this list: 'brain', 'shield', 'zap', 'bot', 'search'.
-2.  A concise title.
-3.  A single paragraph of educational content (3-4 sentences).
-4.  A clear, multiple-choice question based *only* on the content of that card.
-5.  Exactly 3 answer options.
-6.  The correct answer.
+The user will provide a history of the conversation and their latest query. Your response should be helpful and directly related to their question.
 
-The topics for the 5 cards should be:
-1.  AI for Threat Detection (Use 'search' icon)
-2.  AI in Phishing Simulation (Use 'bot' icon)
-3.  AI for Vulnerability Management (Use 'shield' icon)
-4.  AI-Powered Incident Response (Use 'zap' icon)
-5.  The Future of AI in Cybersecurity (Use 'brain' icon)
+Conversation History:
+{{#each history}}
+- {{#if (eq role 'user')}}User: {{/if}}{{#if (eq role 'model')}}Tutor: {{/if}}{{content}}
+{{/each}}
 
-Generate the full training module now.
+User's Query: {{{query}}}
+
+Your Response:
 `,
 });
 
 
-const generateAiToolsTrainingFlow = ai.defineFlow(
+const chatWithTutorFlow = ai.defineFlow(
   {
-    name: 'generateAiToolsTrainingFlow',
-    outputSchema: AiToolsTrainingResponseSchema,
+    name: 'chatWithTutorFlow',
+    inputSchema: ChatWithTutorInputSchema,
+    outputSchema: TutorResponseSchema,
   },
-  async () => {
-    let attempt = 0;
-    const maxRetries = 3;
-    while (attempt < maxRetries) {
-      try {
-        const { output } = await trainingPrompt();
-        if (!output || !output.cards || output.cards.length !== 5) {
-            throw new Error("AI response was incomplete or malformed.");
-        }
-        return output;
-      } catch (error) {
-        console.error(`AI Tools Training generation attempt ${attempt + 1} failed:`, error);
-        attempt++;
-        if (attempt >= maxRetries) {
-          throw new Error(
-            "Failed to generate training module. The AI service may be temporarily unavailable. Please try again."
-          );
-        }
-        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-      }
-    }
-    // This should not be reachable
-    throw new Error("Exhausted all retries for AI tools training generation.");
+  async (input) => {
+    // In a real application, you might use the conversationId to persist
+    // the chat history in a database like Firestore.
+    const { output } = await tutorPrompt(input);
+    return output!;
   }
 );
-
-
-export async function generateAiToolsTraining(): Promise<AiToolsTrainingResponse> {
-    return generateAiToolsTrainingFlow();
-}
