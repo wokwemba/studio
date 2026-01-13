@@ -14,10 +14,11 @@ type UserData = {
   trainingResults?: any[]; // Simplified for this example
   name?: string;
   email?: string;
+  tenantId?: string;
 }
 
 function Dashboard() {
-  const { user } = useUser();
+  const { user, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
 
   const userDocRef = useMemoFirebase(
@@ -25,6 +26,8 @@ function Dashboard() {
     [user, firestore]
   );
   const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userDocRef);
+
+  const isDataLoading = isAuthLoading || isUserDataLoading;
 
   const metrics = [
     {
@@ -44,7 +47,7 @@ function Dashboard() {
     },
   ];
 
-  if (isUserDataLoading) {
+  if (isDataLoading) {
     return (
         <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
             <Loader className="h-16 w-16 animate-spin text-primary" />
@@ -52,6 +55,8 @@ function Dashboard() {
     );
   }
 
+  // Enhance the user object with tenantId for the leaderboard
+  const enhancedUser = user ? { ...user, tenantId: userData?.tenantId } : null;
 
   return (
     <div className="space-y-6">
@@ -60,10 +65,14 @@ function Dashboard() {
           <MetricCard key={metric.label} {...metric} />
         ))}
       </div>
-      <div className="grid grid-cols-1 gap-6">
-        <RiskTrendChart />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+            <RiskTrendChart />
+        </div>
+        <div className="lg:col-span-1">
+             <LeaderboardTable currentUser={enhancedUser} />
+        </div>
       </div>
-      <LeaderboardTable currentUser={user}/>
     </div>
   );
 }

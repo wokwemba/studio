@@ -17,11 +17,11 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUp, ArrowDown, Minus, Loader } from "lucide-react";
+import { Loader } from "lucide-react";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { collection, query, orderBy, limit } from "firebase/firestore";
+import { collection, query, orderBy, limit, where } from "firebase/firestore";
 import type { User as AuthUser } from "firebase/auth";
 
 type User = {
@@ -30,6 +30,7 @@ type User = {
     email: string;
     risk: 'Low' | 'Medium' | 'High';
     avatarId?: string;
+    tenantId: string;
 };
 
 const riskScore: Record<User['risk'], number> = {
@@ -47,12 +48,20 @@ const riskBadgeVariant: Record<
   High: "destructive",
 };
 
-export function LeaderboardTable({ currentUser }: { currentUser: AuthUser | null }) {
+export function LeaderboardTable({ currentUser }: { currentUser: AuthUser & { tenantId?: string } | null }) {
   const firestore = useFirestore();
+  
+  // Only query for users within the same tenant.
   const usersQuery = useMemoFirebase(() => 
-    firestore ? query(collection(firestore, 'users'), orderBy('risk', 'desc'), limit(10)) : null,
-    [firestore]
+    (firestore && currentUser?.tenantId) ? query(
+        collection(firestore, 'users'), 
+        where('tenantId', '==', currentUser.tenantId),
+        orderBy('risk', 'desc'), 
+        limit(10)
+    ) : null,
+    [firestore, currentUser]
   );
+
   const { data: users, isLoading } = useCollection<User>(usersQuery);
 
   const getImage = (id?: string) => {
@@ -68,7 +77,7 @@ export function LeaderboardTable({ currentUser }: { currentUser: AuthUser | null
       <CardHeader>
         <CardTitle className="font-headline">Leaderboard</CardTitle>
         <CardDescription>
-          See how you rank against your colleagues based on risk score.
+          See how you rank against colleagues in your organization based on risk score.
         </CardDescription>
       </CardHeader>
       <CardContent>
