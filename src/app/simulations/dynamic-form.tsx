@@ -8,6 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface DynamicFormProps {
   fields: FormField[];
@@ -23,14 +29,40 @@ export function DynamicForm({ fields, formData, onFormChange, isDisabled }: Dyna
       case 'file': // HTML file inputs are complex, using text for now to enter paths.
         return (
           <Input
-            type={field.type}
+            type={field.type === 'file' ? 'file' : 'text'}
             id={field.name}
             name={field.name}
             placeholder={field.placeholder}
-            value={formData[field.name] || ''}
-            onChange={(e) => onFormChange(field.name, e.target.value)}
+            value={field.type === 'file' ? undefined : (formData[field.name] || '')}
+            onChange={(e) => onFormChange(field.name, field.type === 'file' ? e.target.files : e.target.value)}
             disabled={isDisabled}
           />
+        );
+      case 'date':
+        return (
+           <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !formData[field.name] && "text-muted-foreground"
+                )}
+                disabled={isDisabled}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {formData[field.name] ? format(new Date(formData[field.name]), "PPP") : <span>{field.placeholder || 'Pick a date'}</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={formData[field.name] ? new Date(formData[field.name]) : undefined}
+                onSelect={(date) => onFormChange(field.name, date?.toISOString())}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
         );
       case 'textarea':
         return (
@@ -90,4 +122,3 @@ export function DynamicForm({ fields, formData, onFormChange, isDisabled }: Dyna
     </div>
   );
 }
-

@@ -2,7 +2,7 @@
 export type FormField = {
     name: string;
     label: string;
-    type: 'text' | 'textarea' | 'select' | 'checkbox' | 'file';
+    type: 'text' | 'textarea' | 'select' | 'checkbox' | 'file' | 'date';
     placeholder?: string;
     options?: string[]; // for select dropdown
   };
@@ -269,7 +269,12 @@ export type FormField = {
         { name: 'trainingTopic', label: 'Training Topic', type: 'text', placeholder: 'e.g., "Advanced Kubernetes Security"' },
         { name: 'learningObjectives', label: 'Key Learning Objectives', type: 'textarea', placeholder: 'List 3-5 things the learners should be able to do after the training.' },
         { name: 'targetAudience', label: 'Target Audience', type: 'text', placeholder: 'e.g., "Senior DevOps Engineers"' },
-        { name: 'format', label: 'Preferred Format', type: 'select', options: ['Live Workshop', 'Self-Paced e-Learning Module', 'Series of short videos', 'Informational Document'] },
+        { name: 'numberOfStaff', label: 'Number of Staff', type: 'text', placeholder: 'e.g., 25' },
+        { name: 'deliveryMethod', label: 'Delivery Method', type: 'select', options: ['Online', 'Virtual', 'Physical'] },
+        { name: 'venue', label: 'Venue (if Physical)', type: 'text', placeholder: 'e.g., "Company HQ, Boardroom A"' },
+        { name: 'duration', label: 'Proposed Duration', type: 'text', placeholder: 'e.g., "2 hours", "3 days"' },
+        { name: 'proposedDate', label: 'Proposed Date', type: 'text', placeholder: 'e.g., "October 22, 2024"' },
+        { name: 'timePeriod', label: 'Time Period', type: 'text', placeholder: 'e.g., "9am - 11am EAT"' },
         { name: 'requestedBy', label: 'Requesting Department/Team', type: 'text', placeholder: 'e.g., "Platform Engineering"' },
         { name: 'consent', label: 'I confirm this is a formal request for new training content.', type: 'checkbox' },
       ],
@@ -290,5 +295,6 @@ export type FormField = {
   ];
   
   
+
 
 
