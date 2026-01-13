@@ -32,7 +32,7 @@ import { AiInsights } from '@/components/dashboard/ai-insights';
 
 type Campaign = {
     id: string;
-    name: string;
+    title: string;
     type: 'phishing' | 'training' | 'fraud';
     status: 'draft' | 'active' | 'completed';
 }
@@ -62,13 +62,13 @@ const statusVariant: Record<Incident['status'], 'destructive' | 'secondary' | 'o
 export default function AdminPage() {
   const firestore = useFirestore();
   const { user } = useUser();
-  const tenantId = (user as any)?.tenantId;
-
+  
   const userDocRef = useMemoFirebase(
     () => (user ? doc(firestore, 'users', user.uid) : null),
     [user, firestore]
   );
   const { data: currentUserData } = useDoc<{ roleId: string; tenantId: string }>(userDocRef);
+  const tenantId = currentUserData?.tenantId;
 
   const userRoleDocRef = useMemoFirebase(
     () => (firestore && currentUserData?.roleId ? doc(firestore, 'roles', currentUserData.roleId) : null),
@@ -90,11 +90,11 @@ export default function AdminPage() {
   );
   const { data: highRiskUsers, isLoading: highRiskUsersLoading } = useCollection(highRiskUsersQuery, { skip: !userIsAdmin });
 
-  const campaignsQuery = useMemoFirebase(() => firestore && collection(firestore, `tenants/default-tenant-cyber-up/campaigns`), [firestore]);
-  const { data: activeCampaigns, isLoading: campaignsLoading } = useCollection<Campaign>(campaignsQuery);
+  const campaignsQuery = useMemoFirebase(() => (firestore && tenantId) ? query(collection(firestore, `tenants/${tenantId}/campaigns`)) : null, [firestore, tenantId]);
+  const { data: activeCampaigns, isLoading: campaignsLoading } = useCollection<Campaign>(campaignsQuery, { skip: !tenantId });
 
-  const incidentsQuery = useMemoFirebase(() => firestore && query(collection(firestore, `tenants/default-tenant-cyber-up/incidents`), limit(5)), [firestore]);
-  const { data: recentIncidents, isLoading: incidentsLoading } = useCollection<Incident>(incidentsQuery);
+  const incidentsQuery = useMemoFirebase(() => (firestore && tenantId) ? query(collection(firestore, `tenants/${tenantId}/incidents`), limit(5)) : null, [firestore, tenantId]);
+  const { data: recentIncidents, isLoading: incidentsLoading } = useCollection<Incident>(incidentsQuery, { skip: !tenantId });
 
   const kpiData = [
     { title: 'Total Users', value: users ? users.length : '...', description: 'Across all tenants' },
@@ -148,7 +148,7 @@ export default function AdminPage() {
               <Table>
                   <TableHeader>
                       <TableRow>
-                          <TableHead>Name</TableHead>
+                          <TableHead>Title</TableHead>
                           <TableHead>Type</TableHead>
                           <TableHead className='text-right'>Status</TableHead>
                       </TableRow>
@@ -156,7 +156,7 @@ export default function AdminPage() {
                   <TableBody>
                       {activeCampaigns?.map((campaign) => (
                           <TableRow key={campaign.id}>
-                              <TableCell className='font-medium'>{campaign.name}</TableCell>
+                              <TableCell className='font-medium'>{campaign.title}</TableCell>
                               <TableCell>{campaign.type}</TableCell>
                               <TableCell className='text-right'>
                                   <Badge variant={campaign.status === 'active' ? 'secondary' : 'outline'}>

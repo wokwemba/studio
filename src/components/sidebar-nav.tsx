@@ -109,20 +109,23 @@ export function SidebarNav() {
 
 
   const isActive = (href: string) => {
-    if (href === "/admin" && pathname.startsWith('/admin')) {
-      return true;
-    }
-     if (href === "/training" && pathname.startsWith('/training')) {
-      return true;
-    }
+    // Exact match for the root dashboard
     if (href === "/") {
         return pathname === href;
     }
-    // For other main links, check for exact match to avoid highlighting /training when on /training/module
-    if (mainLinks.some(l => l.href === href)) {
+    // For nested routes, we want to match the parent
+    if (href === "/admin" && pathname.startsWith('/admin')) {
+      return true;
+    }
+    if (href === "/training" && pathname.startsWith('/training')) {
+      return true;
+    }
+    // For other main links, check for exact match
+    if (mainLinks.some(l => l.href === href && l.href !== '/')) {
       return pathname === href;
     }
-    return pathname.startsWith(href) && href !== '/';
+    // For all other cases, an exact match is required
+    return pathname === href;
   };
 
   return (

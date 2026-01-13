@@ -172,7 +172,7 @@ export default function AdminUsersPage() {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading && userIsAdmin ? (
+        {(isLoading && userIsAdmin) ? (
           <div className='flex justify-center items-center h-64'>
             <Loader className='w-8 h-8 animate-spin' />
           </div>
