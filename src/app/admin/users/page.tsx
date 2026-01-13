@@ -37,6 +37,7 @@ import { useCollection, useFirestore, useMemoFirebase, useDoc, useUser } from '@
 import { collection, doc, query, where } from 'firebase/firestore';
 import { Loader } from 'lucide-react';
 import { EditUserRoleDialog } from '@/components/admin/edit-user-role-dialog';
+import { AddUserDialog } from '@/components/admin/add-user-dialog';
 
 type User = {
   id: string;
@@ -132,6 +133,7 @@ const UserTableRow = ({ user }: { user: User }) => {
 
 
 export default function AdminUsersPage() {
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const firestore = useFirestore();
   const { user: authUser } = useUser();
   
@@ -156,6 +158,7 @@ export default function AdminUsersPage() {
   const { data: users, isLoading } = useCollection<User>(usersQuery, { skip: !userIsAdmin });
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex justify-between items-center">
@@ -167,7 +170,7 @@ export default function AdminUsersPage() {
             </div>
             <div className='flex gap-2'>
                 <Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Import CSV</Button>
-                <Button><PlusCircle className="mr-2 h-4 w-4" /> Add User</Button>
+                <Button onClick={() => setIsAddUserOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add User</Button>
             </div>
         </div>
       </CardHeader>
@@ -203,5 +206,13 @@ export default function AdminUsersPage() {
         )}
       </CardContent>
     </Card>
+    {currentUserData?.tenantId && (
+        <AddUserDialog 
+            isOpen={isAddUserOpen}
+            onOpenChange={setIsAddUserOpen}
+            tenantId={currentUserData.tenantId}
+        />
+    )}
+    </>
   );
 }

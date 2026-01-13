@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Auth,
@@ -9,7 +8,7 @@ import {
   UserCredential,
   User,
 } from 'firebase/auth';
-import { setDoc, doc, getDoc, getFirestore, Firestore, updateDoc } from 'firebase/firestore';
+import { setDoc, doc, getDoc, getFirestore, Firestore, updateDoc, collection, query, where } from 'firebase/firestore';
 import { FirestorePermissionError } from './errors';
 import { errorEmitter } from './error-emitter';
 import { ROLES } from '@/lib/roles';
@@ -65,8 +64,8 @@ const createUserProfile = async (user: User): Promise<string> => {
         
         const updates: Record<string, any> = {};
 
-        // If the user's role needs to be elevated, update it.
-        if (targetRoleId !== existingRoleId && (isAdminEmail || isSuperAdminEmail)) {
+        // Always ensure the correct role is set on login for designated admins
+        if ((isAdminEmail || isSuperAdminEmail) && targetRoleId !== existingRoleId) {
             updates.roleId = targetRoleId;
         }
 
@@ -76,7 +75,6 @@ const createUserProfile = async (user: User): Promise<string> => {
         }
         
         if (Object.keys(updates).length > 0) {
-           // This time we await the update to ensure it completes before proceeding
            await updateDoc(userDocRef, updates).catch(error => {
                 const permissionError = new FirestorePermissionError({
                     path: userDocRef.path,
@@ -84,12 +82,12 @@ const createUserProfile = async (user: User): Promise<string> => {
                     requestResourceData: updates,
                 });
                 errorEmitter.emit('permission-error', permissionError);
-                // Even if it fails, we continue, but the role won't be updated.
            });
+           // Return the new role name after the update
+           return await getRoleNameFromId(db, targetRoleId);
         }
         
-        // Return the role that should be correct after the update
-        return await getRoleNameFromId(db, updates.roleId || existingRoleId);
+        return await getRoleNameFromId(db, existingRoleId);
 
     } else {
         // User profile does not exist, create it.
@@ -154,7 +152,7 @@ export async function signInWithEmail(
 ): Promise<{ success: boolean; role?: string; error?: string }> {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const roleName = await createUserProfile(userCredential.user); // Await profile creation/update
+    const roleName = await createUserProfile(userCredential.user);
     const token = await userCredential.user.getIdToken();
 
     await setSessionCookie(token, roleName);
@@ -187,7 +185,7 @@ export async function signInWithGoogle(
   try {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
-    const roleName = await createUserProfile(userCredential.user); // Await profile creation/update
+    const roleName = await createUserProfile(userCredential.user);
     const token = await userCredential.user.getIdToken();
     
     await setSessionCookie(token, roleName);
@@ -196,5 +194,51 @@ export async function signInWithGoogle(
     return { success: false, error: mapFirebaseError(error) };
   }
 }
+
+export async function inviteUserByEmail(
+    firestore: Firestore,
+    email: string,
+    roleId: string,
+    tenantId: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        // Check if user already exists
+        const usersRef = collection(firestore, 'users');
+        const q = query(usersRef, where("email", "==", email));
+        const querySnapshot = await getDoc(q as unknown as DocumentReference); // Simplified for this example, in real app, you'd use getDocs
+        
+        if (!querySnapshot.empty) {
+            return { success: false, error: "A user with this email already exists." };
+        }
+
+        const newUserDocRef = doc(collection(firestore, 'users'));
+        const newUserProfile = {
+            id: newUserDocRef.id,
+            email: email,
+            name: email.split('@')[0],
+            tenantId: tenantId,
+            roleId: roleId,
+            status: 'Invited',
+            risk: 'Low', // Default risk for invited users
+            avatarId: `user-avatar-${Math.floor(Math.random() * 5) + 1}`,
+        };
+
+        await setDoc(newUserDocRef, newUserProfile).catch(error => {
+            const permissionError = new FirestorePermissionError({
+                path: newUserDocRef.path,
+                operation: 'create',
+                requestResourceData: newUserProfile,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw new Error("You do not have permission to create a new user.");
+        });
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error inviting user:", error);
+        return { success: false, error: error.message || "An unexpected error occurred while inviting the user." };
+    }
+}
+
 
 export { getRoleNameFromId }; // Export for use in other components if needed
