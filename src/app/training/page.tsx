@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useUser, useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader, BarChart, BookOpenCheck, ChevronRight, Activity, TrendingDown, Star, ListTodo } from 'lucide-react';
 import { RiskTrendChart } from '@/components/dashboard/risk-trend-chart';
 import { cn } from '@/lib/utils';
+import { useCollection } from '@/firebase/firestore/use-collection';
 
 
 type TrainingResult = {
