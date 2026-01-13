@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
-
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +96,70 @@ export default function LoginPage() {
   }
 
   return (
+    <Card className="w-full max-w-md z-10 bg-card/80 backdrop-blur-lg">
+      <CardHeader>
+        <CardTitle className="text-2xl font-headline">Sign In</CardTitle>
+        <CardDescription>Enter your credentials to access your account.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="m@example.com"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading || googleLoading}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading || googleLoading}
+            />
+          </div>
+          {error && <p className="text-destructive text-sm">{error}</p>}
+          <Button type="submit" className="w-full" disabled={loading || googleLoading}>
+            {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+            {loading ? 'Signing In...' : 'Sign In'}
+          </Button>
+        </form>
+        <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card/80 px-2 text-muted-foreground backdrop-blur-lg">Or continue with</span>
+            </div>
+        </div>
+        <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={loading || googleLoading}>
+            {googleLoading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+            {googleLoading ? 'Signing In...' : 'Sign in with Google'}
+        </Button>
+      </CardContent>
+      <CardFooter className='text-sm text-center flex justify-center'>
+          <p>Don't have an account? <Link href="/signup" className='text-primary hover:underline'>Sign Up</Link></p>
+      </CardFooter>
+    </Card>
+  )
+}
+
+export default function LoginPage() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  return (
     <div 
         className="relative min-h-screen w-full flex flex-col items-center justify-center bg-background p-4"
     >
@@ -114,59 +177,7 @@ export default function LoginPage() {
             <ShieldCheck className="w-10 h-10 text-primary" />
             <h1 className="text-3xl font-headline font-semibold text-white">Cyber-UP</h1>
        </div>
-      <Card className="w-full max-w-md z-10 bg-card/80 backdrop-blur-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl font-headline">Sign In</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading || googleLoading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading || googleLoading}
-              />
-            </div>
-            {error && <p className="text-destructive text-sm">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading || googleLoading}>
-              {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-              {loading ? 'Signing In...' : 'Sign In'}
-            </Button>
-          </form>
-          <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card/80 px-2 text-muted-foreground backdrop-blur-lg">Or continue with</span>
-              </div>
-          </div>
-          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={loading || googleLoading}>
-              {googleLoading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
-              {googleLoading ? 'Signing In...' : 'Sign in with Google'}
-          </Button>
-        </CardContent>
-        <CardFooter className='text-sm text-center flex justify-center'>
-            <p>Don't have an account? <Link href="/signup" className='text-primary hover:underline'>Sign Up</Link></p>
-        </CardFooter>
-      </Card>
+       {isClient ? <LoginForm /> : null}
     </div>
   );
 }
