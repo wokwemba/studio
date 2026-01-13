@@ -89,8 +89,11 @@ service cloud.firestore {
     // Roles are read-only for authenticated users, writable only by SuperAdmins
     match /roles/{roleId} {
       allow get: if isSignedIn();
-      allow list: if isAdmin();
       allow write: if isSuperAdmin();
+    }
+
+    match /roles {
+        allow list: if isAdmin();
     }
     
     // Permissions are managed only by SuperAdmins
