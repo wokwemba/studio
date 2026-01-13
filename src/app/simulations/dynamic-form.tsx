@@ -1,0 +1,93 @@
+
+'use client';
+
+import { FormField } from './data';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+
+interface DynamicFormProps {
+  fields: FormField[];
+  formData: Record<string, any>;
+  onFormChange: (fieldName: string, value: any) => void;
+  isDisabled?: boolean;
+}
+
+export function DynamicForm({ fields, formData, onFormChange, isDisabled }: DynamicFormProps) {
+  const renderField = (field: FormField) => {
+    switch (field.type) {
+      case 'text':
+      case 'file': // HTML file inputs are complex, using text for now to enter paths.
+        return (
+          <Input
+            type={field.type}
+            id={field.name}
+            name={field.name}
+            placeholder={field.placeholder}
+            value={formData[field.name] || ''}
+            onChange={(e) => onFormChange(field.name, e.target.value)}
+            disabled={isDisabled}
+          />
+        );
+      case 'textarea':
+        return (
+          <Textarea
+            id={field.name}
+            name={field.name}
+            placeholder={field.placeholder}
+            value={formData[field.name] || ''}
+            onChange={(e) => onFormChange(field.name, e.target.value)}
+            disabled={isDisabled}
+          />
+        );
+      case 'select':
+        return (
+          <Select
+            value={formData[field.name]}
+            onValueChange={(value) => onFormChange(field.name, value)}
+            disabled={isDisabled}
+          >
+            <SelectTrigger id={field.name}>
+              <SelectValue placeholder={field.placeholder || 'Select an option'} />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options?.map((option) => (
+                <SelectItem key={option} value={option}>{option}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      case 'checkbox':
+        return (
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox
+              id={field.name}
+              checked={!!formData[field.name]}
+              onCheckedChange={(checked) => onFormChange(field.name, checked)}
+              disabled={isDisabled}
+            />
+            <Label htmlFor={field.name} className="text-sm font-normal text-muted-foreground cursor-pointer">
+              {field.label}
+            </Label>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-4 border-t pt-4 mt-4">
+      {fields.map((field) => (
+        <div key={field.name} className="grid w-full items-center gap-1.5">
+           {field.type !== 'checkbox' && <Label htmlFor={field.name}>{field.label}</Label>}
+          {renderField(field)}
+        </div>
+      ))}
+    </div>
+  );
+}
+

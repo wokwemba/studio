@@ -6,22 +6,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { simulationData, type Simulation } from './data';
+import { simulationData } from './data';
 import { Target, Send, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection } from 'firebase/firestore';
+import { DynamicForm } from './dynamic-form';
 
-type SimulationRequestPayload = {
-  id: string;
-  details: string;
-};
+type SimulationDetails = Record<string, any>;
 
 export default function SimulationsPage() {
   const [selectedSimulations, setSelectedSimulations] = useState<Set<string>>(new Set());
-  const [simulationDetails, setSimulationDetails] = useState<Record<string, string>>({});
+  const [simulationDetails, setSimulationDetails] = useState<Record<string, SimulationDetails>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useUser();
@@ -33,12 +30,24 @@ export default function SimulationsPage() {
       newSelected.add(simulationId);
     } else {
       newSelected.delete(simulationId);
+      // Also remove details for the deselected simulation
+      setSimulationDetails(prev => {
+        const newDetails = { ...prev };
+        delete newDetails[simulationId];
+        return newDetails;
+      });
     }
     setSelectedSimulations(newSelected);
   };
 
-  const handleDetailsChange = (simulationId: string, value: string) => {
-    setSimulationDetails(prev => ({ ...prev, [simulationId]: value }));
+  const handleDetailsChange = (simulationId: string, fieldName: string, value: any) => {
+    setSimulationDetails(prev => ({
+      ...prev,
+      [simulationId]: {
+        ...prev[simulationId],
+        [fieldName]: value,
+      },
+    }));
   };
 
   const handleSubmit = async () => {
@@ -60,12 +69,26 @@ export default function SimulationsPage() {
         });
         return;
     }
+    
+    // Check for consent on all selected simulations
+    for (const simId of Array.from(selectedSimulations)) {
+        if (!simulationDetails[simId]?.consent) {
+            const sim = simulationData.find(s => s.id === simId);
+            toast({
+                variant: "destructive",
+                title: "Consent Required",
+                description: `You must provide consent for the "${sim?.type}" simulation to proceed.`,
+            });
+            return;
+        }
+    }
+
 
     setIsSubmitting(true);
     
     const requests = Array.from(selectedSimulations).map(id => ({
       type: simulationData.find(s => s.id === id)?.type || 'Unknown Simulation',
-      details: simulationDetails[id] || 'No details provided.',
+      details: simulationDetails[id] || {},
     }));
 
     try {
@@ -128,29 +151,21 @@ export default function SimulationsPage() {
                       onClick={(e) => e.stopPropagation()} // Prevent accordion from toggling when clicking checkbox
                       disabled={isSubmitting}
                     />
-                    <Label htmlFor={`checkbox-${sim.id}`} className="font-semibold text-base cursor-pointer">
+                    <Label htmlFor={`checkbox-${sim.id}`} className="font-semibold text-base cursor-pointer text-left">
                       {sim.type}
                     </Label>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="pl-12 pr-4 pt-2 pb-4 space-y-4">
-                    <div>
-                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Required Inputs:</h4>
-                      <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">{sim.inputsNeeded}</p>
-                    </div>
+                    <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">{sim.description}</p>
                     {selectedSimulations.has(sim.id) && (
-                       <div>
-                         <Label htmlFor={`textarea-${sim.id}`} className="font-semibold text-sm">Provide Details</Label>
-                         <Textarea
-                           id={`textarea-${sim.id}`}
-                           className="mt-2"
-                           placeholder="Enter details here..."
-                           value={simulationDetails[sim.id] || ''}
-                           onChange={(e) => handleDetailsChange(sim.id, e.target.value)}
-                           disabled={isSubmitting}
-                         />
-                       </div>
+                       <DynamicForm 
+                         fields={sim.fields}
+                         formData={simulationDetails[sim.id] || {}}
+                         onFormChange={(fieldName, value) => handleDetailsChange(sim.id, fieldName, value)}
+                         isDisabled={isSubmitting}
+                       />
                     )}
                   </div>
                 </AccordionContent>

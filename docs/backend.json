@@ -210,9 +210,9 @@
               "type": "object",
               "properties": {
                 "type": { "type": "string", "description": "The type of simulation requested (e.g., 'Phishing Email Attack')." },
-                "details": { "type": "string", "description": "Details provided by the user for the simulation." }
+                "details": { "type": "object", "description": "A key-value map of details provided by the user for the simulation." }
               },
-              "required": ["type"]
+              "required": ["type", "details"]
             }
           },
           "status": { "type": "string", "enum": ["Pending", "In Progress", "Completed", "Cancelled"] },
