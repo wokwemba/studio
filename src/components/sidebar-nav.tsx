@@ -54,7 +54,7 @@ const mainLinks = [
 ];
 
 const trainingLinks = [
-    { href: "/training/module", label: "AI Module Generator", icon: Wand2 },
+    { href: "/training/module", label: "Training", icon: Wand2 },
 ]
 
 const adminLinks = [
