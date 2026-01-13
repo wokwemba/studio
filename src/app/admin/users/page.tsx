@@ -135,15 +135,25 @@ export default function AdminUsersPage() {
   const firestore = useFirestore();
   const { user: authUser } = useUser();
   
-  const userDocRef = useMemoFirebase(() => (firestore && authUser) ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
-  const { data: currentUserData } = useDoc<{ tenantId: string }>(userDocRef);
+  const currentUserDocRef = useMemoFirebase(
+    () => (firestore && authUser) ? doc(firestore, 'users', authUser.uid) : null, 
+    [firestore, authUser]
+  );
+  const { data: currentUserData } = useDoc<{ tenantId: string, roleId: string }>(currentUserDocRef);
   const tenantId = currentUserData?.tenantId;
 
-  const usersQuery = useMemoFirebase(() => 
-    (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null, 
-    [firestore, tenantId]
+  const roleDocRef = useMemoFirebase(
+    () => (firestore && currentUserData?.roleId) ? doc(firestore, 'roles', currentUserData.roleId) : null,
+    [firestore, currentUserData]
   );
-  const { data: users, isLoading } = useCollection<User>(usersQuery);
+  const { data: roleData } = useDoc<Role>(roleDocRef);
+  const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin';
+
+  const usersQuery = useMemoFirebase(() => 
+    (firestore && tenantId && userIsAdmin) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null, 
+    [firestore, tenantId, userIsAdmin]
+  );
+  const { data: users, isLoading } = useCollection<User>(usersQuery, { skip: !userIsAdmin });
 
   return (
     <Card>
@@ -162,10 +172,15 @@ export default function AdminUsersPage() {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {isLoading && userIsAdmin ? (
           <div className='flex justify-center items-center h-64'>
             <Loader className='w-8 h-8 animate-spin' />
           </div>
+        ) : !userIsAdmin ? (
+            <div className="text-center text-muted-foreground py-16">
+                <p>You do not have permission to view this page.</p>
+                <p className="text-sm">Please contact an administrator if you believe this is an error.</p>
+            </div>
         ) : (
         <Table>
           <TableHeader>
