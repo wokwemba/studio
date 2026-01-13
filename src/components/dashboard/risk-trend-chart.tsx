@@ -14,7 +14,6 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { riskTrendData } from "@/app/data";
 
 const chartConfig = {
   risk: {
@@ -23,13 +22,31 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+// Dummy data as a fallback if no live data is available.
+const riskTrendData = [
+  { date: '2024-06-01', risk: 55 },
+  { date: '2024-06-03', risk: 53 },
+  { date: '2024-06-06', risk: 54 },
+  { date: '2024-06-09', risk: 50 },
+  { date: '2024-06-12', risk: 48 },
+  { date: '2024-06-15', risk: 49 },
+  { date: '2024-06-18', risk: 45 },
+  { date: '2024-06-21', risk: 46 },
+  { date: '2024-06-24', risk: 43 },
+  { date: '2024-06-27', risk: 42 },
+  { date: '2024-06-30', risk: 42 },
+];
+
+
 export function RiskTrendChart() {
+  // In a real app, this data would be fetched from Firestore.
+  // For now, we'll continue using the static data for the chart's visual representation.
   return (
     <Card>
       <CardHeader>
         <CardTitle className="font-headline">Risk Trend</CardTitle>
         <CardDescription>
-          Your risk score evolution over the last 30 days.
+          Your risk score evolution over the last 30 days (static demo data).
         </CardDescription>
       </CardHeader>
       <CardContent>

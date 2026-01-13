@@ -180,20 +180,34 @@
   },
   "firestore": {
     "structure": [
-      {"path": "tenants/{tenantId}", "definition": {"schema": {"$ref": "#/entities/Tenant"}}},
-      {"path": "users/{userId}", "definition": {"schema": {"$ref": "#/entities/User"}}},
-      {"path": "roles/{roleId}", "definition": {"schema": {"$ref": "#/entities/Role"}}},
-      {"path": "permissions/{permissionId}", "definition": {"schema": {"$ref": "#/entities/Permission"}}},
-      {"path": "role_permissions/{rolePermissionId}", "definition": {"schema": {"$ref": "#/entities/RolePermission"}}},
-      {"path": "tenants/{tenantId}/campaigns/{campaignId}", "definition": {"schema": {"$ref": "#/entities/Campaign"}}},
-      {"path": "tenants/{tenantId}/courses/{courseId}", "definition": {"schema": {"$ref": "#/entities/Course"}}},
-      {"path": "tenants/{tenantId}/phishing_simulations/{simId}", "definition": {"schema": {"$ref": "#/entities/PhishingSimulation"}}},
-      {"path": "tenants/{tenantId}/fraud_scenarios/{scenarioId}", "definition": {"schema": {"$ref": "#/entities/FraudScenario"}}},
-      {"path": "tenants/{tenantId}/incidents/{incidentId}", "definition": {"schema": {"$ref": "#/entities/Incident"}}},
-      {"path": "tenants/{tenantId}/certifications/{certId}", "definition": {"schema": {"$ref": "#/entities/Certification"}}},
-      {"path": "tenants/{tenantId}/audit_logs/{logId}", "definition": {"schema": {"$ref": "#/entities/AuditLog"}}},
-      {"path": "trainingModules/{moduleId}", "definition": {"schema": {"$ref": "#/entities/TrainingModule"}}},
-      {"path": "users/{userId}/trainingResults/{resultId}", "definition": {"schema": {"$ref": "#/entities/TrainingResult"}}}
+      {
+        "path": "tenants/{tenantId}",
+        "definition": {
+          "schema": { "$ref": "#/entities/Tenant" },
+          "subcollections": {
+            "campaigns": { "schema": { "$ref": "#/entities/Campaign" } },
+            "courses": { "schema": { "$ref": "#/entities/Course" } },
+            "phishing_simulations": { "schema": { "$ref": "#/entities/PhishingSimulation" } },
+            "fraud_scenarios": { "schema": { "$ref": "#/entities/FraudScenario" } },
+            "incidents": { "schema": { "$ref": "#/entities/Incident" } },
+            "certifications": { "schema": { "$ref": "#/entities/Certification" } },
+            "audit_logs": { "schema": { "$ref": "#/entities/AuditLog" } }
+          }
+        }
+      },
+      {
+        "path": "users/{userId}",
+        "definition": {
+          "schema": { "$ref": "#/entities/User" },
+          "subcollections": {
+            "trainingResults": { "schema": { "$ref": "#/entities/TrainingResult" } }
+          }
+        }
+      },
+      { "path": "roles/{roleId}", "definition": { "schema": { "$ref": "#/entities/Role" } } },
+      { "path": "permissions/{permissionId}", "definition": { "schema": { "$ref": "#/entities/Permission" } } },
+      { "path": "role_permissions/{rolePermissionId}", "definition": { "schema": { "$ref": "#/entities/RolePermission" } } },
+      { "path": "trainingModules/{moduleId}", "definition": { "schema": { "$ref": "#/entities/TrainingModule" } } }
     ]
   }
 }

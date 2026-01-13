@@ -25,40 +25,63 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, limit } from 'firebase/firestore';
+import { Loader } from 'lucide-react';
 
-const kpiData = [
-  { title: 'Overall Risk Score', value: '68', change: -3, unit: '', description: 'Medium' },
-  { title: 'Phish Failure %', value: '12%', change: 1.5, unit: '%', description: 'vs. last month' },
-  { title: 'Fraud Alerts', value: '25', change: 5, unit: '', description: 'in last 7 days' },
-  { title: 'Compliance %', value: '92%', change: 0, unit: '%', description: 'ISO 27001' },
-];
+type Campaign = {
+    id: string;
+    name: string;
+    type: 'phishing' | 'training' | 'fraud';
+    status: 'draft' | 'active' | 'completed';
+}
 
-const activeCampaigns = [
-  { name: 'Phishing Q1', type: 'Phishing', status: 'Running' },
-  { name: 'Fraud Drill', type: 'Fraud', status: 'Scheduled' },
-  { name: 'Security Awareness 2024', type: 'Training', status: 'Completed' },
-];
+type Incident = {
+    id: string;
+    category: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    status: 'open' | 'in_progress' | 'resolved' | 'closed';
+    assigned_to: string;
+}
 
-const recentIncidents = [
-    { type: 'Phishing', severity: 'High', status: 'Open', assigned: 'J. Doe' },
-    { type: 'Malware', severity: 'Critical', status: 'In Progress', assigned: 'A. Smith' },
-    { type: 'Data Leak', severity: 'Medium', status: 'Resolved', assigned: 'C. Brown' },
-];
-
-const severityVariant: Record<string, 'destructive' | 'secondary' | 'outline' | 'default'> = {
-    'High': 'destructive',
-    'Critical': 'destructive',
-    'Medium': 'secondary',
-    'Low': 'outline',
+const severityVariant: Record<Incident['severity'], 'destructive' | 'secondary' | 'outline' | 'default'> = {
+    'high': 'destructive',
+    'critical': 'destructive',
+    'medium': 'secondary',
+    'low': 'outline',
 };
 
-const statusVariant: Record<string, 'destructive' | 'secondary' | 'outline' | 'default'> = {
-    'Open': 'destructive',
-    'In Progress': 'secondary',
-    'Resolved': 'default',
+const statusVariant: Record<Incident['status'], 'destructive' | 'secondary' | 'outline' | 'default'> = {
+    'open': 'destructive',
+    'in_progress': 'secondary',
+    'resolved': 'default',
+    'closed': 'default',
 };
 
 export default function AdminPage() {
+  const firestore = useFirestore();
+
+  const usersQuery = useMemoFirebase(() => firestore && collection(firestore, 'users'), [firestore]);
+  const { data: users, isLoading: usersLoading } = useCollection(usersQuery);
+  
+  const highRiskUsersQuery = useMemoFirebase(() => firestore && query(collection(firestore, 'users'), where('risk', '==', 'High')), [firestore]);
+  const { data: highRiskUsers, isLoading: highRiskUsersLoading } = useCollection(highRiskUsersQuery);
+
+  const campaignsQuery = useMemoFirebase(() => firestore && collection(firestore, `tenants/default-tenant-cyberaegis/campaigns`), [firestore]);
+  const { data: activeCampaigns, isLoading: campaignsLoading } = useCollection<Campaign>(campaignsQuery);
+
+  const incidentsQuery = useMemoFirebase(() => firestore && query(collection(firestore, `tenants/default-tenant-cyberaegis/incidents`), limit(5)), [firestore]);
+  const { data: recentIncidents, isLoading: incidentsLoading } = useCollection<Incident>(incidentsQuery);
+
+  const kpiData = [
+    { title: 'Total Users', value: users ? users.length : '...', description: 'Across all tenants' },
+    { title: 'High-Risk Users', value: highRiskUsers ? highRiskUsers.length : '...', description: 'Users with "High" risk profile' },
+    { title: 'Active Campaigns', value: activeCampaigns ? activeCampaigns.filter(c => c.status === 'active').length : '...', description: 'Currently running campaigns' },
+    { title: 'Open Incidents', value: recentIncidents ? recentIncidents.filter(i => i.status === 'open').length : '...', description: 'Incidents requiring attention' },
+  ];
+
+  const isLoading = usersLoading || highRiskUsersLoading || campaignsLoading || incidentsLoading;
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
@@ -78,7 +101,7 @@ export default function AdminPage() {
               <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{kpi.value}{kpi.unit}</div>
+              <div className="text-2xl font-bold">{isLoading ? <Loader className="h-6 w-6 animate-spin" /> : kpi.value}</div>
               <p className="text-xs text-muted-foreground">{kpi.description}</p>
             </CardContent>
           </Card>
@@ -95,28 +118,30 @@ export default function AdminPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead className='text-right'>Status</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {activeCampaigns.map((campaign) => (
-                        <TableRow key={campaign.name}>
-                            <TableCell className='font-medium'>{campaign.name}</TableCell>
-                            <TableCell>{campaign.type}</TableCell>
-                            <TableCell className='text-right'>
-                                <Badge variant={campaign.status === 'Running' ? 'secondary' : 'outline'}>
-                                    {campaign.status}
-                                </Badge>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+            {campaignsLoading ? <div className='flex justify-center items-center h-40'><Loader className='w-8 h-8 animate-spin' /></div> : (
+              <Table>
+                  <TableHeader>
+                      <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead className='text-right'>Status</TableHead>
+                      </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                      {activeCampaigns?.map((campaign) => (
+                          <TableRow key={campaign.id}>
+                              <TableCell className='font-medium'>{campaign.name}</TableCell>
+                              <TableCell>{campaign.type}</TableCell>
+                              <TableCell className='text-right'>
+                                  <Badge variant={campaign.status === 'active' ? 'secondary' : 'outline'}>
+                                      {campaign.status}
+                                  </Badge>
+                              </TableCell>
+                          </TableRow>
+                      ))}
+                  </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -129,6 +154,7 @@ export default function AdminPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {incidentsLoading ? <div className='flex justify-center items-center h-40'><Loader className='w-8 h-8 animate-spin' /></div> : (
              <Table>
                 <TableHeader>
                     <TableRow>
@@ -140,16 +166,16 @@ export default function AdminPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {recentIncidents.map((incident) => (
-                        <TableRow key={incident.type + incident.severity}>
-                            <TableCell className='font-medium'>{incident.type}</TableCell>
+                    {recentIncidents?.map((incident) => (
+                        <TableRow key={incident.id}>
+                            <TableCell className='font-medium'>{incident.category}</TableCell>
                             <TableCell>
                                 <Badge variant={severityVariant[incident.severity] || 'default'}>{incident.severity}</Badge>
                             </TableCell>
                             <TableCell>
                                 <Badge variant={statusVariant[incident.status] || 'default'}>{incident.status}</Badge>
                             </TableCell>
-                            <TableCell>{incident.assigned}</TableCell>
+                            <TableCell>{incident.assigned_to}</TableCell>
                              <TableCell>
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -169,6 +195,7 @@ export default function AdminPage() {
                     ))}
                 </TableBody>
              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

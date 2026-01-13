@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Table,
   TableBody,
@@ -15,46 +17,66 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUp, ArrowDown, Minus } from "lucide-react";
-import { leaderboardData, type LeaderboardUser } from "@/app/data";
+import { ArrowUp, ArrowDown, Minus, Loader } from "lucide-react";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { collection, query, orderBy, limit } from "firebase/firestore";
+import type { User as AuthUser } from "firebase/auth";
 
-const trendIcons = {
-  up: <ArrowUp className="h-4 w-4 text-success" />,
-  down: <ArrowDown className="h-4 w-4 text-destructive" />,
-  same: <Minus className="h-4 w-4 text-muted-foreground" />,
+type User = {
+    id: string;
+    name: string;
+    email: string;
+    risk: 'Low' | 'Medium' | 'High';
+    avatarId?: string;
 };
 
+const riskScore: Record<User['risk'], number> = {
+    'High': 20,
+    'Medium': 50,
+    'Low': 100,
+}
+
 const riskBadgeVariant: Record<
-  LeaderboardUser["risk"],
+  User["risk"],
   "success" | "outline" | "destructive"
 > = {
   Low: "success",
-  Med: "outline",
+  Medium: "outline",
   High: "destructive",
 };
 
-export function LeaderboardTable() {
-  const getImage = (id: string) => PlaceHolderImages.find((p) => p.id === id)?.imageUrl || '';
+export function LeaderboardTable({ currentUser }: { currentUser: AuthUser | null }) {
+  const firestore = useFirestore();
+  const usersQuery = useMemoFirebase(() => 
+    firestore ? query(collection(firestore, 'users'), orderBy('risk', 'desc'), limit(10)) : null,
+    [firestore]
+  );
+  const { data: users, isLoading } = useCollection<User>(usersQuery);
 
-  const leaderboardAvatars: {[key: string]: string} = {
-    'A. Kamau': getImage('leaderboard-user-1'),
-    'J. Otieno': getImage('leaderboard-user-2'),
-    'You': getImage('user-avatar-1'),
-    'L. Wanjiru': getImage('leaderboard-user-3'),
-    'M. Ochieng': getImage('leaderboard-user-4'),
+  const getImage = (id?: string) => {
+    if (!id) return PlaceHolderImages.find((p) => p.id === 'user-avatar-1')?.imageUrl || '';
+    return PlaceHolderImages.find((p) => p.id === id)?.imageUrl || PlaceHolderImages.find((p) => p.id === 'user-avatar-1')?.imageUrl || '';
   }
+
+  const sortedUsers = users?.sort((a, b) => riskScore[b.risk] - riskScore[a.risk]);
+
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="font-headline">Leaderboard</CardTitle>
         <CardDescription>
-          See how you rank against your colleagues.
+          See how you rank against your colleagues based on risk score.
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+                <Loader className="w-8 h-8 animate-spin" />
+            </div>
+        ) : (
         <Table>
           <TableHeader>
             <TableRow>
@@ -62,44 +84,41 @@ export function LeaderboardTable() {
               <TableHead>User</TableHead>
               <TableHead className="text-right">Score</TableHead>
               <TableHead className="text-center">Risk</TableHead>
-              <TableHead className="text-right">Trend</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {leaderboardData.map((entry) => (
+            {sortedUsers?.map((user, index) => (
               <TableRow
-                key={entry.rank}
-                className={cn(entry.user.isCurrentUser && "bg-accent/50")}
+                key={user.id}
+                className={cn(currentUser?.uid === user.id && "bg-accent/50")}
               >
                 <TableCell className="font-medium text-lg font-headline">
-                  {entry.rank}
+                  {index + 1}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={leaderboardAvatars[entry.user.name]}
-                        alt={entry.user.name}
+                        src={getImage(user.avatarId)}
+                        alt={user.name}
                         data-ai-hint="person avatar"
                       />
                       <AvatarFallback>
-                        {entry.user.name.charAt(0)}
+                        {user.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">{entry.user.name}</span>
+                    <span className="font-medium">{currentUser?.uid === user.id ? 'You' : user.name}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-right font-mono">{entry.score}</TableCell>
+                <TableCell className="text-right font-mono">{riskScore[user.risk]}</TableCell>
                 <TableCell className="text-center">
-                  <Badge variant={riskBadgeVariant[entry.risk]}>{entry.risk}</Badge>
-                </TableCell>
-                <TableCell className="flex justify-end pt-5">
-                  {trendIcons[entry.trend]}
+                  <Badge variant={riskBadgeVariant[user.risk]}>{user.risk}</Badge>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+        )}
       </CardContent>
     </Card>
   );

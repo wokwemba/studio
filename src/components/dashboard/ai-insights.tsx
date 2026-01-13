@@ -15,39 +15,50 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader, Wand2 } from 'lucide-react';
-import { trainingCampaigns } from '@/app/training/data';
-import { leaderboardData } from '@/app/data';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 
 export function AiInsights() {
   const [insights, setInsights] = useState<SurfaceAiInsightsOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const firestore = useFirestore();
+
+  const usersQuery = useMemoFirebase(() => firestore && query(collection(firestore, 'users')), [firestore]);
+  const { data: users, isLoading: usersLoading } = useCollection(usersQuery);
+
+  const modulesQuery = useMemoFirebase(() => firestore && query(collection(firestore, 'trainingModules')), [firestore]);
+  const { data: trainingModules, isLoading: modulesLoading } = useCollection(modulesQuery);
+
 
   const handleGenerateInsights = () => {
+    if (!users || !trainingModules) {
+      setError("User and training data is not available yet. Please try again in a moment.");
+      return;
+    }
     setLoading(true);
     setError(null);
     setInsights(null);
 
-    const users = leaderboardData.map((u) => ({
-      userId: u.user.name,
-      department: 'Sales', // Dummy data
-      riskScore: 100 - u.score,
-      phishingFailRate: Math.random() * 0.5,
-      trainingCompletionRate: Math.random(),
+    const insightUsers = users.map((u) => ({
+      userId: u.id,
+      department: 'N/A', // This would come from the user profile if available
+      riskScore: u.risk === 'High' ? 85 : u.risk === 'Medium' ? 50 : 20,
+      phishingFailRate: Math.random() * 0.5, // Placeholder
+      trainingCompletionRate: Math.random(), // Placeholder
+    }));
+    
+    const insightModules = trainingModules.map((m) => ({
+        moduleId: m.id,
+        category: m.category,
+        difficulty: m.difficulty,
     }));
 
-    const modules = trainingCampaigns.flatMap((c) =>
-      c.modules.map((m) => ({
-        moduleId: m.id,
-        category: c.title,
-        difficulty: 'easy', // Dummy data
-      }))
-    );
 
     surfaceAiInsights({
-      tenantId: 'demo-tenant',
-      users: users,
-      trainingModules: modules,
+      tenantId: 'default-tenant-cyberaegis',
+      users: insightUsers,
+      trainingModules: insightModules,
     })
       .then((result) => {
         setInsights(result);
@@ -92,12 +103,12 @@ export function AiInsights() {
           </ul>
         ) : (
           <div className="text-center text-sm text-muted-foreground">
-            Click the button to generate AI-powered insights.
+            {usersLoading || modulesLoading ? <div className='flex items-center gap-2 justify-center'><Loader className='w-4 h-4 animate-spin' /> <span>Loading data...</span></div> : 'Click the button to generate AI-powered insights.'}
           </div>
         )}
       </CardContent>
       <CardFooter>
-        <Button onClick={handleGenerateInsights} disabled={loading} className="w-full">
+        <Button onClick={handleGenerateInsights} disabled={loading || usersLoading || modulesLoading} className="w-full">
           {loading ? (
             <Loader className="mr-2 h-4 w-4 animate-spin" />
           ) : (

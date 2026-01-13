@@ -1,16 +1,59 @@
 'use client';
 
-import { useUser } from '@/firebase';
+import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { RiskTrendChart } from '@/components/dashboard/risk-trend-chart';
 import { LeaderboardTable } from '@/components/dashboard/leaderboard-table';
 import { AiInsights } from '@/components/dashboard/ai-insights';
-import { metrics } from '@/app/data';
 import { Loader, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { doc } from 'firebase/firestore';
+
+type UserData = {
+  risk: 'Low' | 'Medium' | 'High';
+  trainingResults?: any[]; // Simplified for this example
+  name?: string;
+  email?: string;
+}
 
 function Dashboard() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const userDocRef = useMemoFirebase(
+    () => (user && firestore ? doc(firestore, "users", user.uid) : null),
+    [user, firestore]
+  );
+  const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userDocRef);
+
+  const metrics = [
+    {
+      label: 'Risk Score',
+      value: userData?.risk || 'N/A',
+      subValue: 'Current Risk Level',
+    },
+    {
+      label: 'Training Completed',
+      value: `${userData?.trainingResults?.length || 0} modules`,
+      subValue: 'All time',
+    },
+    {
+      label: 'Global Rank',
+      value: 'N/A', // This would require a more complex query or pre-calculated ranks
+      subValue: 'Coming soon',
+    },
+  ];
+
+  if (isUserDataLoading) {
+    return (
+        <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+            <Loader className="h-16 w-16 animate-spin text-primary" />
+        </div>
+    );
+  }
+
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -26,7 +69,7 @@ function Dashboard() {
            <AiInsights />
         </div>
       </div>
-      <LeaderboardTable />
+      <LeaderboardTable currentUser={user}/>
     </div>
   );
 }
