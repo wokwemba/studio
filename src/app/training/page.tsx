@@ -48,10 +48,21 @@ export default function MyTrainingPage() {
   const firestore = useFirestore();
 
   const trainingResultsQuery = useMemoFirebase(
-    () => (user ? query(collection(firestore, `users/${user.uid}/trainingResults`), orderBy('completedAt', 'desc')) : null),
+    () => {
+      if (!user) return null;
+      return query(
+        collection(firestore, `users/${user.uid}/trainingResults`), 
+        orderBy('completedAt', 'desc')
+      );
+    },
     [user, firestore]
   );
-  const { data: trainingResults, isLoading: isLoadingResults } = useCollection<TrainingResult>(trainingResultsQuery);
+  
+  const { data: trainingResults, isLoading: isLoadingResults } = useCollection<TrainingResult>(
+    trainingResultsQuery,
+    { skip: !trainingResultsQuery }
+  );
+
 
   const userDocRef = useMemoFirebase(
     () => (user ? doc(firestore, 'users', user.uid) : null),
