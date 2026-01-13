@@ -18,6 +18,8 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection } from 'firebase/firestore';
+import { Combobox } from '@/components/ui/combobox';
+import { topics } from '@/app/training/topics';
 
 export default function GenerateTrainingModulePage() {
   const [formData, setFormData] = useState<GenerateTrainingModuleInput>({
@@ -134,11 +136,13 @@ export default function GenerateTrainingModulePage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="topic">Module Topic</Label>
-              <Input
-                id="topic"
-                placeholder="e.g., Secure Password Policies, GDPR Basics..."
+              <Combobox
+                items={topics.map(topic => ({ label: topic, value: topic }))}
                 value={formData.topic}
-                onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, topic: value })}
+                placeholder="Select or search for a topic..."
+                searchPlaceholder="Search topics..."
+                notfoundText="No topics found."
                 disabled={isLoading}
               />
             </div>
