@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, type FormEvent } from 'react';
 import {
@@ -10,8 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader, BookOpen, Wand2, Lightbulb } from 'lucide-react';
+import { Loader, BookOpen, Wand2, Lightbulb, CheckCircle, XCircle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
+import { useUser, useFirestore } from '@/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 export default function GenerateTrainingModulePage() {
   const [formData, setFormData] = useState<GenerateTrainingModuleInput>({
@@ -23,6 +29,17 @@ export default function GenerateTrainingModulePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Quiz State
+  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+  const [quizScore, setQuizScore] = useState<number | null>(null);
+  const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const { toast } = useToast();
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+
   const handleGenerate = async (e: FormEvent) => {
     e.preventDefault();
     if (!formData.topic.trim()) return;
@@ -30,6 +47,10 @@ export default function GenerateTrainingModulePage() {
     setIsLoading(true);
     setModule(null);
     setError(null);
+    // Reset quiz state
+    setUserAnswers({});
+    setQuizScore(null);
+    setIsQuizSubmitted(false);
 
     try {
       const result = await generateTrainingModule(formData);
@@ -41,6 +62,59 @@ export default function GenerateTrainingModulePage() {
       setIsLoading(false);
     }
   };
+  
+  const handleAnswerChange = (questionIndex: number, answer: string) => {
+    setUserAnswers(prev => ({ ...prev, [questionIndex]: answer }));
+  };
+
+  const handleSubmitQuiz = () => {
+    if (!module) return;
+    let score = 0;
+    module.quiz.forEach((q, index) => {
+      if (userAnswers[index] === q.correctAnswer) {
+        score++;
+      }
+    });
+    const finalScore = (score / module.quiz.length) * 100;
+    setQuizScore(finalScore);
+    setIsQuizSubmitted(true);
+    toast({
+        title: 'Quiz Submitted!',
+        description: `You scored ${finalScore.toFixed(0)}%.`,
+    });
+  };
+  
+   const handleSaveResults = async () => {
+    if (quizScore === null || !user || !firestore || !module) return;
+    setIsSaving(true);
+    try {
+      const resultsCollection = collection(firestore, `users/${user.uid}/trainingResults`);
+      await addDoc(resultsCollection, {
+        moduleId: formData.topic, // using topic as a pseudo-id
+        userId: user.uid,
+        score: quizScore,
+        timeTaken: 0, // Placeholder
+        completedAt: new Date().toISOString(),
+        riskImpact: 100 - quizScore, // Example calculation
+      });
+      toast({
+        title: 'Results Saved',
+        description: 'Your quiz results have been saved to your profile.',
+      });
+    } catch (error) {
+        console.error("Error saving results: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Save Failed',
+            description: 'Could not save your results. Please try again.',
+        });
+    } finally {
+        setIsSaving(false);
+    }
+  };
+
+  const isQuizComplete = module ? Object.keys(userAnswers).length === module.quiz.length : false;
+
 
   return (
     <div className="space-y-6">
@@ -131,23 +205,67 @@ export default function GenerateTrainingModulePage() {
                 ))}
               </Accordion>
             </div>
-             <div>
+            <div>
               <h3 className="font-headline text-lg mb-2 flex items-center gap-2"><Lightbulb /> Knowledge Check Quiz</h3>
-              <div className="space-y-4">
+              {isQuizSubmitted && quizScore !== null && (
+                <div className='mb-6 p-4 border rounded-lg bg-muted/50'>
+                    <Label className='text-lg font-headline'>Your Score: {quizScore.toFixed(0)}%</Label>
+                    <Progress value={quizScore} className="mt-2" />
+                </div>
+              )}
+              <div className="space-y-6">
                 {module.quiz.map((q, index) => (
-                    <div key={index} className="p-4 border rounded-lg bg-muted/50">
-                        <p className="font-semibold">{`${index + 1}. ${q.question}`}</p>
-                        <ul className="mt-2 list-disc list-inside text-sm text-muted-foreground">
-                            {q.options.map((opt, i) => <li key={i}>{opt}</li>)}
-                        </ul>
-                        <p className="text-sm mt-2 pt-2 border-t font-medium text-primary">Correct Answer: {q.correctAnswer}</p>
-                    </div>
+                  <div key={index} className="p-4 border rounded-lg bg-muted/50">
+                    <p className="font-semibold">{`${index + 1}. ${q.question}`}</p>
+                    <RadioGroup
+                      value={userAnswers[index]}
+                      onValueChange={(value) => handleAnswerChange(index, value)}
+                      disabled={isQuizSubmitted}
+                      className="mt-4 space-y-2"
+                    >
+                      {q.options.map((opt, i) => {
+                        const isCorrect = opt === q.correctAnswer;
+                        const isSelected = userAnswers[index] === opt;
+                        
+                        return (
+                        <div key={i} className="flex items-center space-x-2">
+                          <RadioGroupItem value={opt} id={`q${index}-opt${i}`} />
+                          <Label
+                            htmlFor={`q${index}-opt${i}`}
+                            className={`flex items-center gap-2 ${
+                              isQuizSubmitted && isCorrect ? 'text-success' : ''
+                            } ${
+                              isQuizSubmitted && isSelected && !isCorrect ? 'text-destructive' : ''
+                            }`}
+                          >
+                           <span>{opt}</span>
+                            {isQuizSubmitted && isCorrect && <CheckCircle className="h-4 w-4" />}
+                            {isQuizSubmitted && isSelected && !isCorrect && <XCircle className="h-4 w-4" />}
+                          </Label>
+                        </div>
+                      )})}
+                    </RadioGroup>
+                    {isQuizSubmitted && userAnswers[index] !== q.correctAnswer && (
+                        <p className="text-sm mt-3 pt-2 border-t text-primary/80">Correct Answer: {q.correctAnswer}</p>
+                    )}
+                  </div>
                 ))}
               </div>
+              {!isQuizSubmitted && (
+                 <Button onClick={handleSubmitQuiz} disabled={!isQuizComplete} className='mt-6'>
+                    Submit Quiz
+                 </Button>
+              )}
             </div>
           </CardContent>
-           <CardFooter>
-            <Button>Save Module to Library</Button>
+          <CardFooter className='flex gap-2'>
+            <Button disabled={isQuizSubmitted}>Save Module to Library</Button>
+            {isQuizSubmitted && (
+                <Button onClick={handleSaveResults} disabled={isSaving}>
+                    {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Results
+                </Button>
+            )}
           </CardFooter>
         </Card>
       )}
