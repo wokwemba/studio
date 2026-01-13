@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -92,6 +93,10 @@ service cloud.firestore {
         allow create: if isSignedIn(); // System/user actions create logs
         allow update, delete: if false;
       }
+      match /simulationRequests/{requestId} {
+        allow create: if isMemberOfTenant(tenantId) && request.resource.data.userId == request.auth.uid;
+        allow read, update, delete: if isTenantAdmin(tenantId) || isSuperAdmin();
+      }
     }
     
     // Roles are read-only for authenticated users, writable only by SuperAdmins
@@ -113,9 +118,7 @@ service cloud.firestore {
 
     // User management
     match /users/{userId} {
-      // A user can get their OWN document, OR an Admin can get any user's document.
-      allow get: if isOwner(userId) || isAdmin();
-      // Only Admins or SuperAdmins can list all users.
+      allow get: if isOwner(userId) || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) || isSuperAdmin();
       allow list: if isAdmin();
       allow create: if isOwner(userId) || isTenantAdmin(request.resource.data.tenantId) || isSuperAdmin();
       allow update(writeFields): 

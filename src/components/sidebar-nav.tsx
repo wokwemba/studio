@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -31,6 +32,7 @@ import {
   Wand2,
   ShieldOff,
   BookOpenCheck,
+  FlaskConical,
 } from "lucide-react";
 
 import {
@@ -66,6 +68,7 @@ const adminLinks = [
     { href: "/admin/users", label: "Users & Roles", icon: Users },
     { href: "/admin/campaigns", label: "Training Campaigns", icon: GitPullRequest },
     { href: "/admin/content", label: "Courses & Content", icon: BookCopy },
+    { href: "/admin/simulations", label: "Simulation Requests", icon: FlaskConical },
     { href: "/admin/phishing", label: "Phishing Sims", icon: Mail },
     { href: "/admin/fraud", label: "Fraud Sims", icon: Zap },
     { href: "/admin/incidents", label: "Incident Mgmt", icon: ShieldAlert },

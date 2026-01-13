@@ -194,6 +194,31 @@
         "riskImpact": { "type": "number" }
       },
       "required": ["userId", "moduleId", "score", "timeTaken"]
+    },
+    "SimulationRequest": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Simulation Request",
+        "type": "object",
+        "description": "A request for a cybersecurity simulation submitted by a user.",
+        "properties": {
+          "userId": { "type": "string", "description": "The ID of the user who submitted the request." },
+          "userName": { "type": "string", "description": "The name of the user who submitted the request." },
+          "tenantId": { "type": "string", "description": "The ID of the tenant the user belongs to." },
+          "simulations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "description": "The type of simulation requested (e.g., 'Phishing Email Attack')." },
+                "details": { "type": "string", "description": "Details provided by the user for the simulation." }
+              },
+              "required": ["type"]
+            }
+          },
+          "status": { "type": "string", "enum": ["Pending", "In Progress", "Completed", "Cancelled"] },
+          "requestedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["userId", "userName", "tenantId", "simulations", "status", "requestedAt"]
     }
   },
   "auth": {
@@ -212,7 +237,8 @@
             "fraud_scenarios": { "schema": { "$ref": "#/entities/FraudScenario" } },
             "incidents": { "schema": { "$ref": "#/entities/Incident" } },
             "certifications": { "schema": { "$ref": "#/entities/Certification" } },
-            "audit_logs": { "schema": { "$ref": "#/entities/AuditLog" } }
+            "audit_logs": { "schema": { "$ref": "#/entities/AuditLog" } },
+            "simulationRequests": { "schema": { "$ref": "#/entities/SimulationRequest" } }
           }
         }
       },
