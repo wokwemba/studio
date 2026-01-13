@@ -245,22 +245,43 @@ export type FormField = {
         ]
     },
     {
-      id: 'vapt-1',
-      type: 'Vulnerability Assessment & Penetration Testing (VAPT)',
-      description: 'A comprehensive security assessment to identify and exploit vulnerabilities in a defined scope.',
-      fields: [
-        { name: 'testName', label: 'Project / Test Name', type: 'text', placeholder: 'e.g., Q3 Web App VAPT' },
-        { name: 'testObjective', label: 'Primary Objective', type: 'textarea', placeholder: 'e.g., Achieve PCI-DSS compliance, Identify critical API vulnerabilities, Simulate external threat actor.' },
-        { name: 'targetScope', label: 'Target Scope (URLs, IPs)', type: 'textarea', placeholder: 'Provide a list of URLs, IP addresses, or application names to be tested.' },
-        { name: 'testType', label: 'Type of Test', type: 'select', options: ['Black Box (No prior knowledge)', 'Grey Box (Limited user credentials)', 'White Box (Full source code & admin access)'] },
-        { name: 'environment', label: 'Test Environment', type: 'select', options: ['Production', 'Staging', 'Development/Test'] },
-        { name: 'outOfScope', label: 'Out of Scope', type: 'textarea', placeholder: 'Specify any assets, techniques, or times that are explicitly forbidden. e.g., "No social engineering, no testing between 1-5 AM UTC."' },
-        { name: 'technicalContact', label: 'Primary Technical Contact', type: 'text', placeholder: 'Email of the person to contact for technical issues during the test.' },
-        { name: 'emergencyContact', label: 'Emergency Contact', type: 'text', placeholder: 'Email or phone for urgent issues (e.g., system outage).' },
-        { name: 'testWindow', label: 'Preferred Testing Window', type: 'text', placeholder: 'e.g., "Oct 1 - Oct 15, business hours only."' },
-        { name: 'consent', label: 'I confirm that I am authorized to request this security assessment on the specified scope.', type: 'checkbox' },
-      ],
-    },
+        id: 'vapt-1',
+        type: 'Vulnerability Assessment & Penetration Testing (VAPT)',
+        description: 'A comprehensive security assessment to identify and exploit vulnerabilities in a defined scope.',
+        fields: [
+          { name: 'vaptObjective', label: 'Primary Business Objectives', type: 'textarea', placeholder: 'e.g., Achieve PCI-DSS compliance, reduce risk, prepare for an audit.' },
+          { name: 'physicalBoundaries', label: 'Physical Boundaries of Campus/Scope', type: 'textarea', placeholder: 'List all buildings, addresses, or physical locations in scope.' },
+          { name: 'remoteScope', label: 'Off-Campus or Remote Scope', type: 'textarea', placeholder: 'Are there any off-campus facilities, branches, or remote worker networks to include or exclude?' },
+          { name: 'internalIPs', label: 'Internal IP Address Range(s)', type: 'textarea', placeholder: 'e.g., 10.0.0.0/16, 192.168.1.0/24' },
+          { name: 'publicIPs', label: 'Public IP Address Range(s) & Associated Domains', type: 'textarea', placeholder: 'List all public-facing IPs and domain names.' },
+          { name: 'networkDiagram', label: 'High-Level Network Diagram (Link or Description)', type: 'textarea', placeholder: 'Provide a link to or describe your network architecture (Firewalls, VLANs, DMZ, Wi-Fi).' },
+          { name: 'networkSegmentation', label: 'Network Segmentation Strategy', type: 'textarea', placeholder: 'How are networks segmented? (e.g., VLANs for staff, students, labs, IoT, guests)' },
+          { name: 'criticalServers', label: 'Critical Servers List', type: 'textarea', placeholder: 'List servers like Domain Controllers, file servers, databases, ERPs with roles and IPs.' },
+          { name: 'remoteAccess', label: 'Remote Access Solutions', type: 'textarea', placeholder: 'VPN gateways, Citrix/VDI portals, RDP gateways.' },
+          { name: 'operatingSystems', label: 'Major Operating Systems in Use', type: 'textarea', placeholder: 'e.g., Windows Server 2022, Ubuntu 22.04, macOS Sonoma' },
+          { name: 'criticalApps', label: 'Business-Critical Applications', type: 'textarea', placeholder: 'e.g., Student Information System, Finance/Payroll, LMS like Moodle.' },
+          { name: 'internalApps', label: 'Internally Developed Applications', type: 'textarea', placeholder: 'List any custom-built web or desktop applications in scope.' },
+          { name: 'iotSystems', label: 'IoT/OT Systems in Scope', type: 'textarea', placeholder: 'e.g., CCTV, building access control, lab equipment, smart boards.' },
+          { name: 'authorizedSoftware', label: 'Authorized/Standard Software List', type: 'textarea', placeholder: 'Do you have a list of standard software for endpoints? If so, provide a link or description.' },
+          { name: 'identityProvider', label: 'Identity Provider & User Count', type: 'text', placeholder: 'e.g., Active Directory (~500 users), Azure AD (~1200 users).' },
+          { name: 'userGroups', label: 'Main User Groups', type: 'textarea', placeholder: 'e.g., administration, teaching staff, students, guests, contractors.' },
+          { name: 'passwordPolicy', label: 'Password Policy Details', type: 'textarea', placeholder: 'Describe complexity, length, and expiry requirements.' },
+          { name: 'publicWebsites', label: 'Public-Facing Websites & Portals', type: 'textarea', placeholder: 'List all known public web assets.' },
+          { name: 'publicAPIs', label: 'Exposed API Endpoints', type: 'textarea', placeholder: 'List all public-facing API gateways or endpoints.' },
+          { name: 'cloudServices', label: 'Cloud Services in Scope', type: 'textarea', placeholder: 'e.g., AWS/Azure tenants, SaaS like Office 365, Google Workspace. Are they in scope?' },
+          { name: 'legacySystems', label: 'Known Legacy or Decommissioned Systems', type: 'textarea', placeholder: 'Are there any old systems that might still be accessible?' },
+          { name: 'pastAssessments', label: 'Previous Security Assessments', type: 'textarea', placeholder: 'Have you had a VAPT before? Can past reports be shared?' },
+          { name: 'pastIncidents', label: 'Recent Security Incidents', type: 'textarea', placeholder: 'Describe any security incidents in the last 24 months.' },
+          { name: 'securityControls', label: 'Current Security Controls', type: 'textarea', placeholder: 'e.g., EDR/XDR, SIEM, WAF, IPS/IDS, DLP.' },
+          { name: 'vulnManagement', label: 'Vulnerability Management Program', type: 'textarea', placeholder: 'Is there an existing program? What tools are used (e.g., Nessus, Qualys)?' },
+          { name: 'outOfScope', label: 'Explicitly Out-of-Scope Systems/IPs', type: 'textarea', placeholder: 'e.g., "Do not test the live production SCADA network."' },
+          { name: 'testingWindow', label: 'Acceptable Testing Windows', type: 'text', placeholder: 'e.g., "Weekends only", "After 6 PM local time".' },
+          { name: 'socialEngineeringRules', label: 'Permitted Level of Social Engineering', type: 'textarea', placeholder: 'e.g., Phishing is okay, but no vishing or physical attempts.' },
+          { name: 'exploitRules', label: 'Permitted Level of Exploit Testing', type: 'textarea', placeholder: 'e.g., Proof-of-concept only, no DoS, no data exfiltration.' },
+          { name: 'emergencyContacts', label: 'Primary Technical & 24/7 Emergency Contacts', type: 'textarea', placeholder: 'Provide names, roles, emails, and phone numbers.' },
+          { name: 'consent', label: 'I confirm that I am authorized to request this security assessment on the specified scope.', type: 'checkbox' },
+        ],
+      },
     {
       id: 'training-1',
       type: 'Customized Training Request',
@@ -298,3 +319,6 @@ export type FormField = {
 
 
 
+
+
+    
