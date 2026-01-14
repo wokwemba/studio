@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useUser, useCollection, useFirestore, useMemoFirebase, updateUserStatus, deleteUser as deleteUserFromDb } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useUser, useCollection, useFirestore, useMemoFirebase, updateUserStatus, deleteUser as deleteUserFromDb, useDoc } from '@/firebase';
+import { collection, query, where, doc } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
   Card,
@@ -131,14 +131,20 @@ function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, 
 }
 
 export default function AdminUsersPage() {
-  const { user: currentUser } = useUser();
+  const { user: currentUser, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<UserProfile | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const { toast } = useToast();
+  
+  const adminUserDocRef = useMemoFirebase(
+    () => (currentUser ? doc(firestore, "users", currentUser.uid) : null),
+    [currentUser, firestore]
+  );
+  const { data: adminUserData, isLoading: isAdminUserDataLoading } = useDoc<UserProfile>(adminUserDocRef);
 
-  const tenantId = (currentUser as any)?.tenantId;
+  const tenantId = adminUserData?.tenantId;
 
   const usersQuery = useMemoFirebase(
     () => (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null,
@@ -149,7 +155,7 @@ export default function AdminUsersPage() {
   const rolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'roles') : null, [firestore]);
   const { data: roles, isLoading: rolesLoading } = useCollection<Role>(rolesQuery);
   
-  const isLoading = usersLoading || rolesLoading;
+  const isLoading = isAuthLoading || isAdminUserDataLoading || usersLoading || rolesLoading;
 
   const handleStatusUpdate = async (user: UserProfile, status: 'Active' | 'Suspended') => {
     if (!firestore) return;
@@ -199,7 +205,7 @@ export default function AdminUsersPage() {
                 </CardTitle>
                 <CardDescription>View, edit, and manage all users in your organization.</CardDescription>
             </div>
-            <Button onClick={() => setIsAddUserOpen(true)}>
+            <Button onClick={() => setIsAddUserOpen(true)} disabled={!tenantId}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add User
             </Button>
