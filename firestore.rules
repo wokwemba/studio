@@ -85,5 +85,11 @@ service cloud.firestore {
       allow read: if request.auth.uid != null;
       allow write: if isSuperAdmin();
     }
+
+    // COMPLIANCE RULES: Readable by any authenticated user, writable only by Super Admins.
+    match /compliance_rules/{ruleId} {
+      allow read: if request.auth.uid != null;
+      allow write: if isSuperAdmin();
+    }
   }
 }

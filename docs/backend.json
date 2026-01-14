@@ -389,6 +389,29 @@
           }
         },
         "required": ["name", "price", "limits", "features"]
+      },
+      "ComplianceRule": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "ComplianceRule",
+        "type": "object",
+        "description": "Defines a compliance rule mapping regulations to training.",
+        "properties": {
+          "regulation": { "type": "string" },
+          "article": { "type": "string" },
+          "requirement": { "type": "string" },
+          "frequency": { "type": "string" },
+          "requiredModules": { "type": "array", "items": { "type": "string" } },
+          "evidenceRequired": { "type": "array", "items": { "type": "string" } },
+          "reporting": {
+            "type": "object",
+            "properties": {
+              "format": { "type": "string" },
+              "fields": { "type": "array", "items": { "type": "string" } },
+              "retentionPeriod": { "type": "number" }
+            }
+          }
+        },
+        "required": ["regulation", "requirement", "frequency"]
       }
   },
   "auth": {
@@ -404,6 +427,7 @@
     "/phishing_templates/{templateId}": { "schema": { "$ref": "#/entities/PhishingTemplate" }, "description": "Global library of phishing templates." },
     "/reports/{reportId}": { "schema": { "$ref": "#/entities/Report" }, "description": "Generated reports for tenants." },
     "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles." },
-    "/subscription_plans/{planId}": { "schema": { "$ref": "#/entities/SubscriptionPlan" }, "description": "Defines the available subscription plans." }
+    "/subscription_plans/{planId}": { "schema": { "$ref": "#/entities/SubscriptionPlan" }, "description": "Defines the available subscription plans." },
+    "/compliance_rules/{ruleId}": { "schema": { "$ref": "#/entities/ComplianceRule" }, "description": "Global library of compliance rules and mappings." }
   }
 }
