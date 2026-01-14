@@ -31,6 +31,12 @@ service cloud.firestore {
       allow update: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) ||
                        (isOwnRecord(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['preferences', 'lastLogin', 'displayName', 'photoURL']));
       allow delete: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId);
+
+      // TRAINING RESULTS: Users can read their own training results. Admins can read results for users in their tenant.
+      match /trainingResults/{resultId} {
+        allow read, write: if isOwnRecord(userId);
+        allow read: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId);
+      }
     }
 
     // USER PROGRESS: Users can manage their own progress. Admins can view progress within their tenant.
@@ -69,5 +75,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
