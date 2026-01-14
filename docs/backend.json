@@ -292,5 +292,3 @@
     "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles." }
   }
 }
-
-    
