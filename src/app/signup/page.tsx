@@ -47,7 +47,7 @@ export default function SignupPage() {
       if (result.role === 'Admin' || result.role === 'SuperAdmin') {
         router.push('/admin');
       } else {
-        router.push('/');
+        router.push('/training');
       }
     } else {
       setError(result.error || 'An unexpected error occurred.');
@@ -69,7 +69,7 @@ export default function SignupPage() {
 
        <div className="relative z-10 flex items-center gap-2 mb-6">
             <ShieldCheck className="w-10 h-10 text-primary" />
-            <h1 className="text-3xl font-headline font-semibold text-white">CCyberGuard</h1>
+            <h1 className="text-3xl font-headline font-semibold text-white">CyberAegis AI</h1>
        </div>
         <Card className="w-full max-w-md z-10 bg-card/80 backdrop-blur-lg">
         <CardHeader>

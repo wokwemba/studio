@@ -49,20 +49,19 @@ import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 
 const mainLinks = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/training", label: "My Training", icon: BookOpenCheck },
-  { href: "/training/achievements", label: "Achievements", icon: Trophy },
-  { href: "/flashcards", label: "Flashcards", icon: Copy },
-  { href: "/simulations", label: "Simulations", icon: Target },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/simulations", label: "Request Simulation", icon: Target },
+  { href: "/certificates", label: "My Certificates", icon: FileText },
   { href: "/profile", label: "My Profile", icon: User },
-  { href: "/certificates", label: "Certificates", icon: FileText },
 ];
 
 const trainingLinks = [
     { href: "/training/module", label: "Training Generator", icon: Wand2 },
     { href: "/tutor", label: "AI Tutor", icon: BrainCircuit },
+    { href: "/flashcards", label: "Flashcards", icon: Copy },
     { href: "/training/history", label: "Training History", icon: History },
+    { href: "/training/achievements", label: "Achievements", icon: Trophy },
 ]
 
 export function SidebarNav() {
@@ -86,18 +85,12 @@ export function SidebarNav() {
   const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin' || user?.email === 'wokwemba@safaricom.co.ke';
   
   const isActive = (href: string) => {
-    // For nested routes, we want to match the parent
-    if (href === "/admin" && pathname.startsWith('/admin')) {
-      return true;
-    }
-     if (href === "/training" && pathname.startsWith('/training')) {
-      return true;
+    if (href === "/" && pathname !== "/") {
+        return false;
     }
     if (href !== "/" && pathname.startsWith(href)) {
         return true;
     }
-
-    // Exact match for all other links
     return pathname === href;
   };
   
@@ -105,6 +98,19 @@ export function SidebarNav() {
 
   return (
     <SidebarMenu>
+        <SidebarMenuItem>
+             <SidebarMenuButton
+                asChild
+                isActive={isActive('/')}
+                className="font-headline"
+                tooltip="Dashboard"
+            >
+                <Link href="/">
+                    <LayoutDashboard className="h-5 w-5" />
+                    {state === 'expanded' && <span>Dashboard</span>}
+                </Link>
+            </SidebarMenuButton>
+        </SidebarMenuItem>
       {mainLinks.map((link) => (
         <SidebarMenuItem key={link.href}>
           <SidebarMenuButton
@@ -122,7 +128,7 @@ export function SidebarNav() {
       ))}
        <SidebarSeparator />
         <SidebarGroup>
-            <SidebarGroupLabel>AI Tools</SidebarGroupLabel>
+            <SidebarGroupLabel>AI & Learning Tools</SidebarGroupLabel>
             {trainingLinks.map((link) => (
                  <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton
@@ -155,7 +161,7 @@ export function SidebarNav() {
          <SidebarMenuItem>
             <SidebarMenuButton
                 asChild
-                isActive={isActive('/admin')}
+                isActive={pathname.startsWith('/admin')}
                 className="font-headline"
                 tooltip="Admin Panel"
             >
@@ -170,5 +176,3 @@ export function SidebarNav() {
     </SidebarMenu>
   );
 }
-
-    

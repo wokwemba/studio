@@ -11,7 +11,7 @@ import { useUser } from "@/firebase";
 import { useEffect } from "react";
 
 const unauthenticatedRoutes = ["/login", "/signup"];
-const publicRoutes = ["/"]; // Add other public routes here if needed
+const publicRoutes = ["/"]; // This is the public landing page
 
 async function clearSessionCookie() {
     try {
@@ -29,7 +29,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
 
   useEffect(() => {
-    // Wait until the authentication state is fully determined.
     if (isUserLoading) {
       return; 
     }
@@ -38,14 +37,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const isPublicRoute = publicRoutes.includes(pathname);
 
     if (user) {
-      // User is logged in. If they are on an auth page, redirect them.
       if (isAuthRoute) {
-        router.push('/');
+        // If logged in, redirect from auth pages to the main training dashboard
+        router.push('/training');
+      } else if (pathname === '/') {
+        // If logged in and at the root, redirect to the training dashboard
+        router.push('/training');
       }
     } else {
       // User is not logged in.
       clearSessionCookie();
-      // If the route is protected (not public and not an auth route), redirect to login.
       if (!isPublicRoute && !isAuthRoute) {
         router.push('/login');
       }
@@ -54,7 +55,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   
   const isAuthPage = unauthenticatedRoutes.includes(pathname);
   
-  // While loading, if the route is protected, show a loader.
   if (isUserLoading && !isAuthPage && !publicRoutes.includes(pathname)) {
       return (
         <div className="flex items-center justify-center min-h-screen bg-background">
@@ -62,18 +62,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       );
   }
-
-  // If on an auth page and not logged in yet, show the page.
-  if (isAuthPage && !user) {
-    return <>{children}</>;
-  }
-
-  // If on a public page and not logged in, show the page.
-  if (!user && publicRoutes.includes(pathname)) {
+  
+  if (isAuthPage || (!user && publicRoutes.includes(pathname))) {
     return <>{children}</>;
   }
   
-  // If the user is logged in, show the main dashboard layout.
   if (user) {
     return (
         <div className="min-h-screen w-full flex">
@@ -81,7 +74,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <SidebarHeader>
             <Link href="/" className="flex items-center gap-2">
                 <ShieldCheck className="w-8 h-8 text-primary" />
-                <h1 className="text-xl font-headline font-semibold text-sidebar-foreground">CCyberGuard</h1>
+                <h1 className="text-xl font-headline font-semibold text-sidebar-foreground">CyberAegis</h1>
             </Link>
             </SidebarHeader>
             <SidebarContent>
@@ -96,8 +89,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // Fallback for indeterminate states, renders nothing to prevent flashes.
   return null; 
 }
-
-    
