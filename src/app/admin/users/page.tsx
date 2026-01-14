@@ -33,8 +33,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Loader, Users, MoreVertical, PlusCircle, UserCog, Trash2, Send, ShieldOff, ShieldCheck } from 'lucide-react';
+import { Loader, Users, MoreVertical, PlusCircle, UserCog, Trash2, Send, ShieldOff, ShieldCheck, Search } from 'lucide-react';
 import { AddUserDialog } from '@/components/admin/add-user-dialog';
 import { EditUserRoleDialog } from '@/components/admin/edit-user-role-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -136,6 +137,7 @@ export default function AdminUsersPage() {
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<UserProfile | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   
   const adminUserDocRef = useMemoFirebase(
@@ -192,23 +194,46 @@ export default function AdminUsersPage() {
     }
     setUserToDelete(null);
   };
+  
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    if (!searchTerm.trim()) return users;
+    
+    const lowercasedTerm = searchTerm.toLowerCase();
+    return users.filter(
+      (user) =>
+        user.name.toLowerCase().includes(lowercasedTerm) ||
+        user.email.toLowerCase().includes(lowercasedTerm)
+    );
+  }, [users, searchTerm]);
 
 
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-                <CardTitle className="font-headline flex items-center gap-2">
-                    <Users />
-                    <span>Manage Users</span>
-                </CardTitle>
-                <CardDescription>View, edit, and manage all users in your organization.</CardDescription>
+        <CardHeader>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div>
+                    <CardTitle className="font-headline flex items-center gap-2">
+                        <Users />
+                        <span>Manage Users</span>
+                    </CardTitle>
+                    <CardDescription>View, edit, and manage all users in your organization.</CardDescription>
+                </div>
+                 <Button onClick={() => setIsAddUserOpen(true)} disabled={!tenantId}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add User
+                </Button>
             </div>
-            <Button onClick={() => setIsAddUserOpen(true)} disabled={!tenantId}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add User
-            </Button>
+            <div className="relative mt-4">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    placeholder="Search by name or email..." 
+                    className="pl-8 w-full sm:w-80"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -224,7 +249,7 @@ export default function AdminUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users && roles && users.map(user => (
+                {roles && filteredUsers.map(user => (
                   <UserTableRow 
                     key={user.id} 
                     user={user} 
