@@ -3,83 +3,71 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // User documents
-    match /users/{userId} {
-      // Regular user: only their own doc
-      allow read: if request.auth.uid == userId;
 
-      // Admin: any user doc
-      allow read, update, write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-      
-      // Prevent non-admins from deleting other users
-      allow delete: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
+    // Helper functions based on custom claims
+    function isSuperAdmin() {
+      return request.auth.token.role == 'super_admin' || request.auth.token.email == 'wokwemba@safaricom.co.ke';
     }
 
-    // Entire users collection
-    match /users/{document=**} {
-      // Only admins can list all users
-      allow list: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
+    function isTenantAdmin(tenantId) {
+      return request.auth.token.role == 'tenant_admin' && request.auth.token.tenantId == tenantId;
     }
 
-    // Roles collection
-    match /roles/{roleId} {
-      // Any authenticated user can read role definitions.
-      allow read: if request.auth.uid != null;
-      // Only admins can create, update, or delete roles.
-      allow write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
+    function isOwnRecord(userId) {
+      return request.auth.uid == userId;
     }
 
-    match /roles/{document=**} {
-      // Only admins can list all roles
-      allow list: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-    }
-    
-    // Tenant-specific data
+    // TENANTS: Only Super Admins can manage tenants. Tenant admins can read their own tenant doc.
     match /tenants/{tenantId} {
-      // Admins and users belonging to the tenant can read tenant data.
-      allow read, list: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-      // Only super admins (or our specific admin email) can write to tenants.
-      allow write: if request.auth.token.superAdmin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-      
-      // Subcollections within a tenant
-      match /campaigns/{campaignId} {
-        allow read, write: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-      }
-      match /courses/{courseId} {
-        allow read, write: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-      }
-      match /phishing_simulations/{simId} {
-        allow read, write: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-      }
-       match /fraud_scenarios/{scenarioId} {
-        allow read, write: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-      }
-      match /incidents/{incidentId} {
-        allow read, write: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-      }
-      match /certifications/{certId} {
-        allow read, write: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-      }
-      match /audit_logs/{logId} {
-        allow read: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-        allow create: if request.auth.uid != null;
-        allow update, delete: if false;
-      }
-      match /simulationRequests/{requestId} {
-        allow create: if request.resource.data.userId == request.auth.uid;
-        allow read, update, delete: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-      }
+      allow read: if isSuperAdmin() || (isTenantAdmin(tenantId) && isOwnRecord(request.auth.uid));
+      allow write: if isSuperAdmin();
     }
 
-     match /tenants/{document=**} {
-      allow list: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
+    // USERS: Super Admins can manage all users. Tenant Admins can manage users in their tenant.
+    // Users can update their own preferences.
+    match /users/{userId} {
+      allow read: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) || isOwnRecord(userId);
+      allow create: if isSuperAdmin() || isTenantAdmin(request.resource.data.tenantId);
+      allow update: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) ||
+                       (isOwnRecord(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['preferences', 'lastLogin', 'displayName', 'photoURL']));
+      allow delete: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId);
     }
 
-    // Training Modules are readable by any authenticated user, but only writable by admins.
+    // USER PROGRESS: Users can manage their own progress. Admins can view progress within their tenant.
+    match /userProgress/{progressId} {
+      allow read: if isSuperAdmin() || isTenantAdmin(resource.data.tenantId) || isOwnRecord(resource.data.userId);
+      allow create: if isOwnRecord(request.resource.data.userId);
+      allow update: if isOwnRecord(resource.data.userId);
+      allow delete: if isSuperAdmin() || isOwnRecord(resource.data.userId);
+    }
+    
+    // TRAINING MODULES: Readable by any authenticated user, writable only by Super Admins.
     match /trainingModules/{moduleId} {
       allow read: if request.auth.uid != null;
-      allow write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
+      allow write: if isSuperAdmin();
+    }
+    
+    // ASSIGNMENTS: Managed by Tenant Admins and Super Admins.
+    match /assignments/{assignmentId} {
+        allow read, write: if isSuperAdmin() || isTenantAdmin(resource.data.tenantId);
+    }
+    
+    // PHISHING SIMULATIONS: Managed by Tenant Admins and Super Admins.
+    match /phishingSimulations/{simId} {
+      allow read, write: if isSuperAdmin() || isTenantAdmin(resource.data.tenantId);
+    }
+    
+    // REPORTS: Managed by Tenant Admins and Super Admins.
+    match /reports/{reportId} {
+      allow read, write: if isSuperAdmin() || isTenantAdmin(resource.data.tenantId);
+    }
+    
+    // ROLES: Readable by any authenticated user, but only writable by Super Admins.
+    match /roles/{roleId} {
+      allow read: if request.auth.uid != null;
+      allow write: if isSuperAdmin();
     }
   }
 }
+
+    

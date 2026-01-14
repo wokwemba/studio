@@ -7,23 +7,67 @@
       "type": "object",
       "description": "Represents a tenant (e.g., a company) using the platform.",
       "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name of the tenant (e.g., 'Acme Corp')."
-        },
-        "region": {
-          "type": "string",
-          "description": "The geographical region of the tenant."
-        },
-        "branding": {
+        "name": { "type": "string", "description": "Name of the tenant (e.g., 'Safaricom PLC')." },
+        "region": { "type": "string", "description": "The geographical region of the tenant." },
+        "status": { "type": "string", "enum": ["active", "suspended", "trial", "expired"], "description": "The current status of the tenant." },
+        "subscription": {
           "type": "object",
-          "description": "Custom branding for the tenant."
+          "properties": {
+            "tier": { "type": "string", "enum": ["basic", "pro", "enterprise"] },
+            "startDate": { "type": "string", "format": "date-time" },
+            "renewalDate": { "type": "string", "format": "date-time" },
+            "maxUsers": { "type": "number" },
+            "features": { "type": "array", "items": { "type": "string" } }
+          }
         },
-        "status": {
-          "type": "string",
-          "enum": ["active", "suspended", "trial"],
-          "description": "The current status of the tenant."
-        }
+        "settings": {
+          "type": "object",
+          "properties": {
+            "branding": {
+              "type": "object",
+              "properties": {
+                "logoUrl": { "type": "string", "format": "uri" },
+                "primaryColor": { "type": "string" },
+                "secondaryColor": { "type": "string" }
+              }
+            },
+            "security": {
+              "type": "object",
+              "properties": {
+                "passwordPolicy": { "type": "string" },
+                "mfaRequired": { "type": "boolean" },
+                "sessionTimeout": { "type": "number" }
+              }
+            },
+            "compliance": {
+              "type": "object",
+              "properties": {
+                "regulations": { "type": "array", "items": { "type": "string" } },
+                "requireCertificates": { "type": "boolean" }
+              }
+            }
+          }
+        },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "adminEmail": { "type": "string", "format": "email" },
+            "billingEmail": { "type": "string", "format": "email" },
+            "phone": { "type": "string" },
+            "address": { "type": "string" }
+          }
+        },
+        "stats": {
+            "type": "object",
+            "properties": {
+                "totalUsers": { "type": "number" },
+                "activeUsers": { "type": "number" },
+                "completionRate": { "type": "number" },
+                "avgScore": { "type": "number" }
+            }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "region", "status"]
     },
@@ -33,150 +77,46 @@
       "type": "object",
       "description": "Represents a user of the platform.",
       "properties": {
-        "name": { "type": "string" },
         "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
         "tenantId": { "type": "string", "description": "Primary reference to Tenant." },
-        "assignedTenants": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Array of tenant IDs the user has access to."
-        },
-        "roleId": { "type": "string", "description": "Reference to Role." },
-        "avatarId": { "type": "string", "description": "Reference to a placeholder image ID for the user's avatar." },
-        "mfa_enabled": { "type": "boolean", "default": false },
-        "status": { "type": "string", "enum": ["Active", "Invited", "Suspended"] },
-        "risk": { "type": "string", "enum": ["Low", "Medium", "High"] }
-      },
-      "required": ["name", "email", "tenantId", "roleId", "status", "risk"]
-    },
-    "Role": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Role",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string", "enum": ["User", "Admin", "SuperAdmin"] }
-      },
-      "required": ["name"]
-    },
-    "Permission": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Permission",
-      "type": "object",
-      "properties": {
-        "key": { "type": "string", "description": "e.g. MANAGE_USERS" }
-      },
-      "required": ["key"]
-    },
-    "RolePermission": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "RolePermission",
-      "type": "object",
-      "properties": {
-        "roleId": { "type": "string" },
-        "permissionId": { "type": "string" }
-      },
-      "required": ["roleId", "permissionId"]
-    },
-    "Campaign": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Campaign",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "duration": { "type": "string" },
-        "audience": { "type": "string" },
-        "modules": { 
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "id": { "type": "string" },
-                    "title": { "type": "string" },
-                    "description": { "type": "string" }
-                },
-                "required": ["id", "title", "description"]
+        "assignedTenants": { "type": "array", "items": { "type": "string" }, "description": "Array of tenant IDs the user has access to." },
+        "role": { "type": "string", "enum": ["super_admin", "tenant_admin", "department_admin", "employee"] },
+        "department": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "invited", "suspended", "archived"] },
+        "trainingStats": {
+            "type": "object",
+            "properties": {
+                "completedModules": { "type": "number" },
+                "totalModules": { "type": "number" },
+                "avgScore": { "type": "number" },
+                "lastCompleted": { "type": "string", "format": "date-time" },
+                "complianceScore": { "type": "number" }
             }
         },
-        "activities": {
-            "type": "array",
-            "items": { "type": "string" }
+        "phishingStats": {
+            "type": "object",
+            "properties": {
+                "simulatedReceived": { "type": "number" },
+                "clicked": { "type": "number" },
+                "reported": { "type": "number" },
+                "riskScore": { "type": "string", "enum": ["low", "medium", "high", "critical"] }
+            }
         },
-        "kpis": { "type": "string" },
-        "type": { "type": "string", "enum": ["training", "phishing", "fraud"] },
-        "start_date": { "type": "string", "format": "date-time" },
-        "end_date": { "type": "string", "format": "date-time" },
-        "status": { "type": "string", "enum": ["draft", "scheduled", "active", "completed"] }
+        "preferences": {
+            "type": "object",
+            "properties": {
+                "language": { "type": "string" },
+                "notifications": { "type": "boolean" },
+                "darkMode": { "type": "boolean" }
+            }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastLogin": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "status", "type"]
-    },
-    "Course": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Course",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "duration": { "type": "number", "description": "Duration in minutes." },
-        "version": { "type": "string" }
-      },
-      "required": ["title", "duration"]
-    },
-    "PhishingSimulation": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PhishingSimulation",
-      "type": "object",
-      "properties": {
-        "template": { "type": "string" },
-        "difficulty": { "type": "string", "enum": ["low", "medium", "high"] },
-        "scheduled_at": { "type": "string", "format": "date-time" }
-      },
-      "required": ["template", "difficulty"]
-    },
-    "FraudScenario": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "FraudScenario",
-      "type": "object",
-      "properties": {
-        "scenario_type": { "type": "string" },
-        "region": { "type": "string" },
-        "risk_level": { "type": "string" }
-      },
-      "required": ["scenario_type", "region"]
-    },
-    "Incident": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Incident",
-      "type": "object",
-      "properties": {
-        "reported_by": { "type": "string" },
-        "category": { "type": "string" },
-        "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
-        "status": { "type": "string", "enum": ["open", "in_progress", "resolved", "closed"] },
-        "assigned_to": { "type": "string" }
-      },
-      "required": ["reported_by", "category", "severity", "status"]
-    },
-    "Certification": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Certification",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "validity_months": { "type": "number" }
-      },
-      "required": ["name", "validity_months"]
-    },
-    "AuditLog": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "AuditLog",
-      "type": "object",
-      "properties": {
-        "actor_id": { "type": "string" },
-        "action": { "type": "string" },
-        "resource": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
-      },
-      "required": ["actor_id", "action", "resource", "timestamp"]
+      "required": ["email", "displayName", "tenantId", "role", "status"]
     },
     "TrainingModule": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -184,77 +124,173 @@
       "type": "object",
       "description": "Represents a training module.",
       "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
         "category": { "type": "string" },
-        "difficulty": { "type": "string" },
-        "aiAdaptive": { "type": "boolean" },
-        "duration": { "type": "number" }
-      },
-      "required": ["category", "difficulty", "aiAdaptive", "duration"]
-    },
-    "TrainingResult": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "TrainingResult",
-      "type": "object",
-      "description": "Result of a user completing a training module.",
-      "properties": {
-        "userId": { "type": "string" },
-        "moduleId": { "type": "string" },
-        "score": { "type": "number" },
-        "timeTaken": { "type": "number" },
-        "riskImpact": { "type": "number" }
-      },
-      "required": ["userId", "moduleId", "score", "timeTaken"]
-    },
-    "SimulationRequest": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "Simulation Request",
-        "type": "object",
-        "description": "A request for a cybersecurity simulation submitted by a user.",
-        "properties": {
-          "userId": { "type": "string", "description": "The ID of the user who submitted the request." },
-          "userName": { "type": "string", "description": "The name of the user who submitted the request." },
-          "tenantId": { "type": "string", "description": "The ID of the tenant the user belongs to." },
-          "simulations": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": { "type": "string", "description": "The type of simulation requested (e.g., 'Phishing Email Attack')." },
-                "details": { "type": "object", "description": "A key-value map of details provided by the user for the simulation." }
-              },
-              "required": ["type", "details"]
-            }
-          },
-          "status": { "type": "string", "enum": ["Pending", "In Progress", "Completed", "Cancelled"] },
-          "requestedAt": { "type": "string", "format": "date-time" }
+        "difficulty": { "type": "string", "enum": ["beginner", "intermediate", "advanced"] },
+        "duration": { "type": "number", "description": "Duration in minutes." },
+        "content": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["video", "slides", "interactive", "document"] },
+            "url": { "type": "string", "format": "uri" },
+            "slides": { "type": "array", "items": { "type": "object" } },
+            "transcript": { "type": "string" }
+          }
         },
-        "required": ["userId", "userName", "tenantId", "simulations", "status", "requestedAt"]
+        "quiz": {
+          "type": "object",
+          "properties": {
+            "questions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "question": { "type": "string" },
+                  "options": { "type": "array", "items": { "type": "string" } },
+                  "correctAnswer": { "type": "number" },
+                  "explanation": { "type": "string" }
+                }
+              }
+            },
+            "passingScore": { "type": "number" },
+            "attemptsAllowed": { "type": "number" }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "version": { "type": "string" },
+            "createdBy": { "type": "string" },
+            "lastUpdated": { "type": "string", "format": "date-time" },
+            "tags": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "availability": {
+          "type": "object",
+          "properties": {
+            "global": { "type": "boolean" },
+            "tenantIds": { "type": "array", "items": { "type": "string" } },
+            "tiers": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      },
+      "required": ["title", "category", "difficulty", "duration"]
+    },
+    "UserProgress": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "UserProgress",
+        "type": "object",
+        "description": "Tracks a single user's progress for a single module.",
+        "properties": {
+            "userId": { "type": "string" },
+            "moduleId": { "type": "string" },
+            "tenantId": { "type": "string" },
+            "status": { "type": "string", "enum": ["not_started", "in_progress", "completed", "expired"] },
+            "startedAt": { "type": "string", "format": "date-time" },
+            "completedAt": { "type": "string", "format": "date-time" },
+            "score": { "type": "number" },
+            "attempts": { "type": "array", "items": { "type": "object" } },
+            "certificate": {
+                "type": "object",
+                "properties": {
+                    "issuedAt": { "type": "string", "format": "date-time" },
+                    "expiresAt": { "type": "string", "format": "date-time" },
+                    "certificateId": { "type": "string" },
+                    "downloadUrl": { "type": "string", "format": "uri" }
+                }
+            }
+        },
+        "required": ["userId", "moduleId", "tenantId", "status"]
+    },
+    "Assignment": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Assignment",
+        "type": "object",
+        "description": "Represents a training assignment for users.",
+        "properties": {
+            "tenantId": { "type": "string" },
+            "moduleId": { "type": "string" },
+            "assignedBy": { "type": "string" },
+            "assignedTo": {
+                "type": "object",
+                "properties": {
+                    "type": { "type": "string", "enum": ["all", "department", "group", "individual"] },
+                    "department": { "type": "string" },
+                    "groupId": { "type": "string" },
+                    "userIds": { "type": "array", "items": { "type": "string" } }
+                }
+            },
+            "dueDate": { "type": "string", "format": "date-time" },
+            "priority": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+            "status": { "type": "string", "enum": ["active", "completed", "cancelled"] },
+            "reminderSettings": {
+                "type": "object",
+                "properties": {
+                    "daysBefore": { "type": "array", "items": { "type": "number" } },
+                    "notifications": { "type": "boolean" }
+                }
+            },
+            "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["tenantId", "moduleId", "assignedBy", "assignedTo", "status"]
+    },
+    "PhishingSimulation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PhishingSimulation",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["email", "sms", "social"] },
+        "template": { "type": "string" },
+        "targetGroup": { "type": "object" },
+        "schedule": { "type": "object" },
+        "results": { "type": "object" },
+        "status": { "type": "string", "enum": ["draft", "scheduled", "sent", "completed"] }
+      },
+      "required": ["tenantId", "name", "type", "status"]
+    },
+    "Report": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Report",
+        "type": "object",
+        "properties": {
+            "tenantId": { "type": "string" },
+            "name": { "type": "string" },
+            "type": { "type": "string", "enum": ["compliance", "training", "phishing", "custom"] },
+            "period": { "type": "object" },
+            "filters": { "type": "object" },
+            "data": { "type": "object" },
+            "generatedBy": { "type": "string" },
+            "generatedAt": { "type": "string", "format": "date-time" },
+            "downloadUrl": { "type": "string", "format": "uri" }
+        },
+        "required": ["tenantId", "name", "type", "generatedBy", "generatedAt"]
+    },
+    "Role": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Role",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "enum": ["super_admin", "tenant_admin", "department_admin", "employee"] }
+      },
+      "required": ["name"]
     }
   },
   "auth": {
     "providers": ["password", "anonymous", "google.com"]
   },
   "firestore": {
-    "/tenants/{tenantId}": {
-        "schema": { "$ref": "#/entities/Tenant" },
-        "description": "Top-level collection of tenants (corporates)."
-    },
-    "/tenants/{tenantId}/campaigns/{campaignId}": { "schema": { "$ref": "#/entities/Campaign" }, "description": "Training campaigns specific to a tenant." },
-    "/tenants/{tenantId}/courses/{courseId}": { "schema": { "$ref": "#/entities/Course" }, "description": "Courses specific to a tenant." },
-    "/tenants/{tenantId}/phishing_simulations/{simId}": { "schema": { "$ref": "#/entities/PhishingSimulation" }, "description": "Phishing simulations for a tenant." },
-    "/tenants/{tenantId}/fraud_scenarios/{scenarioId}": { "schema": { "$ref": "#/entities/FraudScenario" }, "description": "Fraud scenarios for a tenant." },
-    "/tenants/{tenantId}/incidents/{incidentId}": { "schema": { "$ref": "#/entities/Incident" }, "description": "Security incidents reported within a tenant." },
-    "/tenants/{tenantId}/certifications/{certId}": { "schema": { "$ref": "#/entities/Certification" }, "description": "Certifications specific to a tenant." },
-    "/tenants/{tenantId}/audit_logs/{logId}": { "schema": { "$ref": "#/entities/AuditLog" }, "description": "Audit logs for actions within a tenant." },
-    "/tenants/{tenantId}/simulationRequests/{reqId}": { "schema": { "$ref": "#/entities/SimulationRequest" }, "description": "Simulation requests from users in a tenant." },
-    "/users/{userId}": {
-      "schema": { "$ref": "#/entities/User" },
-      "description": "Top-level collection for all users across all tenants."
-    },
-    "/users/{userId}/trainingResults/{resultId}": { "schema": { "$ref": "#/entities/TrainingResult" }, "description": "Training results for a specific user." },
-    "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles." },
-    "/permissions/{permissionId}": { "schema": { "$ref": "#/entities/Permission" }, "description": "System-wide permissions." },
-    "/role_permissions/{rpId}": { "schema": { "$ref": "#/entities/RolePermission" }, "description": "Joins roles to permissions." },
-    "/trainingModules/{moduleId}": { "schema": { "$ref": "#/entities/TrainingModule" }, "description": "Global library of training modules." }
+    "/tenants/{tenantId}": { "schema": { "$ref": "#/entities/Tenant" }, "description": "Top-level collection of tenants." },
+    "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "Top-level collection for all users." },
+    "/trainingModules/{moduleId}": { "schema": { "$ref": "#/entities/TrainingModule" }, "description": "Global library of training modules." },
+    "/userProgress/{progressId}": { "schema": { "$ref": "#/entities/UserProgress" }, "description": "Tracks user progress in modules." },
+    "/assignments/{assignmentId}": { "schema": { "$ref": "#/entities/Assignment" }, "description": "Training assignments for tenants." },
+    "/phishingSimulations/{simId}": { "schema": { "$ref": "#/entities/PhishingSimulation" }, "description": "Phishing simulations for tenants." },
+    "/reports/{reportId}": { "schema": { "$ref": "#/entities/Report" }, "description": "Generated reports for tenants." },
+    "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles." }
   }
 }
+
+    
