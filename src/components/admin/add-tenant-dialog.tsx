@@ -30,6 +30,10 @@ export function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialogProps) 
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
+    defaultValues: {
+      name: "",
+      region: ""
+    }
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
@@ -57,9 +61,17 @@ export function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialogProps) 
         setIsSaving(false);
     }
   };
+  
+  const handleClose = () => {
+    onOpenChange(false);
+    if (!isSaving) {
+        form.reset({ name: '', region: '' });
+    }
+  }
+
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add New Tenant</DialogTitle>
@@ -96,7 +108,7 @@ export function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialogProps) 
               )}
             />
             <DialogFooter className='pt-4'>
-                <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>Cancel</Button>
+                <Button variant="outline" onClick={handleClose} disabled={isSaving}>Cancel</Button>
                 <Button type="submit" disabled={isSaving}>
                     {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
                     {isSaving ? 'Creating...' : 'Create Tenant'}
