@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useUser, useCollection, useFirestore, useMemoFirebase, updateUserStatus, deleteUser as deleteUserFromDb } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
   Card,
@@ -138,22 +138,13 @@ export default function AdminUsersPage() {
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const { toast } = useToast();
 
-  const usersQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'users')) : null),
-    [firestore]
-  );
-  
-  // No longer filtering by tenantId in the query to ensure SuperAdmins see all users.
-  // Filtering is done client-side.
-  const { data: allUsers, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery, { skip: !usersQuery });
-
   const tenantId = (currentUser as any)?.tenantId;
 
-  // Client-side filtering
-  const users = currentUser?.email === 'super@admin.com' 
-    ? allUsers 
-    : allUsers?.filter(u => u.tenantId === tenantId);
-
+  const usersQuery = useMemoFirebase(
+    () => (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null,
+    [firestore, tenantId]
+  );
+  const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery, { skip: !usersQuery });
 
   const rolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'roles') : null, [firestore]);
   const { data: roles, isLoading: rolesLoading } = useCollection<Role>(rolesQuery);
@@ -204,9 +195,9 @@ export default function AdminUsersPage() {
             <div>
                 <CardTitle className="font-headline flex items-center gap-2">
                     <Users />
-                    <span>Users &amp; Roles</span>
+                    <span>Manage Users</span>
                 </CardTitle>
-                <CardDescription>Manage users and their assigned roles in your organization.</CardDescription>
+                <CardDescription>View, edit, and manage all users in your organization.</CardDescription>
             </div>
             <Button onClick={() => setIsAddUserOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />

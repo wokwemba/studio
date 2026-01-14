@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 
 const adminNavLinks = [
-    { href: '/admin', label: 'Dashboard' },
+    { href: '/admin/dashboard', label: 'Dashboard' },
     { href: '/admin/users', label: 'Users & Roles' },
     { href: '/admin/campaigns', label: 'Campaigns' },
     { href: '/admin/simulations', label: 'Simulations' },
@@ -30,7 +30,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Menubar className="border-none">
                 {adminNavLinks.map(link => (
                     <MenubarMenu key={link.href}>
-                        <MenubarTrigger asChild className={cn("cursor-pointer data-[active=true]:text-primary", pathname === link.href && "text-primary font-semibold")} data-active={pathname === link.href}>
+                        <MenubarTrigger asChild className={cn("cursor-pointer", pathname === link.href && "text-primary font-semibold")}>
                             <Link href={link.href}>{link.label}</Link>
                         </MenubarTrigger>
                     </MenubarMenu>
