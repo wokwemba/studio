@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -19,12 +19,13 @@ import { Input } from '@/components/ui/input';
 import { useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader, Edit, X } from 'lucide-react';
+import { Loader, Edit } from 'lucide-react';
 import type { UserProfile } from '@/app/admin/users/page';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Badge } from '../ui/badge';
 import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface UserDetailsDialogProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ interface UserDetailsDialogProps {
 
 const FormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  risk: z.enum(['Low', 'Medium', 'High']),
 });
 
 export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: UserDetailsDialogProps) {
@@ -45,11 +47,11 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { name: user.name },
+    defaultValues: { name: user.name, risk: user.risk },
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    if (!firestore || data.name === user.name) {
+    if (!firestore) {
         setIsEditing(false);
         return;
     };
@@ -57,18 +59,24 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
     
     try {
         const userDocRef = doc(firestore, 'users', user.id);
-        updateDocumentNonBlocking(userDocRef, { name: data.name });
-        toast({
-            title: 'User Updated',
-            description: `Successfully updated name for ${data.name}.`,
-        });
+        const updates: Partial<UserProfile> = {};
+        if (data.name !== user.name) updates.name = data.name;
+        if (data.risk !== user.risk) updates.risk = data.risk;
+
+        if (Object.keys(updates).length > 0) {
+            updateDocumentNonBlocking(userDocRef, updates);
+            toast({
+                title: 'User Updated',
+                description: `Successfully updated profile for ${data.name}.`,
+            });
+        }
         onOpenChange(false);
     } catch(error) {
-        console.error("Error updating user name:", error);
+        console.error("Error updating user:", error);
         toast({
             variant: "destructive",
             title: "Update Failed",
-            description: "Could not update user name. Please check permissions."
+            description: "Could not update user profile. Please check permissions."
         })
     } finally {
         setIsSaving(false);
@@ -79,7 +87,10 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
   const handleClose = () => {
     onOpenChange(false);
     // Delay resetting edit mode to avoid UI flicker
-    setTimeout(() => setIsEditing(false), 200);
+    setTimeout(() => {
+        setIsEditing(false);
+        form.reset({ name: user.name, risk: user.risk });
+    }, 200);
   }
   
   const userAvatar = user.photoURL || PlaceHolderImages.find(p => p.id === user.avatarId)?.imageUrl || '';
@@ -93,7 +104,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-                <DialogTitle className="text-2xl font-headline">{user.name}</DialogTitle>
+                <DialogTitle className="text-2xl font-headline">{form.watch('name')}</DialogTitle>
                 <DialogDescription>{user.email}</DialogDescription>
             </div>
         </DialogHeader>
@@ -102,18 +113,40 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
              <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
                     <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Display Name</FormLabel>
-                        <FormControl>
-                            <Input placeholder="Enter user's full name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Display Name</FormLabel>
+                          <FormControl>
+                              <Input placeholder="Enter user's full name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}
                     />
+                     <FormField
+                        control={form.control}
+                        name="risk"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Risk Level</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a risk level" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Low">Low</SelectItem>
+                                    <SelectItem value="Medium">Medium</SelectItem>
+                                    <SelectItem value="High">High</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
                     <DialogFooter className='pt-4'>
                         <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={isSaving}>Cancel</Button>
                         <Button type="submit" disabled={isSaving}>
@@ -136,7 +169,9 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
                     </div>
                      <div className="grid grid-cols-3 items-center gap-4">
                         <Label className="text-right text-muted-foreground">Risk Level</Label>
-                        <p className="col-span-2 font-medium">{user.risk}</p>
+                         <div className="col-span-2">
+                             <Badge variant={user.risk === 'Low' ? 'success' : user.risk === 'Medium' ? 'outline' : 'destructive'}>{user.risk}</Badge>
+                         </div>
                     </div>
                     <div className="grid grid-cols-3 items-center gap-4">
                         <Label className="text-right text-muted-foreground">User ID</Label>
