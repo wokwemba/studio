@@ -9,24 +9,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useFirestore, updateDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from 'lucide-react';
+import type { Tenant } from '@/app/admin/tenants/page';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
-interface AddTenantDialogProps {
+interface EditTenantDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  tenant: Tenant;
 }
 
 const FormSchema = z.object({
   name: z.string().min(2, { message: "Tenant name must be at least 2 characters." }),
-  region: z.string().min(2, { message: "Region is required." }),
   status: z.enum(['active', 'suspended', 'trial']),
 });
 
-export function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialogProps) {
+export function EditTenantDialog({ isOpen, onOpenChange, tenant }: EditTenantDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -34,53 +35,56 @@ export function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialogProps) 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      name: "",
-      region: "",
-      status: "trial",
-    }
+      name: tenant.name,
+      status: tenant.status,
+    },
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (!firestore) return;
     setIsSaving(true);
+    
+    const updates: Partial<Tenant> = {};
+    if (data.name !== tenant.name) updates.name = data.name;
+    if (data.status !== tenant.status) updates.status = data.status;
+
+    if (Object.keys(updates).length === 0) {
+        toast({
+            description: "No changes were made.",
+        });
+        setIsSaving(false);
+        onOpenChange(false);
+        return;
+    }
 
     try {
-        const tenantsCollection = collection(firestore, 'tenants');
-        await addDocumentNonBlocking(tenantsCollection, data);
+        const tenantDocRef = doc(firestore, 'tenants', tenant.id);
+        updateDocumentNonBlocking(tenantDocRef, updates);
 
         toast({
-            title: 'Tenant Created',
-            description: `The tenant "${data.name}" has been created successfully.`,
+            title: 'Tenant Updated',
+            description: `The tenant "${data.name}" has been updated.`,
         });
         onOpenChange(false);
-        form.reset();
     } catch (error) {
-        console.error("Error creating tenant:", error);
+        console.error("Error updating tenant:", error);
         toast({
             variant: "destructive",
-            title: "Creation Failed",
-            description: "Could not create the tenant. Please check permissions and try again."
+            title: "Update Failed",
+            description: "Could not update the tenant. Please check permissions."
         });
     } finally {
         setIsSaving(false);
     }
   };
-  
-  const handleClose = () => {
-    onOpenChange(false);
-    if (!isSaving) {
-        form.reset();
-    }
-  }
-
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Tenant</DialogTitle>
+          <DialogTitle>Edit Tenant: {tenant.name}</DialogTitle>
           <DialogDescription>
-            Create a new corporate entity on the platform.
+            Update the tenant's details and status.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -92,20 +96,7 @@ export function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialogProps) 
                 <FormItem>
                   <FormLabel>Tenant Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Acme Corporation" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="region"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Region</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., North America" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -117,16 +108,16 @@ export function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialogProps) 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select initial status" />
+                        <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="trial">Trial</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="suspended">Suspended</SelectItem>
+                       <SelectItem value="trial">Trial</SelectItem>
+                       <SelectItem value="active">Active</SelectItem>
+                       <SelectItem value="suspended">Suspended</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -134,10 +125,10 @@ export function AddTenantDialog({ isOpen, onOpenChange }: AddTenantDialogProps) 
               )}
             />
             <DialogFooter className='pt-4'>
-                <Button variant="outline" onClick={handleClose} disabled={isSaving}>Cancel</Button>
+                <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>Cancel</Button>
                 <Button type="submit" disabled={isSaving}>
                     {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                    {isSaving ? 'Creating...' : 'Create Tenant'}
+                    {isSaving ? 'Saving...' : 'Save Changes'}
                 </Button>
             </DialogFooter>
           </form>

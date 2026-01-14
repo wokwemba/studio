@@ -18,9 +18,14 @@
         "branding": {
           "type": "object",
           "description": "Custom branding for the tenant."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "suspended", "trial"],
+          "description": "The current status of the tenant."
         }
       },
-      "required": ["name", "region"]
+      "required": ["name", "region", "status"]
     },
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -253,3 +258,5 @@
     "/trainingModules/{moduleId}": { "schema": { "$ref": "#/entities/TrainingModule" }, "description": "Global library of training modules." }
   }
 }
+
+    
