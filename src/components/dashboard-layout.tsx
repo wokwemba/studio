@@ -74,7 +74,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <SidebarHeader>
             <Link href="/" className="flex items-center gap-2">
                 <ShieldCheck className="w-8 h-8 text-primary" />
-                <h1 className="text-xl font-headline font-semibold text-sidebar-foreground">CyberAegis</h1>
+                <h1 className="text-xl font-headline font-semibold text-sidebar-foreground">CyberGuard</h1>
             </Link>
             </SidebarHeader>
             <SidebarContent>
@@ -91,3 +91,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return null; 
 }
+
+    

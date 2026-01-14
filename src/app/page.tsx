@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -22,7 +23,7 @@ function LandingPage() {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen text-center px-4 -mt-16">
             <ShieldCheck className="w-24 h-24 text-primary mb-4" />
-            <h1 className="text-5xl font-bold font-headline mb-4">Welcome to CyberAegis AI</h1>
+            <h1 className="text-5xl font-bold font-headline mb-4">Welcome to CyberGuard</h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
                 The next-generation platform for AI-powered cybersecurity training, risk management, and compliance.
             </p>
@@ -53,3 +54,5 @@ export default function Home() {
   // by the layout component.
   return <LandingPage />;
 }
+
+    
