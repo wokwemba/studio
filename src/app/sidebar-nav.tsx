@@ -98,19 +98,6 @@ export function SidebarNav() {
 
   return (
     <SidebarMenu>
-        <SidebarMenuItem>
-             <SidebarMenuButton
-                asChild
-                isActive={isActive('/')}
-                className="font-headline"
-                tooltip="Dashboard"
-            >
-                <Link href="/">
-                    <LayoutDashboard className="h-5 w-5" />
-                    {state === 'expanded' && <span>Dashboard</span>}
-                </Link>
-            </SidebarMenuButton>
-        </SidebarMenuItem>
       {mainLinks.map((link) => (
         <SidebarMenuItem key={link.href}>
           <SidebarMenuButton
