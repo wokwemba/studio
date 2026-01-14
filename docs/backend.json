@@ -276,7 +276,71 @@
         "name": { "type": "string", "enum": ["super_admin", "tenant_admin", "department_admin", "employee"] }
       },
       "required": ["name"]
-    }
+    },
+    "SubscriptionPlan": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "SubscriptionPlan",
+        "type": "object",
+        "description": "Defines a subscription plan for tenants.",
+        "properties": {
+          "name": { "type": "string", "description": "Name of the plan (e.g., 'Enterprise')." },
+          "price": {
+            "type": "object",
+            "properties": {
+              "monthly": { "type": "number" },
+              "annual": { "type": "number" },
+              "currency": { "type": "string", "default": "USD" }
+            }
+          },
+          "limits": {
+            "type": "object",
+            "properties": {
+              "maxUsers": { "type": "number" },
+              "maxAdmins": { "type": "number" },
+              "storageGB": { "type": "number" },
+              "apiCalls": { "type": "number" }
+            }
+          },
+          "features": {
+            "type": "object",
+            "properties": {
+              "training": {
+                "type": "object",
+                "properties": {
+                  "customContent": { "type": "boolean" },
+                  "advancedAnalytics": { "type": "boolean" },
+                  "apiAccess": { "type": "boolean" }
+                }
+              },
+              "phishing": {
+                "type": "object",
+                "properties": {
+                  "simulations": { "type": "boolean" },
+                  "customTemplates": { "type": "boolean" },
+                  "advancedReporting": { "type": "boolean" }
+                }
+              },
+              "compliance": {
+                "type": "object",
+                "properties": {
+                  "automatedReports": { "type": "boolean" },
+                  "customCertificates": { "type": "boolean" },
+                  "auditTrail": { "type": "boolean" }
+                }
+              },
+              "support": {
+                "type": "object",
+                "properties": {
+                  "priority": { "type": "boolean" },
+                  "sso": { "type": "boolean" },
+                  "customBranding": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "required": ["name", "price", "limits", "features"]
+      }
   },
   "auth": {
     "providers": ["password", "anonymous", "google.com"]
@@ -289,6 +353,7 @@
     "/assignments/{assignmentId}": { "schema": { "$ref": "#/entities/Assignment" }, "description": "Training assignments for tenants." },
     "/phishingSimulations/{simId}": { "schema": { "$ref": "#/entities/PhishingSimulation" }, "description": "Phishing simulations for tenants." },
     "/reports/{reportId}": { "schema": { "$ref": "#/entities/Report" }, "description": "Generated reports for tenants." },
-    "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles." }
+    "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles." },
+    "/subscription_plans/{planId}": { "schema": { "$ref": "#/entities/SubscriptionPlan" }, "description": "Defines the available subscription plans." }
   }
 }

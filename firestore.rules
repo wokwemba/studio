@@ -73,5 +73,11 @@ service cloud.firestore {
       allow read: if request.auth.uid != null;
       allow write: if isSuperAdmin();
     }
+
+    // SUBSCRIPTION PLANS: Readable by any authenticated user, writable only by Super Admins.
+    match /subscription_plans/{planId} {
+      allow read: if request.auth.uid != null;
+      allow write: if isSuperAdmin();
+    }
   }
 }
