@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -6,10 +7,13 @@ service cloud.firestore {
     // User documents
     match /users/{userId} {
       // Regular user: only their own doc
-      allow read, write: if request.auth.uid == userId;
+      allow read: if request.auth.uid == userId;
 
       // Admin: any user doc
-      allow read, write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
+      allow read, update, write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
+      
+      // Prevent non-admins from deleting other users
+      allow delete: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
     }
 
     // Entire users collection

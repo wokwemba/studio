@@ -35,10 +35,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Loader, Users, MoreVertical, PlusCircle, UserCog, Trash2, Send, ShieldOff, ShieldCheck, Search } from 'lucide-react';
+import { Loader, Users, MoreVertical, PlusCircle, UserCog, Trash2, Send, ShieldOff, ShieldCheck, Search, Eye } from 'lucide-react';
 import { AddUserDialog } from '@/components/admin/add-user-dialog';
 import { EditUserRoleDialog } from '@/components/admin/edit-user-role-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { UserDetailsDialog } from '@/components/admin/user-details-dialog';
 
 
 export type Role = {
@@ -64,7 +65,7 @@ const statusVariant: Record<UserProfile['status'], 'success' | 'secondary' | 'de
   Suspended: 'destructive',
 };
 
-function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, onReactivateUser, onDeleteUser }: { 
+function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, onReactivateUser, onDeleteUser, onViewDetails }: { 
     user: UserProfile, 
     roles: Role[], 
     onEditRole: (user: UserProfile) => void, 
@@ -72,6 +73,7 @@ function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, 
     onSuspendUser: (user: UserProfile) => void;
     onReactivateUser: (user: UserProfile) => void;
     onDeleteUser: (user: UserProfile) => void;
+    onViewDetails: (user: UserProfile) => void;
 }) {
   const roleName = roles.find(r => r.id === user.roleId)?.name || 'Unknown';
   const userAvatar = user.photoURL || PlaceHolderImages.find(p => p.id === user.avatarId)?.imageUrl || '';
@@ -102,6 +104,9 @@ function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, 
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+             <DropdownMenuItem onSelect={() => onViewDetails(user)}>
+              <Eye className="mr-2 h-4 w-4" /> View Details
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onEditRole(user)}>
               <UserCog className="mr-2 h-4 w-4" /> Edit Role
             </DropdownMenuItem>
@@ -137,6 +142,7 @@ export default function AdminUsersPage() {
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<UserProfile | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+  const [userToView, setUserToView] = useState<UserProfile | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   
@@ -254,6 +260,7 @@ export default function AdminUsersPage() {
                     key={user.id} 
                     user={user} 
                     roles={roles}
+                    onViewDetails={setUserToView}
                     onEditRole={setUserToEdit}
                     onResendInvite={(u) => alert(`Resend invite for ${u.name}`)}
                     onSuspendUser={(u) => handleStatusUpdate(u, 'Suspended')}
@@ -283,6 +290,15 @@ export default function AdminUsersPage() {
           currentRoleId={userToEdit.roleId}
           roles={roles}
         />
+      )}
+
+      {userToView && roles && (
+          <UserDetailsDialog
+            isOpen={!!userToView}
+            onOpenChange={(isOpen) => !isOpen && setUserToView(null)}
+            user={userToView}
+            roleName={roles.find(r => r.id === userToView.roleId)?.name || 'Unknown'}
+          />
       )}
 
       {userToDelete && (
