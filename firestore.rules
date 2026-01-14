@@ -3,94 +3,75 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // ------------------------------------------------------------------------
-    // Helper Functions
-    // ------------------------------------------------------------------------
-    function isSignedIn() {
-      return request.auth != null;
-    }
-    
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    function isAdmin() {
-      return request.auth.token.admin == true;
-    }
-
-    // ------------------------------------------------------------------------
-    // Collection Rules
-    // ------------------------------------------------------------------------
-    
-    // Rule for individual user documents
+    // User documents
     match /users/{userId} {
-      // A user can read/write their own document
-      allow read, write: if isOwner(userId);
-      
-      // Admins can read/write any user document
-      allow read, write: if isAdmin();
+      // Regular user: only their own doc
+      allow read, write: if request.auth.uid == userId;
+
+      // Admin: any user doc
+      allow read, write: if request.auth.token.admin == true;
     }
 
-    // Rule for listing the entire users collection
+    // Entire users collection
     match /users/{document=**} {
       // Only admins can list all users
-      allow list: if isAdmin();
+      allow list: if request.auth.token.admin == true;
     }
 
     // Roles collection
     match /roles/{roleId} {
       // Admins can read/write roles
-      allow read, write: if isAdmin();
+      allow read, write: if request.auth.token.admin == true;
     }
 
     match /roles/{document=**} {
       // Only admins can list all roles
-      allow list: if isAdmin();
+      allow list: if request.auth.token.admin == true;
     }
     
     // Tenant-specific data
     match /tenants/{tenantId} {
       // Admins and users belonging to the tenant can read tenant data.
-      allow read: if isAdmin() || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
+      allow read: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
       // Only admins (or a future SuperAdmin role) can write to tenants.
-      allow write: if isAdmin();
+      allow write: if request.auth.token.admin == true;
 
       // Subcollections within a tenant
       match /campaigns/{campaignId} {
-        allow read, write: if isAdmin();
+        allow read, write: if request.auth.token.admin == true;
       }
       match /courses/{courseId} {
-        allow read, write: if isAdmin();
+        allow read, write: if request.auth.token.admin == true;
       }
       match /phishing_simulations/{simId} {
-        allow read, write: if isAdmin();
+        allow read, write: if request.auth.token.admin == true;
       }
        match /fraud_scenarios/{scenarioId} {
-        allow read, write: if isAdmin();
+        allow read, write: if request.auth.token.admin == true;
       }
       match /incidents/{incidentId} {
-        allow read: if isAdmin();
-        allow create: if isSignedIn(); 
-        allow update, delete: if isAdmin();
+        allow read: if request.auth.token.admin == true;
+        allow create: if request.auth.uid != null; 
+        allow update, delete: if request.auth.token.admin == true;
       }
       match /certifications/{certId} {
-        allow read, write: if isAdmin();
+        allow read, write: if request.auth.token.admin == true;
       }
       match /audit_logs/{logId} {
-        allow read: if isAdmin();
-        allow create: if isSignedIn();
+        allow read: if request.auth.token.admin == true;
+        allow create: if request.auth.uid != null;
         allow update, delete: if false;
       }
       match /simulationRequests/{requestId} {
         allow create: if request.resource.data.userId == request.auth.uid;
-        allow read, update, delete: if isAdmin();
+        allow read, update, delete: if request.auth.token.admin == true;
       }
     }
 
     // Training Modules are readable by any authenticated user, but only writable by admins.
     match /trainingModules/{moduleId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow read: if request.auth.uid != null;
+      allow write: if request.auth.token.admin == true;
     }
   }
 }
