@@ -15,6 +15,7 @@ import { Card } from '@/components/ui/card';
 const adminNavLinks = [
     { href: '/admin/dashboard', label: 'Dashboard' },
     { href: '/admin/users', label: 'Users & Roles' },
+    { href: '/admin/tenants', label: 'Tenants' },
     { href: '/admin/campaigns', label: 'Campaigns' },
     { href: '/admin/simulations', label: 'Simulations' },
     { href: '/admin/content', label: 'Content' },

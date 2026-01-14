@@ -225,36 +225,26 @@
     "providers": ["password", "anonymous", "google.com"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "tenants/{tenantId}",
-        "definition": {
-          "schema": { "$ref": "#/entities/Tenant" },
-          "subcollections": {
-            "campaigns": { "schema": { "$ref": "#/entities/Campaign" } },
-            "courses": { "schema": { "$ref": "#/entities/Course" } },
-            "phishing_simulations": { "schema": { "$ref": "#/entities/PhishingSimulation" } },
-            "fraud_scenarios": { "schema": { "$ref": "#/entities/FraudScenario" } },
-            "incidents": { "schema": { "$ref": "#/entities/Incident" } },
-            "certifications": { "schema": { "$ref": "#/entities/Certification" } },
-            "audit_logs": { "schema": { "$ref": "#/entities/AuditLog" } },
-            "simulationRequests": { "schema": { "$ref": "#/entities/SimulationRequest" } }
-          }
-        }
-      },
-      {
-        "path": "users/{userId}",
-        "definition": {
-          "schema": { "$ref": "#/entities/User" },
-          "subcollections": {
-            "trainingResults": { "schema": { "$ref": "#/entities/TrainingResult" } }
-          }
-        }
-      },
-      { "path": "roles/{roleId}", "definition": { "schema": { "$ref": "#/entities/Role" } } },
-      { "path": "permissions/{permissionId}", "definition": { "schema": { "$ref": "#/entities/Permission" } } },
-      { "path": "role_permissions/{rolePermissionId}", "definition": { "schema": { "$ref": "#/entities/RolePermission" } } },
-      { "path": "trainingModules/{moduleId}", "definition": { "schema": { "$ref": "#/entities/TrainingModule" } } }
-    ]
+    "/tenants/{tenantId}": {
+        "schema": { "$ref": "#/entities/Tenant" },
+        "description": "Top-level collection of tenants (corporates)."
+    },
+    "/tenants/{tenantId}/campaigns/{campaignId}": { "schema": { "$ref": "#/entities/Campaign" }, "description": "Training campaigns specific to a tenant." },
+    "/tenants/{tenantId}/courses/{courseId}": { "schema": { "$ref": "#/entities/Course" }, "description": "Courses specific to a tenant." },
+    "/tenants/{tenantId}/phishing_simulations/{simId}": { "schema": { "$ref": "#/entities/PhishingSimulation" }, "description": "Phishing simulations for a tenant." },
+    "/tenants/{tenantId}/fraud_scenarios/{scenarioId}": { "schema": { "$ref": "#/entities/FraudScenario" }, "description": "Fraud scenarios for a tenant." },
+    "/tenants/{tenantId}/incidents/{incidentId}": { "schema": { "$ref": "#/entities/Incident" }, "description": "Security incidents reported within a tenant." },
+    "/tenants/{tenantId}/certifications/{certId}": { "schema": { "$ref": "#/entities/Certification" }, "description": "Certifications specific to a tenant." },
+    "/tenants/{tenantId}/audit_logs/{logId}": { "schema": { "$ref": "#/entities/AuditLog" }, "description": "Audit logs for actions within a tenant." },
+    "/tenants/{tenantId}/simulationRequests/{reqId}": { "schema": { "$ref": "#/entities/SimulationRequest" }, "description": "Simulation requests from users in a tenant." },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Top-level collection for all users across all tenants."
+    },
+    "/users/{userId}/trainingResults/{resultId}": { "schema": { "$ref": "#/entities/TrainingResult" }, "description": "Training results for a specific user." },
+    "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles." },
+    "/permissions/{permissionId}": { "schema": { "$ref": "#/entities/Permission" }, "description": "System-wide permissions." },
+    "/role_permissions/{rpId}": { "schema": { "$ref": "#/entities/RolePermission" }, "description": "Joins roles to permissions." },
+    "/trainingModules/{moduleId}": { "schema": { "$ref": "#/entities/TrainingModule" }, "description": "Global library of training modules." }
   }
 }

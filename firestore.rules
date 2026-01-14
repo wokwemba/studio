@@ -39,9 +39,9 @@ service cloud.firestore {
     match /tenants/{tenantId} {
       // Admins and users belonging to the tenant can read tenant data.
       allow read: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-      // Only admins (or a future SuperAdmin role) can write to tenants.
-      allow write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-
+      // Only super admins (or our specific admin email) can write to tenants.
+      allow write: if request.auth.token.superAdmin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
+      
       // Subcollections within a tenant
       match /campaigns/{campaignId} {
         allow read, write: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
@@ -72,6 +72,10 @@ service cloud.firestore {
         allow create: if request.resource.data.userId == request.auth.uid;
         allow read, update, delete: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       }
+    }
+
+     match /tenants/{document=**} {
+      allow list: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
     }
 
     // Training Modules are readable by any authenticated user, but only writable by admins.
