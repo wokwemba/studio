@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { type UserProfile, type Role } from '@/app/admin/users/page';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader, Users, UserCheck, UserPlus, UserCog } from 'lucide-react';
 import { AiInsights } from '@/components/dashboard/ai-insights';
 
