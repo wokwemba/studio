@@ -56,9 +56,7 @@ service cloud.firestore {
         allow read, write: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       }
       match /incidents/{incidentId} {
-        allow read: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
-        allow create: if request.auth.uid != null; 
-        allow update, delete: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
+        allow read, write: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       }
       match /certifications/{certId} {
         allow read, write: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';

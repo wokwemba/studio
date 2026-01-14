@@ -51,7 +51,7 @@ import { doc } from "firebase/firestore";
 const mainLinks = [
   { href: "/training", label: "My Training", icon: BookOpenCheck },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/simulations", label: "Request Simulation", icon: Target },
+  { href: "/simulations", label: "Request Simulation", icon: FlaskConical },
   { href: "/certificates", label: "My Certificates", icon: FileText },
   { href: "/profile", label: "My Profile", icon: User },
 ];

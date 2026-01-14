@@ -258,5 +258,3 @@
     "/trainingModules/{moduleId}": { "schema": { "$ref": "#/entities/TrainingModule" }, "description": "Global library of training modules." }
   }
 }
-
-    
