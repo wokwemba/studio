@@ -33,6 +33,7 @@ import {
   ShieldOff,
   BookOpenCheck,
   FlaskConical,
+  BrainCircuit,
 } from "lucide-react";
 
 import {
@@ -60,6 +61,7 @@ const mainLinks = [
 
 const trainingLinks = [
     { href: "/training/module", label: "Training Generator", icon: Wand2 },
+    { href: "/tutor", label: "AI Tutor", icon: BrainCircuit },
     { href: "/training/history", label: "Training History", icon: History },
 ]
 
@@ -168,3 +170,5 @@ export function SidebarNav() {
     </SidebarMenu>
   );
 }
+
+    

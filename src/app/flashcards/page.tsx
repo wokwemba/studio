@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, type FormEvent } from 'react';
@@ -29,7 +30,7 @@ const FlashcardComponent = ({ card, index }: { card: Flashcard, index: number })
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className="w-full h-64 [perspective:1000px]"
+      className="w-full h-64 [perspective:1000px] cursor-pointer"
       onClick={() => setIsFlipped(!isFlipped)}
     >
       <motion.div
