@@ -9,13 +9,13 @@ service cloud.firestore {
       allow read, write: if request.auth.uid == userId;
 
       // Admin: any user doc
-      allow read, write: if request.auth.token.admin == true;
+      allow read, write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
     }
 
     // Entire users collection
     match /users/{document=**} {
       // Only admins can list all users
-      allow list: if request.auth.token.admin == true;
+      allow list: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
     }
 
     // Roles collection
@@ -23,57 +23,57 @@ service cloud.firestore {
       // Any authenticated user can read role definitions.
       allow read: if request.auth.uid != null;
       // Only admins can create, update, or delete roles.
-      allow write: if request.auth.token.admin == true;
+      allow write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
     }
 
     match /roles/{document=**} {
       // Only admins can list all roles
-      allow list: if request.auth.token.admin == true;
+      allow list: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
     }
     
     // Tenant-specific data
     match /tenants/{tenantId} {
       // Admins and users belonging to the tenant can read tenant data.
-      allow read: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId;
+      allow read: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       // Only admins (or a future SuperAdmin role) can write to tenants.
-      allow write: if request.auth.token.admin == true;
+      allow write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
 
       // Subcollections within a tenant
       match /campaigns/{campaignId} {
-        allow read, write: if request.auth.token.admin == true;
+        allow read, write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       }
       match /courses/{courseId} {
-        allow read, write: if request.auth.token.admin == true;
+        allow read, write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       }
       match /phishing_simulations/{simId} {
-        allow read, write: if request.auth.token.admin == true;
+        allow read, write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       }
        match /fraud_scenarios/{scenarioId} {
-        allow read, write: if request.auth.token.admin == true;
+        allow read, write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       }
       match /incidents/{incidentId} {
-        allow read: if request.auth.token.admin == true;
+        allow read: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
         allow create: if request.auth.uid != null; 
-        allow update, delete: if request.auth.token.admin == true;
+        allow update, delete: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       }
       match /certifications/{certId} {
-        allow read, write: if request.auth.token.admin == true;
+        allow read, write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       }
       match /audit_logs/{logId} {
-        allow read: if request.auth.token.admin == true;
+        allow read: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
         allow create: if request.auth.uid != null;
         allow update, delete: if false;
       }
       match /simulationRequests/{requestId} {
         allow create: if request.resource.data.userId == request.auth.uid;
-        allow read, update, delete: if request.auth.token.admin == true;
+        allow read, update, delete: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       }
     }
 
     // Training Modules are readable by any authenticated user, but only writable by admins.
     match /trainingModules/{moduleId} {
       allow read: if request.auth.uid != null;
-      allow write: if request.auth.token.admin == true;
+      allow write: if request.auth.token.admin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
     }
   }
 }
