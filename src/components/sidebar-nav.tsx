@@ -81,7 +81,7 @@ export function SidebarNav() {
   );
   const { data: roleData, isLoading: isRoleDataLoading } = useDoc<{name: 'User' | 'Admin' | 'SuperAdmin'}>(userRoleDocRef);
 
-  const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin' || user?.email === 'wokwembs@safaricom.co.ke';
+  const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin' || user?.email === 'wokwemba@safaricom.co.ke';
   
   const isActive = (href: string) => {
     // For nested routes, we want to match the parent
