@@ -63,6 +63,12 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin() || isTenantAdmin(resource.data.tenantId);
     }
     
+    // PHISHING TEMPLATES: Writable by Super Admins, readable by all admins.
+    match /phishing_templates/{templateId} {
+      allow read: if isSuperAdmin() || request.auth.token.role == 'tenant_admin';
+      allow write: if isSuperAdmin();
+    }
+    
     // REPORTS: Managed by Tenant Admins and Super Admins.
     match /reports/{reportId} {
       allow read, write: if isSuperAdmin() || isTenantAdmin(resource.data.tenantId);

@@ -251,6 +251,55 @@
       },
       "required": ["tenantId", "name", "type", "status"]
     },
+    "PhishingTemplate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PhishingTemplate",
+      "type": "object",
+      "description": "Represents a template for a phishing simulation.",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+        "email": {
+          "type": "object",
+          "properties": {
+            "fromName": { "type": "string" },
+            "fromEmail": { "type": "string", "format": "email" },
+            "subject": { "type": "string" },
+            "htmlBody": { "type": "string" },
+            "textBody": { "type": "string" },
+            "attachments": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "type": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "landingPage": {
+          "type": "object",
+          "properties": {
+            "url": { "type": "string", "format": "uri" },
+            "design": { "type": "string" },
+            "captureCredentials": { "type": "boolean" },
+            "redirectTo": { "type": "string", "format": "uri" }
+          }
+        },
+        "educationalContent": {
+          "type": "object",
+          "properties": {
+            "debriefMessage": { "type": "string" },
+            "trainingModule": { "type": "string" },
+            "tips": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      },
+      "required": ["name", "category", "difficulty", "email"]
+    },
     "Report": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "Report",
@@ -352,6 +401,7 @@
     "/userProgress/{progressId}": { "schema": { "$ref": "#/entities/UserProgress" }, "description": "Tracks user progress in modules." },
     "/assignments/{assignmentId}": { "schema": { "$ref": "#/entities/Assignment" }, "description": "Training assignments for tenants." },
     "/phishingSimulations/{simId}": { "schema": { "$ref": "#/entities/PhishingSimulation" }, "description": "Phishing simulations for tenants." },
+    "/phishing_templates/{templateId}": { "schema": { "$ref": "#/entities/PhishingTemplate" }, "description": "Global library of phishing templates." },
     "/reports/{reportId}": { "schema": { "$ref": "#/entities/Report" }, "description": "Generated reports for tenants." },
     "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles." },
     "/subscription_plans/{planId}": { "schema": { "$ref": "#/entities/SubscriptionPlan" }, "description": "Defines the available subscription plans." }
