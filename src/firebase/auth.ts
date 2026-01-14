@@ -16,7 +16,7 @@ import { errorEmitter } from './error-emitter';
 import { ROLES } from '@/lib/roles';
 import type { Role } from '@/app/admin/users/page';
 
-const DEFAULT_TENANT_ID = 'default-tenant-cyber-up';
+const DEFAULT_TENANT_ID = 'default-tenant-ccyberguard';
 
 async function setSessionCookie(token: string, role: string) {
   try {

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'Cyber-UP',
+  title: 'CCyberGuard',
   description: 'AI-Powered Cybersecurity Training Platform',
 };
 

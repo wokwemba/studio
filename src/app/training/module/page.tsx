@@ -121,7 +121,7 @@ export default function GenerateTrainingModulePage() {
   const handleShare = () => {
     if (typeof window === 'undefined' || !module) return;
     const subject = `Check out this Cybersecurity Training Module: ${module.title}`;
-    const body = `I generated a training module on Cyber-UP about "${topic}". You can check it out here:\n\n${window.location.href}`;
+    const body = `I generated a training module on CCyberGuard about "${topic}". You can check it out here:\n\n${window.location.href}`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
@@ -139,7 +139,7 @@ export default function GenerateTrainingModulePage() {
       });
 
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save(`Cyber-UP_Certificate_${topic.replace(/\s/g, '_')}.pdf`);
+      pdf.save(`CCyberGuard_Certificate_${topic.replace(/\s/g, '_')}.pdf`);
       toast({
         title: "Certificate Downloaded",
         description: "Your certificate has been saved."

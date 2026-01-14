@@ -61,7 +61,7 @@ export function AiInsights() {
 
 
     surfaceAiInsights({
-      tenantId: tenantId || 'default-tenant-cyber-up',
+      tenantId: tenantId || 'default-tenant-ccyberguard',
       users: insightUsers,
       trainingModules: insightModules,
     })

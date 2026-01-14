@@ -230,7 +230,7 @@ export default function LoginPage() {
 
        <div className="relative z-10 flex items-center gap-2 mb-6">
             <ShieldCheck className="w-10 h-10 text-primary" />
-            <h1 className="text-3xl font-headline font-semibold text-white">Cyber-UP</h1>
+            <h1 className="text-3xl font-headline font-semibold text-white">CCyberGuard</h1>
        </div>
        {isClient ? <LoginForm /> : (
          <Card className="w-full max-w-md z-10 bg-card/80 backdrop-blur-lg">

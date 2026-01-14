@@ -50,7 +50,7 @@ export default function CertificatesPage() {
       });
 
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save(`Cyber-UP_Certificate_${certificate.moduleId.replace(/\s/g, '_')}.pdf`);
+      pdf.save(`CCyberGuard_Certificate_${certificate.moduleId.replace(/\s/g, '_')}.pdf`);
       toast({
         title: "Certificate Downloaded",
         description: "Your certificate has been saved."
