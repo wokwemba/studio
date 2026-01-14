@@ -38,7 +38,7 @@ service cloud.firestore {
     // Tenant-specific data
     match /tenants/{tenantId} {
       // Admins and users belonging to the tenant can read tenant data.
-      allow read: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
+      allow read, list: if request.auth.token.admin == true || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       // Only super admins (or our specific admin email) can write to tenants.
       allow write: if request.auth.token.superAdmin == true || request.auth.token.email == 'wokwemba@safaricom.co.ke';
       

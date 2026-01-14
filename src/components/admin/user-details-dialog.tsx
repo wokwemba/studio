@@ -16,16 +16,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useFirestore, updateDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useFirestore, updateDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader, Edit } from 'lucide-react';
+import { Loader, Edit, Check } from 'lucide-react';
 import type { UserProfile } from '@/app/admin/users/page';
+import type { Tenant } from '@/app/admin/tenants/page';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Badge } from '../ui/badge';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Checkbox } from '../ui/checkbox';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface UserDetailsDialogProps {
   isOpen: boolean;
@@ -37,6 +40,7 @@ interface UserDetailsDialogProps {
 const FormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   risk: z.enum(['Low', 'Medium', 'High']),
+  assignedTenants: z.array(z.string()).optional(),
 });
 
 export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: UserDetailsDialogProps) {
@@ -45,9 +49,16 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
   const { toast } = useToast();
   const firestore = useFirestore();
 
+  const tenantsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'tenants') : null, [firestore]);
+  const { data: tenants, isLoading: tenantsLoading } = useCollection<Tenant>(tenantsQuery);
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { name: user.name, risk: user.risk },
+    defaultValues: { 
+        name: user.name, 
+        risk: user.risk,
+        assignedTenants: user.assignedTenants || [user.tenantId]
+    },
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
@@ -62,6 +73,13 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
         const updates: Partial<UserProfile> = {};
         if (data.name !== user.name) updates.name = data.name;
         if (data.risk !== user.risk) updates.risk = data.risk;
+        
+        // Check for changes in assigned tenants
+        const initialTenants = new Set(user.assignedTenants || [user.tenantId]);
+        const newTenants = new Set(data.assignedTenants || []);
+        if (initialTenants.size !== newTenants.size || ![...initialTenants].every(t => newTenants.has(t))) {
+            updates.assignedTenants = Array.from(newTenants);
+        }
 
         if (Object.keys(updates).length > 0) {
             updateDocumentNonBlocking(userDocRef, updates);
@@ -86,10 +104,9 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
   
   const handleClose = () => {
     onOpenChange(false);
-    // Delay resetting edit mode to avoid UI flicker
     setTimeout(() => {
         setIsEditing(false);
-        form.reset({ name: user.name, risk: user.risk });
+        form.reset({ name: user.name, risk: user.risk, assignedTenants: user.assignedTenants || [user.tenantId] });
     }, 200);
   }
   
@@ -97,7 +114,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader className="flex-row items-center gap-4">
             <Avatar className="h-16 w-16">
                 <AvatarImage src={userAvatar} alt={user.name} />
@@ -147,6 +164,52 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
                             </FormItem>
                         )}
                         />
+                     <FormField
+                        control={form.control}
+                        name="assignedTenants"
+                        render={() => (
+                            <FormItem>
+                                <FormLabel>Tenant Assignments</FormLabel>
+                                <ScrollArea className="h-40 w-full rounded-md border p-4">
+                                     {tenantsLoading && <Loader className="w-4 h-4 animate-spin" />}
+                                     {tenants?.map((tenant) => (
+                                        <FormField
+                                            key={tenant.id}
+                                            control={form.control}
+                                            name="assignedTenants"
+                                            render={({ field }) => {
+                                                return (
+                                                <FormItem
+                                                    key={tenant.id}
+                                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                                >
+                                                    <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value?.includes(tenant.id)}
+                                                        onCheckedChange={(checked) => {
+                                                        return checked
+                                                            ? field.onChange([...(field.value || []), tenant.id])
+                                                            : field.onChange(
+                                                                field.value?.filter(
+                                                                (value) => value !== tenant.id
+                                                                )
+                                                            )
+                                                        }}
+                                                    />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal">
+                                                    {tenant.name}
+                                                    </FormLabel>
+                                                </FormItem>
+                                                )
+                                            }}
+                                            />
+                                     ))}
+                                </ScrollArea>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                        />
                     <DialogFooter className='pt-4'>
                         <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={isSaving}>Cancel</Button>
                         <Button type="submit" disabled={isSaving}>
@@ -173,13 +236,18 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
                              <Badge variant={user.risk === 'Low' ? 'success' : user.risk === 'Medium' ? 'outline' : 'destructive'}>{user.risk}</Badge>
                          </div>
                     </div>
-                    <div className="grid grid-cols-3 items-center gap-4">
-                        <Label className="text-right text-muted-foreground">User ID</Label>
-                        <p className="col-span-2 font-mono text-xs bg-muted p-1 rounded break-all">{user.id}</p>
+                    <div className="space-y-1">
+                        <Label className="text-muted-foreground">Tenant Assignments</Label>
+                        <div className="col-span-2 flex flex-wrap gap-1">
+                             {tenantsLoading ? <Loader className='w-4 h-4 animate-spin' /> : (user.assignedTenants || [user.tenantId])?.map(tId => {
+                                const tenantName = tenants?.find(t => t.id === tId)?.name || tId;
+                                return <Badge key={tId} variant="secondary">{tenantName}</Badge>
+                            })}
+                        </div>
                     </div>
-                    <div className="grid grid-cols-3 items-center gap-4">
-                        <Label className="text-right text-muted-foreground">Tenant ID</Label>
-                        <p className="col-span-2 font-mono text-xs bg-muted p-1 rounded break-all">{user.tenantId}</p>
+                     <div className="space-y-1">
+                        <Label className="text-muted-foreground">User ID</Label>
+                        <p className="font-mono text-xs bg-muted p-1 rounded break-all">{user.id}</p>
                     </div>
                 </div>
 

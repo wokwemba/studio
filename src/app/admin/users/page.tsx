@@ -57,6 +57,7 @@ export type UserProfile = {
   status: 'Active' | 'Invited' | 'Suspended';
   risk: 'Low' | 'Medium' | 'High';
   tenantId: string;
+  assignedTenants?: string[];
 };
 
 const statusVariant: Record<UserProfile['status'], 'success' | 'secondary' | 'destructive'> = {
