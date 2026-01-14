@@ -20,8 +20,10 @@ service cloud.firestore {
 
     // Roles collection
     match /roles/{roleId} {
-      // Admins can read/write roles
-      allow read, write: if request.auth.token.admin == true;
+      // Any authenticated user can read role definitions.
+      allow read: if request.auth.uid != null;
+      // Only admins can create, update, or delete roles.
+      allow write: if request.auth.token.admin == true;
     }
 
     match /roles/{document=**} {
