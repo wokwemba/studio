@@ -91,5 +91,11 @@ service cloud.firestore {
       allow read: if request.auth.uid != null;
       allow write: if isSuperAdmin();
     }
+
+    // RISK SCORES: Writable by admins, readable by the user and their admins.
+    match /risk_scores/{userId} {
+      allow read: if isOwnRecord(userId) || isSuperAdmin() || isTenantAdmin(resource.data.tenantId);
+      allow write: if isSuperAdmin() || isTenantAdmin(request.resource.data.tenantId);
+    }
   }
 }

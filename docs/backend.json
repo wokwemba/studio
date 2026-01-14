@@ -390,7 +390,7 @@
         },
         "required": ["name", "price", "limits", "features"]
       },
-      "ComplianceRule": {
+    "ComplianceRule": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "ComplianceRule",
         "type": "object",
@@ -412,7 +412,81 @@
           }
         },
         "required": ["regulation", "requirement", "frequency"]
-      }
+    },
+    "RiskScore": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RiskScore",
+      "type": "object",
+      "description": "Represents a user's calculated risk score.",
+      "properties": {
+        "userId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "overallScore": { "type": "number" },
+        "components": {
+          "type": "object",
+          "properties": {
+            "training": {
+              "type": "object",
+              "properties": {
+                "score": { "type": "number" },
+                "weight": { "type": "number" },
+                "factors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "factor": { "type": "string" },
+                      "value": { "type": "any" },
+                      "impact": { "type": "string", "enum": ["low", "medium", "high"] }
+                    }
+                  }
+                }
+              }
+            },
+            "phishing": {
+              "type": "object",
+              "properties": {
+                "score": { "type": "number" },
+                "weight": { "type": "number" },
+                "factors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "factor": { "type": "string" },
+                      "value": { "type": "any" },
+                      "impact": { "type": "string", "enum": ["low", "medium", "high"] }
+                    }
+                  }
+                }
+              }
+            },
+            "behavior": {
+              "type": "object",
+              "properties": {
+                "score": { "type": "number" },
+                "weight": { "type": "number" },
+                "factors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "factor": { "type": "string" },
+                      "value": { "type": "any" },
+                      "impact": { "type": "string", "enum": ["low", "medium", "high"] }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "riskLevel": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "recommendations": { "type": "array", "items": { "type": "string" } },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "tenantId", "overallScore", "riskLevel"]
+    }
   },
   "auth": {
     "providers": ["password", "anonymous", "google.com"]
@@ -428,6 +502,7 @@
     "/reports/{reportId}": { "schema": { "$ref": "#/entities/Report" }, "description": "Generated reports for tenants." },
     "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles." },
     "/subscription_plans/{planId}": { "schema": { "$ref": "#/entities/SubscriptionPlan" }, "description": "Defines the available subscription plans." },
-    "/compliance_rules/{ruleId}": { "schema": { "$ref": "#/entities/ComplianceRule" }, "description": "Global library of compliance rules and mappings." }
+    "/compliance_rules/{ruleId}": { "schema": { "$ref": "#/entities/ComplianceRule" }, "description": "Global library of compliance rules and mappings." },
+    "/risk_scores/{userId}": { "schema": { "$ref": "#/entities/RiskScore" }, "description": "Calculated risk scores for users." }
   }
 }
