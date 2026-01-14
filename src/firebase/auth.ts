@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Auth,
@@ -49,7 +50,7 @@ const createUserProfile = async (user: User): Promise<string> => {
     const db = getFirestore(user.auth.app);
     const userDocRef = doc(db, 'users', user.uid);
 
-    const isAdminEmail = user.email === 'wokwemba1@gmail.com';
+    const isAdminEmail = user.email === 'wokwemba@safaricom.co.ke';
     const isSuperAdminEmail = user.email === 'super@admin.com';
     
     const docSnap = await getDoc(userDocRef);
@@ -336,3 +337,5 @@ export async function deleteUser(
 }
 
 export { getRoleNameFromId };
+
+    
