@@ -24,6 +24,7 @@ import type { UserProfile } from '@/app/admin/users/page';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Badge } from '../ui/badge';
+import { Label } from '../ui/label';
 
 interface UserDetailsDialogProps {
   isOpen: boolean;
@@ -149,7 +150,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
 
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsEditing(true)}>
-                        <Edit className="mr-2" />
+                        <Edit className="mr-2 h-4 w-4" />
                         Edit User
                     </Button>
                     <Button onClick={handleClose}>Close</Button>
