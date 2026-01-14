@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, type FormEvent, useRef, useEffect } from 'react';
@@ -53,6 +54,13 @@ export default function TutorPage() {
   };
   
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1')?.imageUrl || '';
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [history, isLoading])
 
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)]">
@@ -66,7 +74,7 @@ export default function TutorPage() {
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         <ChatHistory messages={history} userAvatar={userAvatar} />
          {isLoading && (
             <div className="flex items-start gap-4">

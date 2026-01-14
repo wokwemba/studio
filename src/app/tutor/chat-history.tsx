@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ChatMessage } from '@/ai/flows/schemas/tutor-schema';
@@ -15,7 +16,7 @@ interface ChatHistoryProps {
 export function ChatHistory({ messages, userAvatar }: ChatHistoryProps) {
   if (messages.length === 0) {
     return (
-        <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground">
+        <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground h-full">
             <BrainCircuit className="h-16 w-16 mb-4" />
             <p className="text-lg">Welcome to the AI Tutor!</p>
             <p>Start by asking a question below.</p>
