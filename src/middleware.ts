@@ -18,17 +18,17 @@ export async function middleware(request: NextRequest) {
 
   const isAdminRoute = pathname.startsWith('/admin');
 
-  // If a user is logged in and tries to access login/signup, redirect to dashboard
+  // If a user is logged in and tries to access login/signup, redirect to their dashboard.
   if (userIsLoggedIn && (pathname === '/login' || pathname === '/signup')) {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
+    url.pathname = '/training';
     return NextResponse.redirect(url);
   }
 
-  // If a non-admin user tries to access an admin route, redirect them to the dashboard
+  // If a non-admin user tries to access an admin route, redirect them to their dashboard.
   if (isAdminRoute && userIsLoggedIn && userRole !== 'Admin' && userRole !== 'SuperAdmin' && session.token.email !== 'wokwemba@safaricom.co.ke') {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
+    url.pathname = '/training';
     return NextResponse.redirect(url);
   }
 

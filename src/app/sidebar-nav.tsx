@@ -80,20 +80,20 @@ export function SidebarNav() {
     () => (firestore && userData?.roleId ? doc(firestore, "roles", userData.roleId) : null),
     [firestore, userData]
   );
-  const { data: roleData, isLoading: isRoleDataLoading } = useDoc<{name: 'User' | 'Admin' | 'SuperAdmin'}>(userRoleDocRef);
+  const { data: roleData, isLoading: isRoleDataLoading } = useDoc<{name: 'User' | 'Admin' | 'SuperAdmin'}>(userDocRef);
 
   const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin' || user?.email === 'wokwemba@safaricom.co.ke';
   
   const isActive = (href: string) => {
-    if (href === "/" && pathname !== "/") {
-        return false;
-    }
-     if (href === "/training" && pathname.startsWith('/training')) {
+    // Exact match for the main training dashboard
+    if (href === "/training" && pathname === "/training") {
       return true;
     }
-    if (href !== "/" && pathname.startsWith(href)) {
+    // Match for nested routes, but not the parent itself unless it's an exact match
+    if (href !== "/" && pathname.startsWith(href) && pathname !== href) {
         return true;
     }
+    // For top-level links, we want an exact match.
     return pathname === href;
   };
   
@@ -105,7 +105,7 @@ export function SidebarNav() {
         <SidebarMenuItem key={link.href}>
           <SidebarMenuButton
             asChild
-            isActive={isActive(link.href)}
+            isActive={pathname.startsWith(link.href)}
             className="font-headline"
             tooltip={link.label}
           >
@@ -123,7 +123,7 @@ export function SidebarNav() {
                  <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton
                         asChild
-                        isActive={isActive(link.href)}
+                        isActive={pathname.startsWith(link.href)}
                         className="font-headline"
                         tooltip={link.label}
                         size="sm"
