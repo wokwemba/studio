@@ -88,6 +88,9 @@ export function SidebarNav() {
     if (href === "/" && pathname !== "/") {
         return false;
     }
+     if (href === "/training" && pathname.startsWith('/training')) {
+      return true;
+    }
     if (href !== "/" && pathname.startsWith(href)) {
         return true;
     }

@@ -1,25 +1,11 @@
 
 'use client';
 
-import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { MetricCard } from '@/components/dashboard/metric-card';
-import { RiskTrendChart } from '@/components/dashboard/risk-trend-chart';
-import { LeaderboardTable } from '@/components/dashboard/leaderboard-table';
-import { Loader, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { doc } from 'firebase/firestore';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-type UserData = {
-  risk: 'Low' | 'Medium' | 'High';
-  trainingResults?: any[]; // Simplified for this example
-  name?: string;
-  email?: string;
-  tenantId?: string;
-}
-
-function LandingPage() {
+export default function Home() {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen text-center px-4 -mt-16">
             <ShieldCheck className="w-24 h-24 text-primary mb-4" />
@@ -38,21 +24,3 @@ function LandingPage() {
         </div>
     );
 }
-
-export default function Home() {
-  const { user, isUserLoading } = useUser();
-
-  if (isUserLoading) {
-    return (
-        <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
-            <Loader className="h-16 w-16 animate-spin text-primary" />
-        </div>
-    );
-  }
-
-  // This is now a public landing page. Authenticated users are redirected
-  // by the layout component.
-  return <LandingPage />;
-}
-
-    
