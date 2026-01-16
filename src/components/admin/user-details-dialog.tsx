@@ -35,6 +35,7 @@ interface UserDetailsDialogProps {
   onOpenChange: (isOpen: boolean) => void;
   user: UserProfile;
   roleName: string;
+  isSuperAdmin: boolean;
 }
 
 const FormSchema = z.object({
@@ -43,7 +44,7 @@ const FormSchema = z.object({
   assignedTenants: z.array(z.string()).optional(),
 });
 
-export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: UserDetailsDialogProps) {
+export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSuperAdmin }: UserDetailsDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -164,7 +165,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
                             </FormItem>
                         )}
                         />
-                     <FormField
+                     {isSuperAdmin && <FormField
                         control={form.control}
                         name="assignedTenants"
                         render={() => (
@@ -209,7 +210,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
                                 <FormMessage />
                             </FormItem>
                         )}
-                        />
+                        />}
                     <DialogFooter className='pt-4'>
                         <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={isSaving}>Cancel</Button>
                         <Button type="submit" disabled={isSaving}>
@@ -236,7 +237,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
                              <Badge variant={user.risk === 'Low' ? 'success' : user.risk === 'Medium' ? 'outline' : 'destructive'}>{user.risk}</Badge>
                          </div>
                     </div>
-                    <div className="space-y-1">
+                    {isSuperAdmin && <div className="space-y-1">
                         <Label className="text-muted-foreground">Tenant Assignments</Label>
                         <div className="col-span-2 flex flex-wrap gap-1">
                              {tenantsLoading ? <Loader className='w-4 h-4 animate-spin' /> : (user.assignedTenants || [user.tenantId])?.map(tId => {
@@ -244,7 +245,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
                                 return <Badge key={tId} variant="secondary">{tenantName}</Badge>
                             })}
                         </div>
-                    </div>
+                    </div>}
                      <div className="space-y-1">
                         <Label className="text-muted-foreground">User ID</Label>
                         <p className="font-mono text-xs bg-muted p-1 rounded break-all">{user.id}</p>
@@ -252,10 +253,10 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName }: User
                 </div>
 
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsEditing(true)}>
+                    {isSuperAdmin && <Button variant="outline" onClick={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit User
-                    </Button>
+                    </Button>}
                     <Button onClick={handleClose}>Close</Button>
                 </DialogFooter>
             </>

@@ -119,6 +119,7 @@
         "jobTitle": { "type": "string" },
         "employeeId": { "type": "string" },
         "status": { "type": "string", "enum": ["active", "invited", "suspended", "archived"] },
+        "risk": { "type": "string", "enum": ["Low", "Medium", "High"], "description": "The user's overall risk level." },
         "trainingStats": {
             "type": "object",
             "properties": {
@@ -560,5 +561,3 @@
     "/users/{userId}/sms_analyses/{analysisId}": { "schema": { "$ref": "#/entities/SmsAnalysis" }, "description": "Stores the results of SMS fraud analyses for a specific user." }
   }
 }
-
-    

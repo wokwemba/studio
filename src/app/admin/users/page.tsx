@@ -40,6 +40,7 @@ import { AddUserDialog } from '@/components/admin/add-user-dialog';
 import { EditUserRoleDialog } from '@/components/admin/edit-user-role-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { UserDetailsDialog } from '@/components/admin/user-details-dialog';
+import { ROLES } from '@/lib/roles';
 
 
 export type Role = {
@@ -153,16 +154,33 @@ export default function AdminUsersPage() {
   );
   const { data: adminUserData, isLoading: isAdminUserDataLoading } = useDoc<UserProfile>(adminUserDocRef);
 
+  const rolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'roles') : null, [firestore]);
+  const { data: roles, isLoading: rolesLoading } = useCollection<Role>(rolesQuery);
+
+  const isSuperAdmin = useMemo(() => {
+    if (currentUser?.email === 'wokwemba@safaricom.co.ke') return true;
+    const adminRole = roles?.find(r => r.id === adminUserData?.roleId);
+    return adminRole?.name === 'SuperAdmin';
+  }, [currentUser, adminUserData, roles]);
+
   const tenantId = adminUserData?.tenantId;
 
+  // Super admins see all users, tenant admins see only their own.
   const usersQuery = useMemoFirebase(
-    () => (firestore && tenantId) ? query(collection(firestore, 'users'), where('tenantId', '==', tenantId)) : null,
-    [firestore, tenantId]
+    () => {
+        if (!firestore) return null;
+        if (isSuperAdmin) {
+            return collection(firestore, 'users');
+        }
+        if (tenantId) {
+            return query(collection(firestore, 'users'), where('tenantId', '==', tenantId));
+        }
+        return null;
+    },
+    [firestore, tenantId, isSuperAdmin]
   );
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery, { skip: !usersQuery });
 
-  const rolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'roles') : null, [firestore]);
-  const { data: roles, isLoading: rolesLoading } = useCollection<Role>(rolesQuery);
   
   const isLoading = isAuthLoading || isAdminUserDataLoading || usersLoading || rolesLoading;
 
@@ -299,6 +317,7 @@ export default function AdminUsersPage() {
             onOpenChange={(isOpen) => !isOpen && setUserToView(null)}
             user={userToView}
             roleName={roles.find(r => r.id === userToView.roleId)?.name || 'Unknown'}
+            isSuperAdmin={isSuperAdmin}
           />
       )}
 
