@@ -6,16 +6,13 @@ import { useAuthContext } from '@/components/auth/AuthProvider';
 import LoadingSkeleton from '@/components/auth/LoadingSkeleton';
 
 export default function AdminDashboardPage() {
-  const { user, role, loading } = useAuthContext();
+  const { role, loading } = useAuthContext();
   
   if (loading) {
     return <LoadingSkeleton />;
   }
-
-  // Allow a specific user email to always be super admin
-  const isSuperAdmin = role === 'SuperAdmin' || user?.email === 'wokwemba@safaricom.co.ke';
   
-  if (isSuperAdmin) {
+  if (role === 'SuperAdmin') {
     return <SuperAdminDashboard />;
   }
 

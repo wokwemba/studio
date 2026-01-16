@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const impersonationSnap = await getDoc(impersonationDocRef);
 
       let targetUserId = firebaseUser.uid;
+      let effectiveUser = firebaseUser;
 
       if (impersonationSnap.exists()) {
           const impersonationData = impersonationSnap.data();
@@ -72,10 +73,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsImpersonating(true);
           const impersonatedUserObject = { ...firebaseUser, uid: targetUserId, email: impersonationData.targetUserEmail };
           setUser(impersonatedUserObject as User);
+          effectiveUser = impersonatedUserObject as User;
       } else {
           setUser(firebaseUser);
           setIsImpersonating(false);
       }
+
+      // Special override for hardcoded super admin
+      if (effectiveUser.email === 'wokwemba@safaricom.co.ke') {
+        setRole('SuperAdmin');
+        // In a real app, you might fetch all permissions for a SuperAdmin
+        setPermissions(['admin:dashboard:read', 'admin:users:read', 'admin:users:create', 'admin:users:update', 'admin:users:delete', 'admin:users:impersonate']);
+        setLoading(false);
+        return;
+      }
+
 
       // Fetch role and permissions for the effective user (either real or impersonated)
       try {
