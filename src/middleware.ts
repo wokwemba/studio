@@ -1,14 +1,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { getIronSession } from 'iron-session';
-
-const sessionOptions = {
-  cookieName: 'firebase-session',
-  password: process.env.SECRET_COOKIE_PASSWORD || 'complex_password_at_least_32_characters_long_for_dev',
-   cookieOptions: {
-    secure: process.env.NODE_ENV === 'production',
-  },
-};
+import { sessionOptions } from '@/lib/session';
 
 export async function middleware(request: NextRequest) {
   const session = await getIronSession<{ token?: string, role?: string, isAnonymous?: boolean }>(request.cookies, sessionOptions);

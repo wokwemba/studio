@@ -1,21 +1,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { IronSession, getIronSession } from 'iron-session';
-
-const sessionOptions = {
-  cookieName: 'firebase-session',
-  password: process.env.SECRET_COOKIE_PASSWORD || 'complex_password_at_least_32_characters_long_for_dev',
-  cookieOptions: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-  },
-};
-
-async function getSession(req: NextRequest): Promise<IronSession<{ token?: string; role?: string; isAnonymous?: boolean }>> {
-  const res = new NextResponse();
-  return getIronSession<{ token?: string; role?: string; isAnonymous?: boolean }>(req, res, sessionOptions);
-}
+import { getIronSession } from 'iron-session';
+import { sessionOptions } from '@/lib/session';
 
 
 export async function POST(request: NextRequest) {
@@ -51,5 +38,3 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to clear session' }, { status: 500 });
     }
 }
-
-    
