@@ -16,6 +16,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const adminNavLinks = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/tenants', label: 'Tenants', icon: Building },
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/partners', label: 'Partners', icon: Building },
     { href: '/admin/campaigns', label: 'Campaigns', icon: GitPullRequest },
@@ -27,7 +28,7 @@ const adminNavLinks = [
     { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
   return (

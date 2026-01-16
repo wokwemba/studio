@@ -161,7 +161,7 @@ export function SuperAdminDashboard() {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="outline" size="sm" asChild><Link href="/admin/partners">View</Link></Button>
+                                <Button variant="outline" size="sm" asChild><Link href="/admin/tenants">View</Link></Button>
                                 <Button variant="secondary" size="sm"><MessageSquare className="h-4 w-4" /></Button>
                             </div>
                         </li>
