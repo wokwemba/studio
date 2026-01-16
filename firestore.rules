@@ -6,7 +6,8 @@ service cloud.firestore {
 
     // Helper functions based on custom claims
     function isSuperAdmin() {
-      return request.auth.token.role == 'SuperAdmin' || request.auth.token.email == 'wokwemba@safaricom.co.ke';
+      // Custom claims are not fully set up, so we rely on the hardcoded email for super admin access.
+      return request.auth.token.email == 'wokwemba@safaricom.co.ke';
     }
 
     function isTenantAdmin(tenantId) {

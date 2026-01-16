@@ -10,6 +10,8 @@ import type { Tenant } from '@/app/admin/tenants/page';
 import type { UserProfile } from '@/app/admin/users/page';
 import { Badge } from '../ui/badge';
 import Link from 'next/link';
+import { ResponsiveContainer, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, BarChart as RechartsBarChart, LineChart } from 'recharts';
+
 
 function SuperAdminMetricCard({ title, value, icon: Icon }: { title: string; value: string | number; icon: React.ElementType }) {
   return (
@@ -52,6 +54,21 @@ const recentActivityData = [
     { text: 'Critical vulnerability alert sent to all admins' },
 ];
 
+const platformGrowthData = [
+  { month: 'Apr', users: 400, tenants: 5 },
+  { month: 'May', users: 600, tenants: 7 },
+  { month: 'Jun', users: 900, tenants: 10 },
+  { month: 'Jul', users: 1250, tenants: 12 },
+];
+
+const popularModulesData = [
+  { name: 'Phishing 101', assignments: 5200, fill: 'hsl(var(--chart-1))' },
+  { name: 'Password Security', assignments: 4100, fill: 'hsl(var(--chart-2))' },
+  { name: 'Social Engineering', assignments: 3500, fill: 'hsl(var(--chart-3))' },
+  { name: 'GDPR Basics', assignments: 2800, fill: 'hsl(var(--chart-4))' },
+];
+
+
 export function SuperAdminDashboard() {
   const firestore = useFirestore();
 
@@ -85,6 +102,47 @@ export function SuperAdminDashboard() {
         <SuperAdminMetricCard title="Completion Rate" value="78%" icon={BarChart} />
         <SuperAdminMetricCard title="Satisfaction" value="92%" icon={Activity} />
       </div>
+
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Platform Growth</CardTitle>
+            <CardDescription>User and tenant growth over the last few months.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={platformGrowthData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis yAxisId="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))' }} />
+                <Legend />
+                <Line yAxisId="left" type="monotone" dataKey="users" stroke="hsl(var(--primary))" name="Users" />
+                <Line yAxisId="right" type="monotone" dataKey="tenants" stroke="hsl(var(--secondary))" name="Tenants" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Most Popular Modules</CardTitle>
+            <CardDescription>Top assigned training modules across all tenants.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <RechartsBarChart data={popularModulesData} layout="vertical" margin={{ left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" hide/>
+                <YAxis dataKey="name" type="category" width={120} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))' }} />
+                <Bar dataKey="assignments" name="Assignments" layout="vertical" radius={[0, 4, 4, 0]} />
+              </RechartsBarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
             <CardHeader>
@@ -151,5 +209,3 @@ export function SuperAdminDashboard() {
     </div>
   );
 }
-
-

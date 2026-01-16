@@ -9,6 +9,7 @@ import { type UserProfile } from '@/app/admin/users/page';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader, Users, CheckCircle, Percent, Shield, Activity, BarChart, Calendar, MessageSquare, AlertTriangle, ShieldCheck, ShieldClose, ShieldQuestion, Mail, GitPullRequest, Target, FileText, Bell, Settings } from 'lucide-react';
 import { Button } from '../ui/button';
+import { ResponsiveContainer, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, BarChart as RechartsBarChart, LineChart } from 'recharts';
 
 function AdminMetricCard({ title, value, icon: Icon }: { title: string; value: string | number; icon: React.ElementType }) {
   return (
@@ -24,7 +25,7 @@ function AdminMetricCard({ title, value, icon: Icon }: { title: string; value: s
   );
 }
 
-// Placeholder data - this would be calculated from user and training data in a real app
+// Placeholder data
 const departmentPerformanceData = [
     { name: 'IT Dept', completion: 95, status: 'high' },
     { name: 'Finance', completion: 88, status: 'high' },
@@ -53,6 +54,19 @@ const complianceIcons: Record<string, React.ReactElement> = {
     medium: <ShieldQuestion className="h-5 w-5 text-yellow-500" />,
     low: <AlertTriangle className="h-5 w-5 text-destructive" />,
 };
+
+const riskDistributionData = [
+  { name: 'Low', users: 120, fill: 'hsl(var(--success))' },
+  { name: 'Medium', users: 45, fill: 'hsl(var(--primary))' },
+  { name: 'High', users: 15, fill: 'hsl(var(--destructive))' },
+];
+
+const engagementData = [
+  { month: 'May', modules: 150 },
+  { month: 'Jun', modules: 210 },
+  { month: 'Jul', modules: 250 },
+  { month: 'Aug', modules: 230 },
+];
 
 
 export function CorporateAdminDashboard() {
@@ -104,7 +118,7 @@ export function CorporateAdminDashboard() {
         ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline">Department Performance</CardTitle>
@@ -127,6 +141,40 @@ export function CorporateAdminDashboard() {
                     </ul>
                 </CardContent>
             </Card>
+             <div className="grid md:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline">User Risk Distribution</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={250}>
+                            <RechartsBarChart data={riskDistributionData}>
+                                <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}/>
+                                <Bar dataKey="users" radius={[4, 4, 0, 0]} />
+                            </RechartsBarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline">Training Engagement</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={250}>
+                            <LineChart data={engagementData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
+                                <XAxis dataKey="month" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} />
+                                <Legend />
+                                <Line type="monotone" dataKey="modules" stroke="hsl(var(--primary))" name="Modules Completed" />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
         <div className="space-y-6">
             <Card>
