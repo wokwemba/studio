@@ -1,13 +1,15 @@
 'use client';
 import { useState, type FormEvent } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader, GitBranch, Search, Share2, Users, FileText, Globe, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { runOsintAnalysis, type OsintMindMapOutput } from '@/ai/flows/osint-mind-map-flow';
+import { runRiskDetectionAnalysis, type RiskDetectionMapOutput } from '@/ai/flows/osint-mind-map-flow';
 import { MindMapNode } from '@/components/phishing-engine/mind-map-node';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const iconMap = {
     emailAnalysis: FileText,
@@ -18,12 +20,32 @@ const iconMap = {
     reputation: GitBranch,
 };
 
-export default function OsintMindmapPage() {
+const osintCategories = [
+    'Username Search', 'Email Analysis', 'Domain WHOIS', 'Subdomain Enumeration', 
+    'IP Address Analysis', 'Associated Social Media', 'Data Breach Exposure', 
+    'Reputation Analysis', 'Associated Documents', 'Reverse Image Search', 
+    'Phone Number Lookup', 'Geolocation Analysis', 'Dark Web Mentions', 
+    'Company Information', 'Employee Lookup', 'Code Repository Search', 
+    'Vulnerability Scan', 'DNS Records', 'Website Technology', 'Historical Archives'
+];
+
+export default function RiskDetectionMapPage() {
     const [target, setTarget] = useState('example.com');
-    const [isLoading, setIsLoading] =useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [results, setResults] = useState<OsintMindMapOutput | null>(null);
+    const [results, setResults] = useState<RiskDetectionMapOutput | null>(null);
+    const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set(['Email Analysis', 'Domain WHOIS', 'Data Breach Exposure']));
     const { toast } = useToast();
+
+    const handleCategoryChange = (category: string, checked: boolean | 'indeterminate') => {
+        const newSelected = new Set(selectedCategories);
+        if (checked) {
+            newSelected.add(category);
+        } else {
+            newSelected.delete(category);
+        }
+        setSelectedCategories(newSelected);
+    };
 
     const handleAnalyze = async (e: FormEvent) => {
         e.preventDefault();
@@ -31,12 +53,17 @@ export default function OsintMindmapPage() {
             toast({ variant: 'destructive', title: 'Target Required', description: 'Please enter a target to analyze.' });
             return;
         }
+        if (selectedCategories.size === 0) {
+            toast({ variant: 'destructive', title: 'Categories Required', description: 'Please select at least one category to investigate.' });
+            return;
+        }
+
         setIsLoading(true);
         setError(null);
         setResults(null);
 
         try {
-            const analysisResults = await runOsintAnalysis({ target });
+            const analysisResults = await runRiskDetectionAnalysis({ target, categories: Array.from(selectedCategories) });
             setResults(analysisResults);
         } catch (err: any) {
             console.error("OSINT Analysis failed:", err);
@@ -54,27 +81,50 @@ export default function OsintMindmapPage() {
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2">
                         <GitBranch />
-                        OSINT Mind Map
+                        Risk Detection Map
                     </CardTitle>
                     <CardDescription>
-                        Enter a domain, email, or username to generate a simulated Open-Source Intelligence report.
+                        Enter a target and select categories to generate a simulated Open-Source Intelligence report.
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleAnalyze}>
                     <CardContent>
-                        <Label htmlFor="osint-target">Target</Label>
-                        <div className="flex gap-2">
-                            <Input 
-                                id="osint-target"
-                                value={target}
-                                onChange={e => setTarget(e.target.value)}
-                                placeholder="e.g., example.com, user@test.com, or testuser"
-                                disabled={isLoading}
-                            />
-                            <Button type="submit" disabled={isLoading}>
-                                {isLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                                <span className="ml-2 hidden sm:inline">Analyze</span>
-                            </Button>
+                        <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="osint-target">Target</Label>
+                                <div className="flex gap-2">
+                                    <Input 
+                                        id="osint-target"
+                                        value={target}
+                                        onChange={e => setTarget(e.target.value)}
+                                        placeholder="e.g., example.com, user@test.com, or testuser"
+                                        disabled={isLoading}
+                                    />
+                                    <Button type="submit" disabled={isLoading} className="w-32">
+                                        {isLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                                        <span className="ml-2 hidden sm:inline">Analyze</span>
+                                    </Button>
+                                </div>
+                            </div>
+                             <Accordion type="single" collapsible>
+                                <AccordionItem value="item-1">
+                                    <AccordionTrigger>Investigation Categories ({selectedCategories.size} selected)</AccordionTrigger>
+                                    <AccordionContent>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2">
+                                        {osintCategories.map(category => (
+                                            <div key={category} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={category}
+                                                    checked={selectedCategories.has(category)}
+                                                    onCheckedChange={(checked) => handleCategoryChange(category, checked)}
+                                                />
+                                                <Label htmlFor={category} className="text-sm font-normal cursor-pointer">{category}</Label>
+                                            </div>
+                                        ))}
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
                         </div>
                     </CardContent>
                 </form>

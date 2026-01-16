@@ -2,37 +2,43 @@
 
 import { ai } from '@/ai/genkit';
 import {
-    OsintMindMapInputSchema,
-    type OsintMindMapInput,
-    OsintMindMapOutputSchema,
-    type OsintMindMapOutput,
+    RiskDetectionMapInputSchema,
+    type RiskDetectionMapInput,
+    RiskDetectionMapOutputSchema,
+    type RiskDetectionMapOutput,
 } from './schemas/osint-mind-map-schema';
 
-export async function runOsintAnalysis(input: OsintMindMapInput): Promise<OsintMindMapOutput> {
-  return osintMindMapFlow(input);
+export async function runRiskDetectionAnalysis(input: RiskDetectionMapInput): Promise<RiskDetectionMapOutput> {
+  return riskDetectionMapFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'osintMindMapPrompt',
-  input: { schema: OsintMindMapInputSchema },
-  output: { schema: OsintMindMapOutputSchema },
-  prompt: `You are an AI assistant that simulates an OSINT (Open-Source Intelligence) investigation. Given a target, you will generate a plausible report based on what publicly available information might exist.
+  name: 'riskDetectionMapPrompt',
+  input: { schema: RiskDetectionMapInputSchema },
+  output: { schema: RiskDetectionMapOutputSchema },
+  prompt: `You are an AI assistant that simulates an OSINT (Open-Source Intelligence) investigation. Given a target and a list of categories, you will generate a plausible report based on what publicly available information might exist.
 
 First, identify if the target is an email, domain, username, or something else.
-Then, provide a simulated analysis for the relevant categories. For example, if the target is an email, provide 'emailAnalysis', 'breachData', and 'socialMedia'. If it's a domain, provide 'domainAnalysis'.
+
+For each requested category, provide a simulated analysis. If a category is not relevant to the target type, state that. For example, 'Domain WHOIS' is not relevant for an email target.
 
 Do NOT invent passwords or highly sensitive private data. You can invent plausible breach names, social media profile summaries, and WHOIS data. Your output must strictly follow the provided JSON schema.
 
 Target: {{{target}}}
+
+Categories to Investigate:
+{{#each categories}}
+- {{{this}}}
+{{/each}}
 `,
 });
 
 
-const osintMindMapFlow = ai.defineFlow(
+const riskDetectionMapFlow = ai.defineFlow(
   {
-    name: 'osintMindMapFlow',
-    inputSchema: OsintMindMapInputSchema,
-    outputSchema: OsintMindMapOutputSchema,
+    name: 'riskDetectionMapFlow',
+    inputSchema: RiskDetectionMapInputSchema,
+    outputSchema: RiskDetectionMapOutputSchema,
   },
   async (input) => {
     const { output } = await prompt(input);

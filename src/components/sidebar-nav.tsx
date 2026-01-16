@@ -53,7 +53,7 @@ const mainLinks = [
   { href: "/training", label: "My Training", icon: BookOpenCheck },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/simulations", label: "Request Simulation", icon: FlaskConical },
-  { href: "/phishing-engine/dashboard", label: "Phishing Engine", icon: ScanLine },
+  { href: "/phishing-engine/dashboard", label: "Phishing Detector", icon: ScanLine },
   { href: "/certificates", label: "My Certificates", icon: FileText },
   { href: "/profile", label: "My Profile", icon: User },
 ];

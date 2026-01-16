@@ -15,7 +15,7 @@ const navLinks = [
     { href: '/phishing-engine/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/phishing-engine/transactions', label: 'Transactions', icon: FileText },
     { href: '/phishing-engine/alerts', label: 'Alerts', icon: AlertTriangle },
-    { href: '/phishing-engine/osint-mindmap', label: 'OSINT Mind Map', icon: GitBranch },
+    { href: '/phishing-engine/osint-mindmap', label: 'Risk Detection Map', icon: GitBranch },
     { href: '/phishing-engine/reports', label: 'Reports', icon: FileText },
 ];
 
@@ -59,7 +59,7 @@ export default function PhishingEngineLayout({ children }: { children: ReactNode
                 <div className="flex h-full max-h-screen flex-col gap-2">
                     <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                         <Link href="/" className="flex items-center gap-2 font-semibold">
-                            <h1 className="text-lg font-bold">SecureSMS ML</h1>
+                            <h1 className="text-lg font-bold">Phishing Detector Engine</h1>
                         </Link>
                     </div>
                     <div className="flex-1">
