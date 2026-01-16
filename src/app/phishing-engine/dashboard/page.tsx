@@ -238,7 +238,7 @@ export default function PhishingEngineDashboard() {
                                         <div className="space-y-2"><Label htmlFor="message">Message Text</Label><Textarea id="message" placeholder="Paste the SMS message here..." className="min-h-32" value={smsFormData.message} onChange={e => setSmsFormData({...smsFormData, message: e.target.value})} disabled={isAnalyzingSms} /></div>
                                     </CardContent>
                                     <CardFooter className="flex-col items-start gap-4">
-                                        <Button type="submit" disabled={isAnalyzingSms || !smsFormData.message || !smsFormData.senderId}><mrowisAnalyzingSms && <Loader className="mr-2 h-4 w-4 animate-spin" />}Analyze Message</Button>
+                                        <Button type="submit" disabled={isAnalyzingSms || !smsFormData.message || !smsFormData.senderId}>{isAnalyzingSms && <Loader className="mr-2 h-4 w-4 animate-spin" />}Analyze Message</Button>
                                         <div className="space-y-2"><Label className="text-xs text-muted-foreground">Quick Test</Label><div className="flex gap-2"><Button type="button" variant="outline" size="sm" onClick={() => setSmsFormData(exampleMessages.legit)}>Load Legitimate Example</Button><Button type="button" variant="outline" size="sm" onClick={() => setSmsFormData(exampleMessages.fraud)}>Load Fraudulent Example</Button></div></div>
                                     </CardFooter>
                                 </form>
@@ -269,7 +269,7 @@ export default function PhishingEngineDashboard() {
                                     <div className="space-y-2"><Label htmlFor="emailSubject">Subject</Label><Input id="emailSubject" placeholder="e.g., Urgent: Action Required on Your Account" value={emailFormData.subject} onChange={e => setEmailFormData({...emailFormData, subject: e.target.value})} disabled={isAnalyzingEmail} /></div>
                                     <div className="space-y-2"><Label htmlFor="emailBody">Body</Label><Textarea id="emailBody" placeholder="Paste the full email body here..." className="min-h-48" value={emailFormData.body} onChange={e => setEmailFormData({...emailFormData, body: e.target.value})} disabled={isAnalyzingEmail} /></div>
                                 </CardContent>
-                                <CardFooter><Button type="submit" disabled={isAnalyzingEmail || !emailFormData.body}><mrowisAnalyzingEmail && <Loader className="mr-2 h-4 w-4 animate-spin" />}Analyze Email</Button></CardFooter>
+                                <CardFooter><Button type="submit" disabled={isAnalyzingEmail || !emailFormData.body}>{isAnalyzingEmail && <Loader className="mr-2 h-4 w-4 animate-spin" />}Analyze Email</Button></CardFooter>
                             </form>
                         </Card>
                          <Card>
@@ -296,7 +296,7 @@ export default function PhishingEngineDashboard() {
                                     <div className="space-y-2"><Label htmlFor="waSender">Sender Number</Label><Input id="waSender" placeholder="e.g., +254712345678" value={whatsappFormData.sender} onChange={e => setWhatsappFormData({...whatsappFormData, sender: e.target.value})} disabled={isAnalyzingWhatsapp} /></div>
                                     <div className="space-y-2"><Label htmlFor="waMessage">Message Text</Label><Textarea id="waMessage" placeholder="Paste the WhatsApp message here..." className="min-h-32" value={whatsappFormData.message} onChange={e => setWhatsappFormData({...whatsappFormData, message: e.target.value})} disabled={isAnalyzingWhatsapp} /></div>
                                 </CardContent>
-                                <CardFooter><Button type="submit" disabled={isAnalyzingWhatsapp || !whatsappFormData.message}><mrowisAnalyzingWhatsapp && <Loader className="mr-2 h-4 w-4 animate-spin" />}Analyze Message</Button></CardFooter>
+                                <CardFooter><Button type="submit" disabled={isAnalyzingWhatsapp || !whatsappFormData.message}>{isAnalyzingWhatsapp && <Loader className="mr-2 h-4 w-4 animate-spin" />}Analyze Message</Button></CardFooter>
                             </form>
                         </Card>
                         <Card>
