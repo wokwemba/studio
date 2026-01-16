@@ -6,6 +6,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
+  signInAnonymously as signInAnonymouslyFromFirebase,
   UserCredential,
   User,
   updatePassword,
@@ -19,12 +20,12 @@ import type { Role } from '@/app/admin/users/page';
 
 const DEFAULT_TENANT_ID = 'default-tenant-ccyberguard';
 
-async function setSessionCookie(token: string, role: string) {
+async function setSessionCookie(token: string, role: string, isAnonymous: boolean = false) {
   try {
     await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, role }),
+      body: JSON.stringify({ token, role, isAnonymous }),
     });
   } catch (error) {
     console.error("Failed to set session cookie:", error);
@@ -100,7 +101,7 @@ const createUserProfile = async (user: User): Promise<string> => {
             targetRoleId = ROLES.SUPER_ADMIN;
         }
 
-        const newUserProfile = {
+        const newUserProfile: any = {
             email: user.email,
             name: user.displayName || user.email?.split('@')[0] || 'New User',
             tenantId: DEFAULT_TENANT_ID,
@@ -110,6 +111,12 @@ const createUserProfile = async (user: User): Promise<string> => {
             photoURL: user.photoURL || null,
             avatarId: user.photoURL ? null : `user-avatar-${Math.floor(Math.random() * 5) + 1}`,
         };
+
+        if (user.isAnonymous) {
+            newUserProfile.name = `Anonymous User ${user.uid.substring(0, 5)}`;
+            newUserProfile.email = null;
+            newUserProfile.isAnonymous = true;
+        }
 
         try {
             await setDoc(userDocRef, newUserProfile);
@@ -144,6 +151,19 @@ function mapFirebaseError(error: any): string {
     default:
       console.error('Unhandled Firebase Auth Error:', error);
       return 'An unexpected error occurred. Please try again.';
+  }
+}
+
+export async function signInAnonymously(auth: Auth): Promise<{ success: boolean; role?: string; error?: string }> {
+  try {
+    const userCredential = await signInAnonymouslyFromFirebase(auth);
+    const roleName = await createUserProfile(userCredential.user);
+    const token = await userCredential.user.getIdToken();
+    
+    await setSessionCookie(token, roleName, true); // isAnonymous = true
+    return { success: true, role: roleName };
+  } catch (error: any) {
+    return { success: false, error: mapFirebaseError(error) };
   }
 }
 

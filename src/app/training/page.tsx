@@ -1,15 +1,17 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useUser, useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { useUser, useDoc, useFirestore, useMemoFirebase, useCollection, useAuth, signInAnonymously } from '@/firebase';
 import { collection, query, orderBy, doc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, AlertTriangle, ShieldCheck, FileText, Lightbulb, Bell, Clock, Check, Wand2, FlaskConical, BarChart3 } from 'lucide-react';
+import { Loader, AlertTriangle, ShieldCheck, FileText, Lightbulb, Bell, Clock, Check, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MetricCard } from '@/components/dashboard/metric-card';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 type TrainingResult = {
   id: string;
@@ -30,10 +32,69 @@ const securityTip = {
 };
 
 function PublicTrainingLanding() {
+    const router = useRouter();
+    const auth = useAuth();
+    const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleAnonymousLogin = async () => {
+        if (!auth) {
+             toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
+            return;
+        };
+        setIsLoading(true);
+        const result = await signInAnonymously(auth);
+        if (result.success) {
+            router.push('/flashcards');
+        } else {
+            toast({ variant: 'destructive', title: 'Could not log in', description: result.error });
+            setIsLoading(false);
+        }
+    };
+
+    const features = [
+        {
+            icon: Wand2,
+            title: 'AI-Powered Content',
+            description: 'Instantly generate custom training modules and quizzes on any cybersecurity topic.',
+            href: '/training/module'
+        },
+        {
+            icon: FlaskConical,
+            title: 'Realistic Simulations',
+            description: 'Test your readiness against a wide range of simulated cyber attacks.',
+            href: '/simulations'
+        },
+        {
+            icon: BarChart3,
+            title: 'Intelligent Analysis',
+            description: 'Get a clear view of your security posture with AI-driven insights.',
+            href: '/risk-profile'
+        },
+        {
+            icon: BrainCircuit,
+            title: 'AI-Powered Tutoring',
+            description: 'Get 1-on-1 help from an AI tutor to master complex cybersecurity concepts.',
+            href: '/tutor'
+        },
+        {
+            icon: ScanLine,
+            title: 'VAPT & Audit Services',
+            description: 'Request professional vulnerability assessments and system audits.',
+            href: '/vapt'
+        },
+        {
+            icon: FileBadge,
+            title: 'Compliance & Reporting',
+            description: 'Manage compliance requirements and generate detailed reports.',
+            href: '/admin/analytics'
+        },
+    ];
+
     return (
         <div className="flex flex-col items-center justify-center text-center px-4 bg-background py-20">
             <ShieldCheck className="w-24 h-24 text-primary mb-4 mx-auto" />
-            <h1 className="text-5xl font-bold font-headline mb-4">Cybersecurity Training Platform</h1>
+            <h1 className="text-5xl font-bold font-headline mb-4">Cybersecurity Training AND CONSULTANCY</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
                 Sharpen your skills with AI-powered training modules, realistic simulations, and personalized learning paths.
             </p>
@@ -47,44 +108,30 @@ function PublicTrainingLanding() {
                  <Button asChild variant="secondary" size="lg">
                     <Link href="/partner-registration">Register as Partner</Link>
                 </Button>
+                 <Button variant="secondary" size="lg" onClick={handleAnonymousLogin} disabled={isLoading}>
+                     {isLoading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Explore Flashcards
+                </Button>
             </div>
             
              <div className="w-full max-w-6xl mx-auto py-16 mt-10">
                 <h2 className="text-3xl font-bold font-headline mb-12">Explore Our Tools</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <Card className="text-left h-full">
-                        <CardHeader>
-                            <div className="p-3 bg-primary/10 rounded-md w-fit mb-4">
-                                <Wand2 className="w-8 h-8 text-primary" />
-                            </div>
-                            <CardTitle className="font-headline">AI-Powered Content</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-muted-foreground">Instantly generate custom training modules and quizzes on any cybersecurity topic.</p>
-                        </CardContent>
-                    </Card>
-                     <Card className="text-left h-full">
-                        <CardHeader>
-                            <div className="p-3 bg-primary/10 rounded-md w-fit mb-4">
-                                <FlaskConical className="w-8 h-8 text-primary" />
-                            </div>
-                            <CardTitle className="font-headline">Realistic Simulations</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-muted-foreground">Test your readiness with a wide range of simulated cyber attacks.</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="text-left h-full">
-                        <CardHeader>
-                            <div className="p-3 bg-primary/10 rounded-md w-fit mb-4">
-                                <BarChart3 className="w-8 h-8 text-primary" />
-                            </div>
-                            <CardTitle className="font-headline">Intelligent Analysis</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-muted-foreground">Get a clear view of your security posture with AI-driven insights.</p>
-                        </CardContent>
-                    </Card>
+                    {features.map((feature) => (
+                         <Link href={feature.href} key={feature.title}>
+                            <Card className="text-left h-full hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer">
+                                <CardHeader>
+                                    <div className="p-3 bg-primary/10 rounded-md w-fit mb-4">
+                                        <feature.icon className="w-8 h-8 text-primary" />
+                                    </div>
+                                    <CardTitle className="font-headline">{feature.title}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-muted-foreground">{feature.description}</p>
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    ))}
                 </div>
             </div>
         </div>
@@ -249,3 +296,5 @@ export default function MyTrainingPage() {
 
     return <UserTrainingDashboard />;
 }
+
+    

@@ -12,15 +12,15 @@ const sessionOptions = {
   },
 };
 
-async function getSession(req: NextRequest): Promise<IronSession<{ token?: string; role?: string }>> {
+async function getSession(req: NextRequest): Promise<IronSession<{ token?: string; role?: string; isAnonymous?: boolean }>> {
   const res = new NextResponse();
-  return getIronSession<{ token?: string; role?: string }>(req, res, sessionOptions);
+  return getIronSession<{ token?: string; role?: string; isAnonymous?: boolean }>(req, res, sessionOptions);
 }
 
 
 export async function POST(request: NextRequest) {
   try {
-    const { token, role } = await request.json();
+    const { token, role, isAnonymous } = await request.json();
 
     if (!token || !role) {
       return NextResponse.json({ error: 'Token and role are required' }, { status: 400 });
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
 
     session.token = token;
     session.role = role;
+    session.isAnonymous = !!isAnonymous;
     await session.save();
 
     return NextResponse.json({ success: true });
@@ -50,3 +51,5 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to clear session' }, { status: 500 });
     }
 }
+
+    

@@ -11,15 +11,23 @@ const sessionOptions = {
 };
 
 export async function middleware(request: NextRequest) {
-  const session = await getIronSession<{ token?: string, role?: string }>(request.cookies, sessionOptions);
+  const session = await getIronSession<{ token?: string, role?: string, isAnonymous?: boolean }>(request.cookies, sessionOptions);
   const { pathname } = request.nextUrl;
   const userIsLoggedIn = !!session.token;
   const userRole = session.role;
+  const userIsAnonymous = !!session.isAnonymous;
 
   const isAdminRoute = pathname.startsWith('/admin');
 
-  // If a user is logged in and tries to access login/signup, redirect to their dashboard.
-  if (userIsLoggedIn && (pathname === '/login' || pathname === '/signup')) {
+  // If an anonymous user tries to access anything other than flashcards or auth pages, redirect them.
+  if (userIsAnonymous && pathname !== '/flashcards' && pathname !== '/login' && pathname !== '/signup') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/flashcards';
+      return NextResponse.redirect(url);
+  }
+
+  // If a logged-in (but not anonymous) user tries to access login/signup, redirect to their dashboard.
+  if (userIsLoggedIn && !userIsAnonymous && (pathname === '/login' || pathname === '/signup')) {
     const url = request.nextUrl.clone();
     url.pathname = '/training';
     return NextResponse.redirect(url);
