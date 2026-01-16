@@ -7,7 +7,7 @@ import { collection, doc, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader, Building, MoreVertical, Eye, Check, X, Archive, Star, MessageSquare, Briefcase, UserPlus } from 'lucide-react';
+import { Loader, Building, MoreVertical, Eye, Check, X, Archive, Star, MessageSquare, Briefcase, BarChart3 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from '@/components/ui/dropdown-menu';
@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { AddNoteDialog } from '@/components/admin/partner-add-note-dialog';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 export type Note = {
     text: string;
@@ -174,11 +175,21 @@ export default function AdminPartnersPage() {
         <>
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2">
-                        <Building />
-                        <span>Manage Partners</span>
-                    </CardTitle>
-                    <CardDescription>Review and manage all incoming partnership requests.</CardDescription>
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                        <div>
+                            <CardTitle className="font-headline flex items-center gap-2">
+                                <Building />
+                                <span>Manage Partners</span>
+                            </CardTitle>
+                            <CardDescription>Review and manage all incoming partnership requests.</CardDescription>
+                        </div>
+                        <Button asChild variant="outline">
+                            <Link href="/admin/partners/analytics">
+                                <BarChart3 className="mr-2 h-4 w-4" />
+                                View Analytics
+                            </Link>
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
@@ -298,5 +309,3 @@ export default function AdminPartnersPage() {
         </>
     );
 }
-
-    
