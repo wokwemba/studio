@@ -1,4 +1,3 @@
-
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -7,17 +6,15 @@ import { SidebarNav } from "@/components/sidebar-nav";
 import Header from "@/components/header";
 import { ShieldCheck, Loader } from "lucide-react";
 import Link from "next/link";
-import { useUser } from "@/firebase";
+import { useAuthContext } from "./auth/AuthProvider";
 
 const unauthenticatedRoutes = ["/login", "/signup", "/partner-registration"];
 const publicRoutes = ["/"];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, isUserLoading } = useUser();
+  const { user, loading: isUserLoading } = useAuthContext();
   const pathname = usePathname();
   
-  // The middleware should handle all redirects.
-  // This component now focuses on rendering the correct layout state.
   const isAuthPage = unauthenticatedRoutes.includes(pathname);
   const isPublicPage = publicRoutes.includes(pathname);
   
@@ -31,14 +28,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       );
   }
   
-  // If it's a public or auth page, just render the content without the dashboard shell.
-  // The middleware ensures that a logged-in user won't see these pages.
   if (isAuthPage || (!user && isPublicPage)) {
     return <>{children}</>;
   }
   
-  // If we have any kind of user (full or anonymous), show the dashboard layout.
-  // The middleware has already ensured they are on an accessible page.
   if (user) {
     return (
         <div className="min-h-screen w-full flex">
@@ -61,8 +54,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // This case should ideally not be reached due to middleware.
-  // It acts as a fallback to prevent rendering a broken state.
+  // This case should not be reached due to ProtectedRoute component handling redirects.
+  // It acts as a fallback to prevent rendering a broken state while auth is resolving.
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Loader className="h-16 w-16 animate-spin text-primary" />

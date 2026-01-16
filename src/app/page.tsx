@@ -1,9 +1,9 @@
-
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAuth, signInAnonymously } from '@/firebase';
+import { useAuth as useFirebaseAuth } from '@/firebase/auth';
+import { signInAnonymously } from '@/firebase/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader, ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText } from 'lucide-react';
@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
     const router = useRouter();
-    const auth = useAuth();
+    const auth = useFirebaseAuth();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
 

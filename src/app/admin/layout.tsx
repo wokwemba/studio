@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ReactNode } from 'react';
@@ -12,6 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { LayoutDashboard, Users, Building, GitPullRequest, ClipboardList, BookCopy, ShieldAlert, BarChart3, Settings } from 'lucide-react';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const adminNavLinks = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -29,22 +29,24 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
 
   return (
-    <div className="space-y-6">
-        <Card>
-            <Menubar className="border-none flex-wrap h-auto">
-                {adminNavLinks.map(link => (
-                    <MenubarMenu key={link.href}>
-                        <MenubarTrigger asChild className={cn("cursor-pointer", pathname.startsWith(link.href) && "text-primary bg-accent font-semibold")}>
-                            <Link href={link.href} className='flex items-center gap-2'>
-                                <link.icon className="h-4 w-4" />
-                                {link.label}
-                            </Link>
-                        </MenubarTrigger>
-                    </MenubarMenu>
-                ))}
-            </Menubar>
-        </Card>
-        {children}
-    </div>
+    <ProtectedRoute>
+      <div className="space-y-6">
+          <Card>
+              <Menubar className="border-none flex-wrap h-auto">
+                  {adminNavLinks.map(link => (
+                      <MenubarMenu key={link.href}>
+                          <MenubarTrigger asChild className={cn("cursor-pointer", pathname.startsWith(link.href) && "text-primary bg-accent font-semibold")}>
+                              <Link href={link.href} className='flex items-center gap-2'>
+                                  <link.icon className="h-4 w-4" />
+                                  {link.label}
+                              </Link>
+                          </MenubarTrigger>
+                      </MenubarMenu>
+                  ))}
+              </Menubar>
+          </Card>
+          {children}
+      </div>
+    </ProtectedRoute>
   );
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/firebase';
-import { signInWithEmail, signInWithGoogle, resetInvitedUserPassword } from '@/firebase/auth';
+import { useAuth, signInWithEmail, signInWithGoogle, resetInvitedUserPassword } from '@/firebase/auth';
 import { ShieldCheck, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';

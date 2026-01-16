@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/dashboard-layout';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { AuthProvider } from '@/components/auth/AuthProvider';
 
 export const metadata: Metadata = {
   title: 'CCyberGuard',
@@ -27,10 +28,12 @@ export default function RootLayout({
       </head>
       <body className={cn('font-body antialiased')} suppressHydrationWarning>
         <FirebaseClientProvider>
-          <SidebarProvider>
-            <DashboardLayout>{children}</DashboardLayout>
-          </SidebarProvider>
-          <Toaster />
+          <AuthProvider>
+            <SidebarProvider>
+              <DashboardLayout>{children}</DashboardLayout>
+            </SidebarProvider>
+            <Toaster />
+          </AuthProvider>
         </FirebaseClientProvider>
       </body>
     </html>

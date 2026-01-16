@@ -1,15 +1,16 @@
-
 'use client';
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { useUser, useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
 import { collection, query, orderBy, doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader, AlertTriangle, FileText, Lightbulb, Bell, Clock, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MetricCard } from '@/components/dashboard/metric-card';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { useAuthContext } from '@/components/auth/AuthProvider';
 
 type TrainingResult = {
   id: string;
@@ -30,7 +31,7 @@ const securityTip = {
 };
 
 function UserTrainingDashboard() {
-  const { user, isUserLoading: isAuthLoading } = useUser();
+  const { user, loading: isAuthLoading } = useAuthContext();
   const firestore = useFirestore();
 
   const trainingResultsQuery = useMemoFirebase(() => {
@@ -173,5 +174,9 @@ function UserTrainingDashboard() {
 }
 
 export default function MyTrainingPage() {
-    return <UserTrainingDashboard />;
+    return (
+      <ProtectedRoute>
+        <UserTrainingDashboard />
+      </ProtectedRoute>
+    );
 }

@@ -1,4 +1,3 @@
-
 import { Search, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,14 +12,16 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useAuth, useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { doc } from 'firebase/firestore';
+import { useAuthContext } from "./auth/AuthProvider";
+import { getAuth } from "firebase/auth";
 
 export default function Header() {
-  const auth = useAuth();
-  const { user } = useUser();
+  const auth = getAuth();
+  const { user } = useAuthContext();
   const router = useRouter();
   const firestore = useFirestore();
 
@@ -89,5 +90,3 @@ export default function Header() {
     </header>
   );
 }
-
-    

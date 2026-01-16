@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Auth,
@@ -19,19 +18,6 @@ import { ROLES } from '@/lib/roles';
 import type { Role } from '@/app/admin/users/page';
 
 const DEFAULT_TENANT_ID = 'default-tenant-ccyberguard';
-
-async function setSessionCookie(token: string, role: string, isAnonymous: boolean = false) {
-  try {
-    await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, role, isAnonymous }),
-    });
-  } catch (error) {
-    console.error("Failed to set session cookie:", error);
-    throw new Error("Session setup failed. Please try again.");
-  }
-}
 
 const getRoleNameFromId = async (firestore: Firestore, roleId: string): Promise<string> => {
     try {
@@ -158,9 +144,6 @@ export async function signInAnonymously(auth: Auth): Promise<{ success: boolean;
   try {
     const userCredential = await signInAnonymouslyFromFirebase(auth);
     const roleName = await createUserProfile(userCredential.user);
-    const token = await userCredential.user.getIdToken();
-    
-    await setSessionCookie(token, roleName, true); // isAnonymous = true
     return { success: true, role: roleName };
   } catch (error: any) {
     return { success: false, error: mapFirebaseError(error) };
@@ -175,9 +158,6 @@ export async function signInWithEmail(
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const roleName = await createUserProfile(userCredential.user);
-    const token = await userCredential.user.getIdToken();
-
-    await setSessionCookie(token, roleName);
     return { success: true, role: roleName };
   } catch (error: any) {
     if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -239,9 +219,6 @@ export async function resetInvitedUserPassword(
 
 
         const roleName = await getRoleNameFromId(db, profileData.roleId);
-        const token = await user.getIdToken();
-        await setSessionCookie(token, roleName);
-        
         return { success: true, role: roleName };
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
@@ -259,9 +236,6 @@ export async function signUpWithEmail(
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const roleName = await createUserProfile(userCredential.user);
-    const token = await userCredential.user.getIdToken();
-
-    await setSessionCookie(token, roleName);
     return { success: true, role: roleName };
   } catch (error: any) {
     return { success: false, error: mapFirebaseError(error) };
@@ -275,9 +249,6 @@ export async function signInWithGoogle(
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
     const roleName = await createUserProfile(userCredential.user);
-    const token = await userCredential.user.getIdToken();
-    
-    await setSessionCookie(token, roleName);
     return { success: true, role: roleName };
   } catch (error: any) {
     return { success: false, error: mapFirebaseError(error) };
@@ -357,6 +328,3 @@ export async function deleteUser(
 }
 
 export { getRoleNameFromId };
-
-    
-    
