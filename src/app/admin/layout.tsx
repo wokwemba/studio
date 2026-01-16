@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ReactNode } from 'react';
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/menubar";
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
-import { LayoutDashboard, Users, Building, GitPullRequest, ClipboardList, BookCopy, ShieldAlert, BarChart3, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Building, GitPullRequest, ClipboardList, BookCopy, ShieldAlert, BarChart3, Settings, History } from 'lucide-react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const adminNavLinks = [
@@ -22,6 +23,7 @@ const adminNavLinks = [
     { href: '/admin/content', label: 'Content', icon: BookCopy },
     { href: '/admin/incidents', label: 'Incidents', icon: ShieldAlert },
     { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+    { href: '/admin/audit', label: 'Audit Logs', icon: History },
     { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 

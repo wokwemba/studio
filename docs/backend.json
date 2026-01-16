@@ -356,7 +356,8 @@
       "title": "Role",
       "type": "object",
       "properties": {
-        "name": { "type": "string", "enum": ["SuperAdmin", "Admin", "User"] }
+        "name": { "type": "string", "enum": ["SuperAdmin", "Admin", "User"] },
+        "permissions": { "type": "array", "items": { "type": "string" }, "description": "A list of permission keys granted to this role." }
       },
       "required": ["name"]
     },
