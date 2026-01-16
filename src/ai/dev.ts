@@ -8,5 +8,6 @@ import '@/ai/flows/surface-ai-insights.ts';
 import '@/ai/flows/generate-training-campaigns.ts';
 import '@/ai/flows/chat-flow.ts';
 import '@/ai/flows/generate-flashcards-flow.ts';
+import '@/ai/flows/detect-fraud-flow.ts';
 import '@/ai/genkit';
 import '@/ai/flows/schemas/tutor-schema.ts';

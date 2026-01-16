@@ -34,6 +34,7 @@ import {
   BookOpenCheck,
   FlaskConical,
   BrainCircuit,
+  ScanLine,
 } from "lucide-react";
 
 import {
@@ -49,20 +50,20 @@ import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 
 const mainLinks = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/training", label: "My Training", icon: BookOpenCheck },
-  { href: "/training/achievements", label: "Achievements", icon: Trophy },
-  { href: "/flashcards", label: "Flashcards", icon: Copy },
-  { href: "/simulations", label: "Simulations", icon: Target },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/simulations", label: "Request Simulation", icon: FlaskConical },
+  { href: "/fraud-detector", label: "Fraud Detector", icon: ScanLine },
+  { href: "/certificates", label: "My Certificates", icon: FileText },
   { href: "/profile", label: "My Profile", icon: User },
-  { href: "/certificates", label: "Certificates", icon: FileText },
 ];
 
 const trainingLinks = [
     { href: "/training/module", label: "Training Generator", icon: Wand2 },
     { href: "/tutor", label: "AI Tutor", icon: BrainCircuit },
+    { href: "/flashcards", label: "Flashcards", icon: Copy },
     { href: "/training/history", label: "Training History", icon: History },
+    { href: "/training/achievements", label: "Achievements", icon: Trophy },
 ]
 
 export function SidebarNav() {
@@ -81,23 +82,20 @@ export function SidebarNav() {
     () => (firestore && userData?.roleId ? doc(firestore, "roles", userData.roleId) : null),
     [firestore, userData]
   );
-  const { data: roleData, isLoading: isRoleDataLoading } = useDoc<{name: 'User' | 'Admin' | 'SuperAdmin'}>(userRoleDocRef);
+  const { data: roleData, isLoading: isRoleDataLoading } = useDoc<{name: 'User' | 'Admin' | 'SuperAdmin'}>(userDocRef);
 
   const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin' || user?.email === 'wokwemba@safaricom.co.ke';
   
   const isActive = (href: string) => {
-    // For nested routes, we want to match the parent
-    if (href === "/admin" && pathname.startsWith('/admin')) {
-      return true;
+    // Admin is a parent route, so it should be active for all sub-routes
+    if (href === "/admin") {
+      return pathname.startsWith("/admin");
     }
-     if (href === "/training" && pathname.startsWith('/training')) {
-      return true;
+    // The "My Training" link should only be active for its main page and direct sub-pages, not other top-level links that also start with /training.
+    if (href === "/training") {
+        return pathname === '/training' || pathname.startsWith('/training/');
     }
-    if (href !== "/" && pathname.startsWith(href)) {
-        return true;
-    }
-
-    // Exact match for all other links
+    // For all other links, we want an exact match to avoid highlighting parent links incorrectly.
     return pathname === href;
   };
   
@@ -122,12 +120,12 @@ export function SidebarNav() {
       ))}
        <SidebarSeparator />
         <SidebarGroup>
-            <SidebarGroupLabel>AI Tools</SidebarGroupLabel>
+            <SidebarGroupLabel>AI & Learning Tools</SidebarGroupLabel>
             {trainingLinks.map((link) => (
                  <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton
                         asChild
-                        isActive={isActive(link.href)}
+                        isActive={pathname.startsWith(link.href)}
                         className="font-headline"
                         tooltip={link.label}
                         size="sm"
@@ -170,5 +168,3 @@ export function SidebarNav() {
     </SidebarMenu>
   );
 }
-
-    
