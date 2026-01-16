@@ -12,7 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { doc } from 'firebase/firestore';
@@ -21,7 +21,8 @@ import { logout } from "@/lib/logout";
 
 
 export default function Header() {
-  const { user } = useAuthContext();
+  const { user, role } = useAuthContext();
+  const auth = useAuth();
   const router = useRouter();
   const firestore = useFirestore();
 
@@ -32,7 +33,8 @@ export default function Header() {
   const { data: userData } = useDoc<{ photoURL?: string; avatarId?: string }>(userDocRef);
 
   const handleLogout = () => {
-    logout(router);
+    if (!user || !auth || !firestore) return;
+    logout({ auth, firestore, user, role, router });
   };
 
   const userAvatar = userData?.photoURL 

@@ -1,16 +1,19 @@
-
 'use client';
-import { signOut } from 'firebase/auth';
-import { useAuth, useFirestore } from '@/firebase';
+import { signOut, type Auth } from 'firebase/auth';
 import { type AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { logAuditEvent } from './audit';
-import { useAuthContext } from '@/components/auth/AuthProvider';
+import type { User } from 'firebase/auth';
+import type { Firestore } from 'firebase/firestore';
 
-export async function logout(router: AppRouterInstance) {
-  const auth = useAuth();
-  const firestore = useFirestore();
-  const { user, role } = useAuthContext();
-  
+type LogoutParams = {
+    auth: Auth;
+    firestore: Firestore;
+    user: User;
+    role: string | null;
+    router: AppRouterInstance;
+}
+
+export async function logout({ auth, firestore, user, role, router }: LogoutParams) {
   if (auth && user) {
     await logAuditEvent(firestore, {
         action: 'USER_LOGOUT',
