@@ -13,7 +13,8 @@ import { Loader, Wand2, BarChart, AlertTriangle, Sigma, Banknote } from 'lucide-
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
-import { detectSmsFraud, type SmsFraudOutput, type SmsFraudInput } from '@/ai/flows/sms-fraud-flow';
+import { detectSmsFraud } from '@/ai/flows/sms-fraud-flow';
+import type { SmsFraudOutput, SmsFraudInput } from '@/ai/flows/schemas/sms-fraud-schema';
 
 type SmsAnalysis = SmsFraudOutput & {
     id: string;
