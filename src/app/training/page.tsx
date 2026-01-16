@@ -7,7 +7,7 @@ import { useUser, useDoc, useFirestore, useMemoFirebase, useCollection, useAuth,
 import { collection, query, orderBy, doc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, AlertTriangle, ShieldCheck, FileText, Lightbulb, Bell, Clock, Check, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge } from 'lucide-react';
+import { Loader, AlertTriangle, ShieldCheck, FileText, Lightbulb, Bell, Clock, Check, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { useRouter } from 'next/navigation';
@@ -55,40 +55,76 @@ function PublicTrainingLanding() {
     const features = [
         {
             icon: Wand2,
-            title: 'AI-Powered Content',
+            title: 'AI Content Generation',
             description: 'Instantly generate custom training modules and quizzes on any cybersecurity topic.',
             href: '/training/module'
         },
         {
             icon: FlaskConical,
             title: 'Realistic Simulations',
-            description: 'Test your readiness against a wide range of simulated cyber attacks.',
+            description: 'Test your readiness against a wide range of simulated cyber attacks, from phishing to DDoS.',
             href: '/simulations'
         },
         {
             icon: BarChart3,
-            title: 'Intelligent Analysis',
-            description: 'Get a clear view of your security posture with AI-driven insights.',
+            title: 'Intelligent Risk Analysis',
+            description: 'Get a clear view of your organization\'s security posture with AI-driven insights.',
             href: '/risk-profile'
         },
         {
             icon: BrainCircuit,
-            title: 'AI-Powered Tutoring',
+            title: 'AI Cybersecurity Tutor',
             description: 'Get 1-on-1 help from an AI tutor to master complex cybersecurity concepts.',
             href: '/tutor'
         },
         {
             icon: ScanLine,
             title: 'VAPT & Audit Services',
-            description: 'Request professional vulnerability assessments and system audits.',
+            description: 'Request professional vulnerability assessments, penetration testing, and system audits.',
             href: '/vapt'
         },
         {
             icon: FileBadge,
             title: 'Compliance & Reporting',
-            description: 'Manage compliance requirements and generate detailed reports.',
+            description: 'Manage compliance requirements and generate detailed reports for your organization.',
             href: '/admin/analytics'
         },
+        {
+            icon: Copy,
+            title: 'Interactive Flashcards',
+            description: 'Study key cybersecurity terms and concepts with AI-generated flashcard decks.',
+            href: '/flashcards'
+        },
+        {
+            icon: Trophy,
+            title: 'Gamified Leaderboard',
+            description: 'Compete with your colleagues and climb the ranks based on your security score.',
+            href: '/leaderboard'
+        },
+        {
+            icon: ScanLine, // Reusing icon, it fits well
+            title: 'Phishing Detector Engine',
+            description: 'Analyze suspicious SMS messages for fraud and phishing attempts with our AI engine.',
+            href: '/phishing-engine/dashboard'
+        },
+        {
+            icon: FileText,
+            title: 'Certificate Management',
+            description: 'Earn and manage official certificates for completed training modules.',
+            href: '/certificates'
+        },
+        {
+            icon: ClipboardList,
+            title: 'Incident Response Planning',
+            description: 'Submit requests for guided Incident Response tabletop exercises and drills.',
+            href: '/incident-response'
+        },
+        {
+            icon: GitPullRequest,
+            title: 'Automated Campaign Builder',
+            description: 'Let AI design end-to-end security awareness campaigns for your organization.',
+            href: '/admin/campaigns'
+        }
     ];
 
     return (
@@ -114,9 +150,9 @@ function PublicTrainingLanding() {
                 </Button>
             </div>
             
-             <div className="w-full max-w-6xl mx-auto py-16 mt-10">
+             <div className="w-full max-w-7xl mx-auto py-16 mt-10">
                 <h2 className="text-3xl font-bold font-headline mb-12">Explore Our Tools</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {features.map((feature) => (
                          <Link href={feature.href} key={feature.title}>
                             <Card className="text-left h-full hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer">
@@ -296,5 +332,3 @@ export default function MyTrainingPage() {
 
     return <UserTrainingDashboard />;
 }
-
-    
