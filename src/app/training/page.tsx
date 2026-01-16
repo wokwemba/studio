@@ -7,7 +7,7 @@ import { useUser, useDoc, useFirestore, useMemoFirebase, useCollection } from '@
 import { collection, query, orderBy, doc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, AlertTriangle, ShieldCheck, FileText, Lightbulb, Bell, Clock, Check } from 'lucide-react';
+import { Loader, AlertTriangle, ShieldCheck, FileText, Lightbulb, Bell, Clock, Check, Wand2, FlaskConical, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MetricCard } from '@/components/dashboard/metric-card';
 
@@ -29,8 +29,70 @@ const securityTip = {
     content: "Never share your password via email, even with IT support. Legitimate requests will be handled through official channels."
 };
 
-export default function MyTrainingPage() {
-  const { user, isUserLoading } = useUser();
+function PublicTrainingLanding() {
+    return (
+        <div className="flex flex-col items-center justify-center text-center px-4 bg-background py-20">
+            <ShieldCheck className="w-24 h-24 text-primary mb-4 mx-auto" />
+            <h1 className="text-5xl font-bold font-headline mb-4">Cybersecurity Training Platform</h1>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+                Sharpen your skills with AI-powered training modules, realistic simulations, and personalized learning paths.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+                <Button asChild size="lg">
+                    <Link href="/login">Login</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                    <Link href="/signup">Sign Up</Link>
+                </Button>
+                 <Button asChild variant="secondary" size="lg">
+                    <Link href="/partner-registration">Register as Partner</Link>
+                </Button>
+            </div>
+            
+             <div className="w-full max-w-6xl mx-auto py-16 mt-10">
+                <h2 className="text-3xl font-bold font-headline mb-12">Explore Our Tools</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <Card className="text-left h-full">
+                        <CardHeader>
+                            <div className="p-3 bg-primary/10 rounded-md w-fit mb-4">
+                                <Wand2 className="w-8 h-8 text-primary" />
+                            </div>
+                            <CardTitle className="font-headline">AI-Powered Content</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">Instantly generate custom training modules and quizzes on any cybersecurity topic.</p>
+                        </CardContent>
+                    </Card>
+                     <Card className="text-left h-full">
+                        <CardHeader>
+                            <div className="p-3 bg-primary/10 rounded-md w-fit mb-4">
+                                <FlaskConical className="w-8 h-8 text-primary" />
+                            </div>
+                            <CardTitle className="font-headline">Realistic Simulations</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">Test your readiness with a wide range of simulated cyber attacks.</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="text-left h-full">
+                        <CardHeader>
+                            <div className="p-3 bg-primary/10 rounded-md w-fit mb-4">
+                                <BarChart3 className="w-8 h-8 text-primary" />
+                            </div>
+                            <CardTitle className="font-headline">Intelligent Analysis</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">Get a clear view of your security posture with AI-driven insights.</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function UserTrainingDashboard() {
+  const { user, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
 
   const trainingResultsQuery = useMemoFirebase(() => {
@@ -62,7 +124,7 @@ export default function MyTrainingPage() {
     ];
   }, [userData]);
   
-  const isLoading = isLoadingResults || isLoadingUser || isUserLoading;
+  const isLoading = isLoadingResults || isLoadingUser || isAuthLoading;
 
   if (isLoading) {
     return (
@@ -170,4 +232,20 @@ export default function MyTrainingPage() {
         </div>
     </div>
   );
+}
+
+export default function MyTrainingPage() {
+    const { user, isUserLoading } = useUser();
+    
+    if (isUserLoading) {
+        return (
+            <div className="flex justify-center items-center h-96"><Loader className="w-8 h-8 animate-spin" /></div>
+        );
+    }
+    
+    if (!user) {
+        return <PublicTrainingLanding />;
+    }
+
+    return <UserTrainingDashboard />;
 }
