@@ -40,7 +40,8 @@ service cloud.firestore {
 
       // SMS ANALYSIS: Users can manage their own analysis results.
       match /sms_analyses/{analysisId} {
-        allow read, write: if isOwnRecord(userId);
+        allow read: if isOwnRecord(userId);
+        allow write: if isOwnRecord(userId);
       }
     }
 
