@@ -6,9 +6,11 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useAuth as useFirebaseAuth, useFirestore } from '@/firebase';
 import type { Role } from '@/app/admin/users/page';
 
+type RoleName = 'SuperAdmin' | 'Admin' | 'User';
+
 type AuthContextType = {
   user: User | null;
-  role: string | null;
+  role: RoleName | null;
   loading: boolean;
 };
 
@@ -20,7 +22,7 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const [role, setRole] = useState<RoleName | null>(null);
   const [loading, setLoading] = useState(true);
   const auth = useFirebaseAuth();
   const firestore = useFirestore();
@@ -52,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const roleDocRef = doc(firestore, 'roles', userData.roleId);
             const roleDocSnap = await getDoc(roleDocRef);
             if (roleDocSnap.exists()) {
-              setRole((roleDocSnap.data() as Role).name || 'User');
+              setRole((roleDocSnap.data() as Role).name as RoleName || 'User');
             } else {
               setRole('User'); // Default role if role doc not found
             }
@@ -60,13 +62,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setRole('User'); // Default role if roleId not on user
           }
         } else {
-          // This case might happen for a brand new user before their doc is created.
-          // The createUserProfile function handles setting the role, so this is a fallback.
            setRole('User');
         }
       } catch (error) {
         console.error("Error fetching user role:", error);
-        setRole(null); // Set role to null on error
+        setRole(null);
       }
 
 

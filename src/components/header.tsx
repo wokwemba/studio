@@ -17,10 +17,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { doc } from 'firebase/firestore';
 import { useAuthContext } from "./auth/AuthProvider";
-import { getAuth } from "firebase/auth";
+import { logout } from "@/lib/logout";
+
 
 export default function Header() {
-  const auth = getAuth();
   const { user } = useAuthContext();
   const router = useRouter();
   const firestore = useFirestore();
@@ -32,10 +32,7 @@ export default function Header() {
   const { data: userData } = useDoc<{ photoURL?: string; avatarId?: string }>(userDocRef);
 
   const handleLogout = () => {
-    if(auth) {
-      auth.signOut();
-    }
-    router.push('/login');
+    logout(router);
   };
 
   const userAvatar = userData?.photoURL 

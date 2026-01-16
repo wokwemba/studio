@@ -20,25 +20,26 @@ export default function ProtectedRoute({
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return; // Wait for auth state to resolve
+    if (loading) return; 
 
     if (!user) {
       router.replace(redirectTo);
       return;
     }
     
-    // Handle role requirements
     if (requireRole) {
-      const userIsSuperAdmin = role === 'SuperAdmin';
-      const userIsAdmin = role === 'Admin';
-
-      // If admin role is required, super admins also get access
-      const hasRequiredRole = (requireRole === 'Admin') 
-        ? (userIsAdmin || userIsSuperAdmin) 
-        : role === requireRole;
+      const isSuperAdmin = role === 'SuperAdmin';
+      const isAdmin = role === 'Admin';
+      
+      let hasRequiredRole = false;
+      if (requireRole === 'Admin') {
+        hasRequiredRole = isAdmin || isSuperAdmin;
+      } else {
+        hasRequiredRole = role === requireRole;
+      }
 
       if (!hasRequiredRole) {
-        router.replace('/'); // Redirect to a safe default page if role doesn't match
+        router.replace('/'); 
       }
     }
 
@@ -49,17 +50,20 @@ export default function ProtectedRoute({
   }
 
   if (!user) {
-    // This will be briefly visible before the redirect effect runs.
     return null; 
   }
   
   if (requireRole) {
-      const userIsSuperAdmin = role === 'SuperAdmin';
-      const userIsAdmin = role === 'Admin';
-      const hasRequiredRole = (requireRole === 'Admin') 
-        ? (userIsAdmin || userIsSuperAdmin) 
-        : role === requireRole;
-      if (!hasRequiredRole) return null;
+      const isSuperAdmin = role === 'SuperAdmin';
+      const isAdmin = role === 'Admin';
+      let hasRequiredRole = false;
+      if (requireRole === 'Admin') {
+        hasRequiredRole = isAdmin || isSuperAdmin;
+      } else {
+        hasRequiredRole = role === requireRole;
+      }
+
+      if (!hasRequiredRole) return <LoadingSkeleton />;
   }
 
   return <>{children}</>;

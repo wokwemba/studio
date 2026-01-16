@@ -4,111 +4,53 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  BookUser,
-  ShieldCheck,
-  Trophy,
-  LayoutDashboard,
-  Target,
-  FileText,
-  User,
-  Globe,
-  History,
-  Settings,
-  Copy,
-  Users,
-  GitPullRequest,
-  Mail,
-  Zap,
-  ShieldAlert,
-  BarChart3,
-  FileBadge,
-  BadgeCheck,
-  BookCopy,
-  Blocks,
-  Bell,
-  Monitor,
-  Building,
-  Loader,
-  Wand2,
-  ShieldOff,
-  BookOpenCheck,
-  FlaskConical,
-  BrainCircuit,
-  ScanLine,
-  ClipboardList,
-  ClipboardCheck,
-  LogIn,
-} from "lucide-react";
-
-import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   useSidebar,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { useAuthContext } from "@/components/auth/AuthProvider";
-
-const mainLinks = [
-  { href: "/training", label: "My Training", icon: BookOpenCheck },
-  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/simulations", label: "Request Simulation", icon: FlaskConical },
-  { href: "/phishing-engine/dashboard", label: "Phishing Detector", icon: ScanLine },
-  { href: "/certificates", label: "My Certificates", icon: FileText },
-  { href: "/profile", label: "My Profile", icon: User },
-];
-
-const servicesLinks = [
-    { href: "/vapt", label: "VAPT", icon: ScanLine },
-    { href: "/incident-response", label: "Incident Response", icon: ClipboardList },
-    { href: "/system-audit", label: "System Audit", icon: ClipboardCheck },
-    { href: "/custom-training", label: "Awareness Training", icon: BookUser },
-]
-
-const trainingLinks = [
-    { href: "/training/module", label: "Training Generator", icon: Wand2 },
-    { href: "/tutor", label: "AI Tutor", icon: BrainCircuit },
-    { href: "/flashcards", label: "Flashcards", icon: Copy },
-    { href: "/training/history", label: "Training History", icon: History },
-    { href: "/training/achievements", label: "Achievements", icon: Trophy },
-]
+import { SIDEBAR_LINKS, type SidebarLink } from "@/lib/sidebar-links";
+import { LogIn, Loader } from "lucide-react";
 
 export function SidebarNav() {
   const pathname = usePathname();
   const { state } = useSidebar();
   const { user, role, loading } = useAuthContext();
   
-  const userIsAdmin = role === 'Admin' || role === 'SuperAdmin' || user?.email === 'wokwemba@safaricom.co.ke';
-  
   const isActive = (href: string) => {
-    if (href === "/admin") {
-      return pathname.startsWith("/admin");
-    }
-    if (href === "/training") {
-        return pathname === '/training' || pathname.startsWith('/training/');
-    }
-    return pathname === href || pathname.startsWith(href + '/');
+    if (href === "/admin") return pathname.startsWith("/admin");
+    if (href === "/training") return pathname === '/training' || pathname.startsWith('/training/');
+    return pathname === href;
   };
+  
+  if (loading) {
+    return (
+       <div className="p-4 flex items-center justify-center">
+            <Loader className="w-6 h-6 animate-spin" />
+       </div>
+    );
+  }
 
   if (user?.isAnonymous) {
+    const anonLinks = SIDEBAR_LINKS.filter(link => link.roles.includes('Anonymous'));
     return (
       <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            isActive={isActive('/flashcards')}
-            className="font-headline"
-            tooltip="Flashcards"
-          >
-            <Link href="/flashcards">
-              <Copy className="h-5 w-5" />
-              {state === 'expanded' && <span>Flashcards</span>}
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        <SidebarSeparator />
+        {anonLinks.map((link) => (
+          <SidebarMenuItem key={link.href}>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive(link.href)}
+              className="font-headline"
+              tooltip={link.label}
+            >
+              <Link href={link.href}>
+                <link.icon className="h-5 w-5" />
+                {state === 'expanded' && <span>{link.label}</span>}
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
@@ -118,17 +60,22 @@ export function SidebarNav() {
           >
             <Link href="/login">
               <LogIn className="h-5 w-5" />
-              {state === 'expanded' && <span>Login or Sign Up</span>}
+              {state === 'expanded' && <span>Login / Sign Up</span>}
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
     );
   }
+  
+  const filteredLinks = SIDEBAR_LINKS.filter(link => {
+      if (!role) return false;
+      return link.roles.includes(role) || (role === 'SuperAdmin' && link.roles.includes('Admin'));
+  });
 
   return (
     <SidebarMenu>
-      {mainLinks.map((link) => (
+      {filteredLinks.map((link: SidebarLink) => (
         <SidebarMenuItem key={link.href}>
           <SidebarMenuButton
             asChild
@@ -143,73 +90,6 @@ export function SidebarNav() {
           </SidebarMenuButton>
         </SidebarMenuItem>
       ))}
-       <SidebarSeparator />
-        <SidebarGroup>
-            <SidebarGroupLabel>Services</SidebarGroupLabel>
-            {servicesLinks.map((link) => (
-                 <SidebarMenuItem key={link.href}>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={pathname.startsWith(link.href)}
-                        className="font-headline"
-                        tooltip={link.label}
-                        size="sm"
-                    >
-                        <Link href={link.href}>
-                            <link.icon className="h-4 w-4" />
-                            {state === 'expanded' && <span>{link.label}</span>}
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            ))}
-        </SidebarGroup>
-       <SidebarSeparator />
-        <SidebarGroup>
-            <SidebarGroupLabel>AI & Learning Tools</SidebarGroupLabel>
-            {trainingLinks.map((link) => (
-                 <SidebarMenuItem key={link.href}>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={pathname.startsWith(link.href)}
-                        className="font-headline"
-                        tooltip={link.label}
-                        size="sm"
-                    >
-                        <Link href={link.href}>
-                            <link.icon className="h-4 w-4" />
-                            {state === 'expanded' && <span>{link.label}</span>}
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            ))}
-        </SidebarGroup>
-      {loading && state === 'expanded' && (
-        <>
-        <SidebarSeparator />
-          <div className="p-2 flex items-center gap-2 text-xs text-muted-foreground">
-            <Loader className="w-4 h-4 animate-spin" />
-            <span>Verifying access...</span>
-          </div>
-        </>
-      )}
-      {userIsAdmin && !loading && (
-      <>
-        <SidebarSeparator />
-         <SidebarMenuItem>
-            <SidebarMenuButton
-                asChild
-                isActive={isActive('/admin')}
-                className="font-headline"
-                tooltip="Admin Panel"
-            >
-                <Link href="/admin">
-                    <ShieldCheck className="h-5 w-5" />
-                    {state === 'expanded' && <span>Admin Panel</span>}
-                </Link>
-            </SidebarMenuButton>
-        </SidebarMenuItem>
-        </>
-        )}
     </SidebarMenu>
   );
 }
