@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -9,6 +8,7 @@ import { Loader, History, User, Lock, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import type { AuditLog } from '@/docs/backend-schema';
+import { cn } from '@/lib/utils';
 
 const actionColors: Record<string, string> = {
     USER_LOGIN: 'bg-green-500/20 text-green-400',
