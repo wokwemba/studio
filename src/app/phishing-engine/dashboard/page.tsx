@@ -142,6 +142,14 @@ export default function PhishingEngineDashboard() {
         setSelectedCategories(newSelected);
     };
 
+    const handleSelectAll = () => {
+        setSelectedCategories(new Set(osintCategories));
+    };
+
+    const handleDeselectAll = () => {
+        setSelectedCategories(new Set());
+    };
+
     const handleOsintAnalyze = async (e: FormEvent) => {
         e.preventDefault();
         if (!target.trim()) {
@@ -220,8 +228,8 @@ export default function PhishingEngineDashboard() {
                                         <div className="space-y-2">
                                             <Label className="text-xs text-muted-foreground">Quick Test</Label>
                                             <div className="flex gap-2">
-                                                <Button variant="outline" size="sm" onClick={() => setFormData(exampleMessages.legit)}>Load Legitimate Example</Button>
-                                                <Button variant="outline" size="sm" onClick={() => setFormData(exampleMessages.fraud)}>Load Fraudulent Example</Button>
+                                                <Button type="button" variant="outline" size="sm" onClick={() => setFormData(exampleMessages.legit)}>Load Legitimate Example</Button>
+                                                <Button type="button" variant="outline" size="sm" onClick={() => setFormData(exampleMessages.fraud)}>Load Fraudulent Example</Button>
                                             </div>
                                         </div>
                                     </CardFooter>
@@ -330,6 +338,10 @@ export default function PhishingEngineDashboard() {
                                             <AccordionItem value="item-1">
                                                 <AccordionTrigger>Investigation Categories ({selectedCategories.size} selected)</AccordionTrigger>
                                                 <AccordionContent>
+                                                    <div className="flex gap-2 mb-4 px-2">
+                                                        <Button type="button" size="sm" variant="outline" onClick={handleSelectAll}>Select All</Button>
+                                                        <Button type="button" size="sm" variant="outline" onClick={handleDeselectAll}>Deselect All</Button>
+                                                    </div>
                                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2">
                                                     {osintCategories.map(category => (
                                                         <div key={category} className="flex items-center space-x-2">
