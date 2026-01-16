@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LayoutDashboard, AlertTriangle, FileText, Menu, Settings } from 'lucide-react';
+import { LayoutDashboard, AlertTriangle, FileText, Menu, Settings, GitBranch } from 'lucide-react';
 import { useUser, useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 
@@ -15,6 +15,7 @@ const navLinks = [
     { href: '/phishing-engine/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/phishing-engine/transactions', label: 'Transactions', icon: FileText },
     { href: '/phishing-engine/alerts', label: 'Alerts', icon: AlertTriangle },
+    { href: '/phishing-engine/osint-mindmap', label: 'OSINT Mind Map', icon: GitBranch },
     { href: '/phishing-engine/reports', label: 'Reports', icon: FileText },
 ];
 
