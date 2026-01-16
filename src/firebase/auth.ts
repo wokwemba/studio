@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Auth,
@@ -16,6 +17,7 @@ import { FirestorePermissionError } from './errors';
 import { errorEmitter } from './error-emitter';
 import { ROLES } from '@/lib/roles';
 import type { Role } from '@/app/admin/users/page';
+import { logAuditEvent } from '@/lib/audit';
 
 const DEFAULT_TENANT_ID = 'default-tenant-ccyberguard';
 
@@ -141,9 +143,15 @@ function mapFirebaseError(error: any): string {
 }
 
 export async function signInAnonymously(auth: Auth): Promise<{ success: boolean; role?: string; error?: string }> {
+  const firestore = getFirestore(auth.app);
   try {
     const userCredential = await signInAnonymouslyFromFirebase(auth);
     const roleName = await createUserProfile(userCredential.user);
+    await logAuditEvent(firestore, {
+        action: 'USER_LOGIN',
+        actor: { uid: userCredential.user.uid, email: userCredential.user.email, role: 'Anonymous' },
+        metadata: { method: 'anonymous' },
+    });
     return { success: true, role: roleName };
   } catch (error: any) {
     return { success: false, error: mapFirebaseError(error) };
@@ -155,14 +163,19 @@ export async function signInWithEmail(
   email: string,
   password: string
 ): Promise<{ success: boolean; role?: string; error?: string; isInvited?: boolean }> {
+  const firestore = getFirestore(auth.app);
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const roleName = await createUserProfile(userCredential.user);
+     await logAuditEvent(firestore, {
+        action: 'USER_LOGIN',
+        actor: { uid: userCredential.user.uid, email, role: roleName },
+        metadata: { method: 'email' },
+    });
     return { success: true, role: roleName };
   } catch (error: any) {
     if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        const db = getFirestore(auth.app);
-        const usersRef = collection(db, 'users');
+        const usersRef = collection(firestore, 'users');
         const q = query(usersRef, where("email", "==", email), where("status", "==", "Invited"));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
@@ -197,9 +210,6 @@ export async function resetInvitedUserPassword(
         // The user now exists in Auth. We need to find the Firestore doc and update it.
         const userDoc = querySnapshot.docs[0]; // The doc we found earlier
         
-        // We'll update the existing user document with the new UID from authentication
-        // This is a simplified approach. In production, you might want to handle this differently to avoid placeholder docs.
-        // For this app, we'll try to update the doc if we can, or create a new one with the UID.
         try {
             const tempDocRef = doc(db, 'users', userDoc.id);
             await deleteDoc(tempDocRef); // Remove the old doc
@@ -214,11 +224,17 @@ export async function resetInvitedUserPassword(
             status: 'Active',
             email: user.email, // ensure email is correct
             name: profileData.name || user.displayName,
-            // tenantId, roleId, etc., are carried over from profileData
         });
 
 
         const roleName = await getRoleNameFromId(db, profileData.roleId);
+        
+        await logAuditEvent(db, {
+            action: 'USER_SIGNUP',
+            actor: { uid: user.uid, email: user.email, role: roleName },
+            metadata: { method: 'invited' },
+        });
+
         return { success: true, role: roleName };
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
@@ -233,9 +249,15 @@ export async function signUpWithEmail(
   email: string,
   password: string
 ): Promise<{ success: boolean; role?: string; error?: string }> {
+  const firestore = getFirestore(auth.app);
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const roleName = await createUserProfile(userCredential.user);
+    await logAuditEvent(firestore, {
+        action: 'USER_SIGNUP',
+        actor: { uid: userCredential.user.uid, email, role: roleName },
+        metadata: { method: 'email' },
+    });
     return { success: true, role: roleName };
   } catch (error: any) {
     return { success: false, error: mapFirebaseError(error) };
@@ -245,10 +267,16 @@ export async function signUpWithEmail(
 export async function signInWithGoogle(
   auth: Auth
 ): Promise<{ success: boolean; role?: string; error?: string }> {
+  const firestore = getFirestore(auth.app);
   try {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
     const roleName = await createUserProfile(userCredential.user);
+     await logAuditEvent(firestore, {
+        action: 'USER_LOGIN',
+        actor: { uid: userCredential.user.uid, email: userCredential.user.email, role: roleName },
+        metadata: { method: 'google.com' },
+    });
     return { success: true, role: roleName };
   } catch (error: any) {
     return { success: false, error: mapFirebaseError(error) };
@@ -280,8 +308,19 @@ export async function inviteUserByEmail(
             avatarId: `user-avatar-${Math.floor(Math.random() * 5) + 1}`,
         };
         
-        // Let firestore auto-generate the ID. This user doc is temporary until the user signs up.
-        await addDoc(collection(firestore, "users"), newUserProfile);
+        const newDocRef = await addDoc(collection(firestore, "users"), newUserProfile);
+
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+        if(currentUser) {
+            await logAuditEvent(firestore, {
+                action: 'USER_INVITED',
+                actor: { uid: currentUser.uid, email: currentUser.email },
+                target: { type: 'USER', id: newDocRef.id },
+                metadata: { invitedEmail: email, roleId: roleId }
+            });
+        }
+
 
         return { success: true };
     } catch (error: any) {

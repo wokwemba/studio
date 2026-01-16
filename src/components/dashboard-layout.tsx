@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -7,6 +8,7 @@ import Header from "@/components/header";
 import { ShieldCheck, Loader } from "lucide-react";
 import Link from "next/link";
 import { useAuthContext } from "./auth/AuthProvider";
+import { ImpersonationBanner } from "./admin/impersonation-banner";
 
 const unauthenticatedRoutes = ["/login", "/signup", "/partner-registration"];
 const publicRoutes = ["/"];
@@ -47,6 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </SidebarContent>
         </Sidebar>
         <div className="flex flex-col flex-1">
+            <ImpersonationBanner />
             <Header />
             <main className="p-4 sm:p-6 lg:p-8 flex-1">{children}</main>
         </div>

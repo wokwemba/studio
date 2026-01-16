@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { useFirestore, updateDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader, Edit, Check } from 'lucide-react';
+import { Loader, Edit, Check, UserCheck } from 'lucide-react';
 import type { UserProfile } from '@/app/admin/users/page';
 import type { Tenant } from '@/app/admin/tenants/page';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -29,6 +29,8 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
 import { ScrollArea } from '../ui/scroll-area';
+import { useAuthContext } from '../auth/AuthProvider';
+import { startImpersonation } from '@/lib/impersonation';
 
 interface UserDetailsDialogProps {
   isOpen: boolean;
@@ -49,6 +51,8 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { realUser: adminUser, role: adminRole } = useAuthContext();
+
 
   const tenantsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'tenants') : null, [firestore]);
   const { data: tenants, isLoading: tenantsLoading } = useCollection<Tenant>(tenantsQuery);
@@ -111,6 +115,11 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
     }, 200);
   }
   
+  const handleImpersonate = async () => {
+    if (!firestore || !adminUser) return;
+    await startImpersonation(firestore, { uid: adminUser.uid, email: adminUser.email, role: adminRole }, user);
+  }
+
   const userAvatar = user.photoURL || PlaceHolderImages.find(p => p.id === user.avatarId)?.imageUrl || '';
 
   return (
@@ -253,10 +262,18 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
                 </div>
 
                 <DialogFooter>
-                    {isSuperAdmin && <Button variant="outline" onClick={() => setIsEditing(true)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit User
-                    </Button>}
+                    {isSuperAdmin && (
+                        <>
+                        <Button variant="secondary" onClick={handleImpersonate}>
+                            <UserCheck className="mr-2 h-4 w-4" />
+                            Impersonate
+                        </Button>
+                        <Button variant="outline" onClick={() => setIsEditing(true)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit User
+                        </Button>
+                        </>
+                    )}
                     <Button onClick={handleClose}>Close</Button>
                 </DialogFooter>
             </>

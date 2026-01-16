@@ -356,7 +356,7 @@
       "title": "Role",
       "type": "object",
       "properties": {
-        "name": { "type": "string", "enum": ["super_admin", "tenant_admin", "department_admin", "employee"] }
+        "name": { "type": "string", "enum": ["SuperAdmin", "Admin", "User"] }
       },
       "required": ["name"]
     },
@@ -539,6 +539,32 @@
         "analyzedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "senderId", "message", "verdict", "riskScore", "analyzedAt"]
+    },
+    "AdminImpersonation": {
+      "title": "Admin Impersonation",
+      "type": "object",
+      "description": "Tracks an active admin impersonation session.",
+      "properties": {
+        "targetUserId": { "type": "string", "description": "The UID of the user being impersonated." },
+        "targetUserEmail": { "type": "string", "description": "The email of the user being impersonated." },
+        "startedAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the session started." }
+      },
+      "required": ["targetUserId", "targetUserEmail", "startedAt"]
+    },
+    "AuditLog": {
+      "title": "Audit Log",
+      "type": "object",
+      "description": "Records a significant event that occurred in the system.",
+      "properties": {
+        "actorUid": { "type": "string", "description": "The UID of the user who performed the action." },
+        "actorEmail": { "type": "string", "description": "The email of the user who performed the action." },
+        "action": { "type": "string", "description": "A machine-readable key for the action (e.g., 'USER_LOGIN', 'IMPERSONATION_START')." },
+        "targetType": { "type": "string", "description": "The type of entity being acted upon (e.g., 'USER', 'TENANT')." },
+        "targetId": { "type": "string", "description": "The ID of the entity being acted upon." },
+        "metadata": { "type": "object", "description": "A flexible object for additional context about the event." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Timestamp of when the event occurred." }
+      },
+      "required": ["actorUid", "action", "timestamp"]
     }
   },
   "auth": {
@@ -558,6 +584,8 @@
     "/subscription_plans/{planId}": { "schema": { "$ref": "#/entities/SubscriptionPlan" }, "description": "Defines the available subscription plans." },
     "/compliance_rules/{ruleId}": { "schema": { "$ref": "#/entities/ComplianceRule" }, "description": "Global library of compliance rules and mappings." },
     "/risk_scores/{userId}": { "schema": { "$ref": "#/entities/RiskScore" }, "description": "Calculated risk scores for users." },
-    "/users/{userId}/sms_analyses/{analysisId}": { "schema": { "$ref": "#/entities/SmsAnalysis" }, "description": "Stores the results of SMS fraud analyses for a specific user." }
+    "/users/{userId}/sms_analyses/{analysisId}": { "schema": { "$ref": "#/entities/SmsAnalysis" }, "description": "Stores the results of SMS fraud analyses for a specific user." },
+    "/admin_impersonation/{adminId}": { "schema": { "$ref": "#/entities/AdminImpersonation" }, "description": "Stores active admin impersonation sessions." },
+    "/audit_logs/{logId}": { "schema": { "$ref": "#/entities/AuditLog" }, "description": "Collection of system-wide audit trail events." }
   }
 }

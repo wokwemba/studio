@@ -6,11 +6,11 @@ service cloud.firestore {
 
     // Helper functions based on custom claims
     function isSuperAdmin() {
-      return request.auth.token.role == 'super_admin' || request.auth.token.email == 'wokwemba@safaricom.co.ke';
+      return request.auth.token.role == 'SuperAdmin' || request.auth.token.email == 'wokwemba@safaricom.co.ke';
     }
 
     function isTenantAdmin(tenantId) {
-      return request.auth.token.role == 'tenant_admin' && request.auth.token.tenantId == tenantId;
+      return request.auth.token.role == 'Admin' && request.auth.token.tenantId == tenantId;
     }
 
     function isOwnRecord(userId) {
@@ -109,6 +109,17 @@ service cloud.firestore {
     match /risk_scores/{userId} {
       allow read: if isOwnRecord(userId) || isSuperAdmin() || isTenantAdmin(resource.data.tenantId);
       allow write: if isSuperAdmin() || isTenantAdmin(request.resource.data.tenantId);
+    }
+
+    // AUDIT LOGS: Only allow creation. No one can read/update/delete from the client.
+    match /audit_logs/{logId} {
+      allow create: if request.auth.uid != null;
+      allow read, update, delete: if false;
+    }
+
+    // ADMIN IMPERSONATION: Only the admin themselves can read/write their own session.
+    match /admin_impersonation/{adminId} {
+      allow read, write: if request.auth.uid == adminId;
     }
   }
 }

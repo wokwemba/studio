@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import {
@@ -23,6 +24,8 @@ import { type Role } from '@/app/admin/users/page';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from 'lucide-react';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useAuthContext } from '../auth/AuthProvider';
+import { logAuditEvent } from '@/lib/audit';
 
 interface EditUserRoleDialogProps {
   user: { id: string; name: string };
@@ -43,14 +46,26 @@ export function EditUserRoleDialog({
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user: actor, role: actorRole } = useAuthContext();
 
   const handleSave = async () => {
-    if (!firestore) return;
+    if (!firestore || !actor) return;
     setIsSaving(true);
     try {
       const userDocRef = doc(firestore, 'users', user.id);
       
       updateDocumentNonBlocking(userDocRef, { roleId: selectedRoleId });
+
+      const oldRoleName = roles.find(r => r.id === currentRoleId)?.name;
+      const newRoleName = roles.find(r => r.id === selectedRoleId)?.name;
+
+      await logAuditEvent(firestore, {
+          action: 'USER_ROLE_CHANGE',
+          actor: { uid: actor.uid, email: actor.email, role: actorRole },
+          target: { type: 'USER', id: user.id },
+          metadata: { oldRole: oldRoleName, newRole: newRoleName }
+      });
+
 
       toast({
         title: 'Role Updated',
