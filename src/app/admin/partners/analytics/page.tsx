@@ -3,7 +3,7 @@
 
 import { TrendingUp, Users, Clock, CheckCircle, BarChart3, Building, Map, Gauge, ListFilter } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ResponsiveContainer, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Pie, Cell, Line, BarChart as RechartsBarChart, LineChart } from 'recharts';
+import { ResponsiveContainer, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Pie, Cell, Line, BarChart as RechartsBarChart, LineChart, PieChart } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
