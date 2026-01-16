@@ -1,5 +1,6 @@
 
 'use client';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -8,280 +9,330 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Upload, KeyRound, Webhook, Sparkles, Trash2 } from 'lucide-react';
+import { Upload, KeyRound, Webhook, Sparkles, Trash2, Loader } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import type { Tenant as TenantType } from '@/app/admin/tenants/page';
 
 
 function TenantSettings() {
+  const firestore = useFirestore();
+  const [selectedTenantId, setSelectedTenantId] = useState<string | undefined>(undefined);
+
+  const tenantsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'tenants') : null, [firestore]);
+  const { data: tenants, isLoading: tenantsLoading } = useCollection<TenantType>(tenantsQuery);
+
+  const tenantDocRef = useMemoFirebase(() => (firestore && selectedTenantId) ? doc(firestore, 'tenants', selectedTenantId) : null, [firestore, selectedTenantId]);
+  const { data: tenantData, isLoading: tenantDataLoading } = useDoc<any>(tenantDocRef);
+
+  const settingsDisabled = !selectedTenantId || tenantDataLoading;
+
   return (
     <div className="space-y-6">
-      {/* Branding & Customization */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Branding & Customization</CardTitle>
-          <CardDescription>Customize the look and feel of the platform for your users.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center gap-4">
-            <img src="https://picsum.photos/seed/logo/40/40" alt="logo" className="h-10 w-10 rounded-md" data-ai-hint="logo placeholder" />
-            <Input id="logo" type="file" className="max-w-xs" />
-            <Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Upload Logo</Button>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="primaryColor">Primary Color</Label>
-            <div className="flex items-center gap-2">
-              <Input id="primaryColor" type="color" defaultValue="#24305E" className="w-12 h-10 p-1" />
-              <Input defaultValue="#24305E" className="max-w-xs font-mono" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="welcomeMessage">Custom Welcome Message</Label>
-            <Input id="welcomeMessage" placeholder="Welcome to our security training!" />
-          </div>
-           <div className="space-y-2">
-            <Label htmlFor="supportContact">Custom Support Contact</Label>
-            <Input id="supportContact" placeholder="e.g., security-help@mycompany.com" />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* User & Access Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle>User & Access Management</CardTitle>
-          <CardDescription>Control how users are managed and what they can do.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-           <div className="space-y-2">
-            <Label htmlFor="defaultRole">Default User Role</Label>
-            <Select defaultValue="user">
-              <SelectTrigger className="max-w-xs">
-                <SelectValue placeholder="Select a default role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="department_admin">Department Admin</SelectItem>
-                <SelectItem value="tenant_admin">Tenant Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-              <Label>Allowed Authentication Methods</Label>
-              <div className="flex flex-col space-y-2 pt-2">
-                  <div className="flex items-center space-x-2"><Switch id="auth-password" defaultChecked /><Label htmlFor="auth-password">Email & Password</Label></div>
-                  <div className="flex items-center space-x-2"><Switch id="auth-google" defaultChecked /><Label htmlFor="auth-google">Google</Label></div>
-                   <div className="flex items-center space-x-2"><Switch id="auth-sso" /><Label htmlFor="auth-sso">Single Sign-On (SSO)</Label></div>
-              </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="sessionTimeout">Idle Session Timeout (minutes)</Label>
-            <Input id="sessionTimeout" type="number" defaultValue="30" className="max-w-xs" />
-          </div>
-          <div className="flex items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                  <Label>Allow Self-Registration</Label>
-                  <p className="text-xs text-muted-foreground">Allow users to sign up using your company's email domain.</p>
-              </div>
-              <Switch defaultChecked />
-          </div>
-        </CardContent>
-      </Card>
-      
-       {/* Training & Campaign Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Training & Campaign Settings</CardTitle>
-          <CardDescription>Set rules and defaults for training content and campaigns.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="campaignDuration">Default Campaign Duration (weeks)</Label>
-            <Input id="campaignDuration" type="number" defaultValue="4" className="max-w-xs" />
-          </div>
-           <div className="space-y-2">
-             <Label htmlFor="mandatoryModules">Mandatory Training Modules</Label>
-             <p className="text-xs text-muted-foreground">Force completion of these modules for all new users.</p>
-             <Select>
-                <SelectTrigger className="max-w-xs">
-                    <SelectValue placeholder="Select modules..." />
-                </SelectTrigger>
-                <SelectContent>
-                    {/* Items would be populated from a collection */}
-                    <SelectItem value="m1">Phishing 101</SelectItem>
-                    <SelectItem value="m2">Password Security</SelectItem>
-                </SelectContent>
-             </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="passingScore">Quiz Passing Score (%)</Label>
-            <Input id="passingScore" type="number" defaultValue="80" className="max-w-xs" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="certValidity">Certificate Validity Period (months)</Label>
-            <Input id="certValidity" type="number" defaultValue="12" className="max-w-xs" />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Security & Compliance */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Security & Compliance</CardTitle>
-          <CardDescription>Configure tenant-wide security policies.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-           <div className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                    <Label>Enforce Multi-Factor Authentication (MFA)</Label>
-                    <p className="text-xs text-muted-foreground">Require all users to set up MFA upon their next login.</p>
-                </div>
-                <Switch />
-            </div>
-            <div className="space-y-2">
-                <Label>Password Policy</Label>
-                <div className="flex items-center gap-4">
-                    <Input type="number" defaultValue="8" className="w-32" placeholder="Min length" />
-                    <div className="flex items-center space-x-2"><Switch id="policy-uppercase" defaultChecked /><Label htmlFor="policy-uppercase">Uppercase</Label></div>
-                    <div className="flex items-center space-x-2"><Switch id="policy-number" defaultChecked /><Label htmlFor="policy-number">Number</Label></div>
-                     <div className="flex items-center space-x-2"><Switch id="policy-special" defaultChecked /><Label htmlFor="policy-special">Special Character</Label></div>
-                </div>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="ipWhitelist">IP Whitelisting</Label>
-                <p className="text-xs text-muted-foreground">List IP addresses or CIDR ranges allowed to log in. One per line.</p>
-                <Textarea id="ipWhitelist" placeholder="e.g., 203.0.113.5&#10;198.51.100.0/24" className="min-h-[100px] font-mono" />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="retentionPolicy">Data Retention Policy (days)</Label>
-                <Input id="retentionPolicy" type="number" defaultValue="365" className="max-w-xs" />
-            </div>
-        </CardContent>
-      </Card>
-      
-        {/* Notifications */}
-      <Card>
-          <CardHeader>
-            <CardTitle>Notifications & Communication</CardTitle>
-            <CardDescription>Manage how the platform communicates with your users.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-              <div className="space-y-2">
-                  <Label htmlFor="reminderCadence">Overdue Training Reminder Cadence (days before)</Label>
-                  <Input id="reminderCadence" placeholder="e.g., 7, 3, 1" defaultValue="7, 3, 1" className="max-w-xs" />
-              </div>
-              <div className="space-y-2">
-                  <Label htmlFor="emailFooter">Custom Email Footer</Label>
-                  <Textarea id="emailFooter" placeholder="e.g., © My Company Inc. All rights reserved." />
-              </div>
-          </CardContent>
-      </Card>
-      
-      {/* API Access & Webhooks */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><KeyRound/>API Access & Webhooks</CardTitle>
-          <CardDescription>Manage API keys for programmatic access and configure webhooks.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                    <Label className="font-mono text-sm">api-key-....-xxxx</Label>
-                    <p className="text-xs text-muted-foreground">Last used: 2 hours ago</p>
-                </div>
-                <Button variant="destructive" size="sm">Revoke</Button>
-            </div>
-            <Button variant="outline">Generate New API Key</Button>
-            <Separator />
-             <div className="space-y-2">
-                <Label htmlFor="webhookUrl" className="flex items-center gap-2"><Webhook/>Webhook Endpoint URL</Label>
-                 <p className="text-xs text-muted-foreground">Send real-time event notifications (e.g., training completion, incident alert) to this URL.</p>
-                <Input id="webhookUrl" placeholder="https://myapp.com/webhook/cyberaegis" />
-            </div>
-        </CardContent>
-      </Card>
-      
-      {/* Feature Management */}
-      <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Sparkles/>Feature Management</CardTitle>
-            <CardDescription>Enable or disable specific platform features for this tenant.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                      <Label>AI-Powered Tutor</Label>
-                      <p className="text-xs text-muted-foreground">Allow users to access the conversational AI tutor for learning.</p>
-                  </div>
-                  <Switch defaultChecked />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                      <Label>Advanced Reporting Beta</Label>
-                      <p className="text-xs text-muted-foreground">Enable access to new, experimental reporting dashboards.</p>
-                  </div>
-                  <Switch />
-              </div>
-          </CardContent>
-      </Card>
-
-      {/* Data & Reporting */}
-      <Card>
-          <CardHeader>
-            <CardTitle>Data & Reporting</CardTitle>
-            <CardDescription>Control how data is handled and reported.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>Default Report Generation</Label>
-                <Select defaultValue="monthly">
-                  <SelectTrigger className="max-w-xs">
-                    <SelectValue placeholder="Select a schedule" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-               <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                      <Label>Anonymize User Data in Reports</Label>
-                      <p className="text-xs text-muted-foreground">Hide user names in leaderboards and non-admin reports.</p>
-                  </div>
-                  <Switch />
-              </div>
-              <Separator />
-               <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="font-semibold">Export Tenant Data</h3>
-                        <p className="text-sm text-muted-foreground">Request an export of all user progress and campaign data for this tenant.</p>
-                    </div>
-                    <Button variant="outline">Request Export</Button>
-                </div>
-          </CardContent>
-      </Card>
-      
-       {/* Danger Zone */}
-       <Card className="border-destructive">
+        <Card>
             <CardHeader>
-                <CardTitle className="text-destructive flex items-center gap-2"><Trash2/>Danger Zone</CardTitle>
+                <CardTitle>Select Tenant</CardTitle>
+                <CardDescription>Choose the tenant whose settings you want to configure.</CardDescription>
             </CardHeader>
             <CardContent>
-                 <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="font-semibold">Deactivate this Tenant</h3>
-                        <p className="text-sm text-muted-foreground">This will suspend all users and block access to the platform. This action is reversible.</p>
-                    </div>
-                    <Button variant="destructive">Deactivate Tenant</Button>
-                </div>
+                <Select onValueChange={(value) => setSelectedTenantId(value)} disabled={tenantsLoading}>
+                    <SelectTrigger className="max-w-md">
+                        <SelectValue placeholder={tenantsLoading ? "Loading tenants..." : "Select a tenant..."} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {tenants?.map(tenant => (
+                            <SelectItem key={tenant.id} value={tenant.id}>{tenant.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </CardContent>
         </Card>
 
-       <div className="flex justify-end pt-4">
-            <Button>Save All Changes</Button>
-       </div>
+        {!selectedTenantId ? (
+            <Card>
+                <CardContent className="py-16 text-center text-muted-foreground">
+                    Please select a tenant to manage their settings.
+                </CardContent>
+            </Card>
+        ) : tenantDataLoading ? (
+            <Card>
+                <CardContent className="py-16 flex items-center justify-center gap-2 text-muted-foreground">
+                    <Loader className="h-5 w-5 animate-spin" />
+                    <span>Loading settings...</span>
+                </CardContent>
+            </Card>
+        ) : (
+            <>
+                {/* Branding & Customization */}
+                <Card>
+                    <CardHeader>
+                    <CardTitle>Branding & Customization</CardTitle>
+                    <CardDescription>Customize the look and feel of the platform for your users.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                    <div className="flex items-center gap-4">
+                        <img src={tenantData?.settings?.branding?.logoUrl || "https://picsum.photos/seed/logo/40/40"} alt="logo" className="h-10 w-10 rounded-md" data-ai-hint="logo placeholder" />
+                        <Input id="logo" type="file" className="max-w-xs" disabled={settingsDisabled} />
+                        <Button variant="outline" disabled={settingsDisabled}><Upload className="mr-2 h-4 w-4" /> Upload Logo</Button>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="primaryColor">Primary Color</Label>
+                        <div className="flex items-center gap-2">
+                        <Input id="primaryColor" type="color" defaultValue={tenantData?.settings?.branding?.primaryColor || "#24305E"} className="w-12 h-10 p-1" disabled={settingsDisabled} />
+                        <Input defaultValue={tenantData?.settings?.branding?.primaryColor || "#24305E"} className="max-w-xs font-mono" disabled={settingsDisabled} />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="welcomeMessage">Custom Welcome Message</Label>
+                        <Input id="welcomeMessage" placeholder="Welcome to our security training!" defaultValue={tenantData?.contact?.welcomeMessage} disabled={settingsDisabled} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="supportContact">Custom Support Contact</Label>
+                        <Input id="supportContact" placeholder="e.g., security-help@mycompany.com" defaultValue={tenantData?.contact?.adminEmail} disabled={settingsDisabled} />
+                    </div>
+                    </CardContent>
+                </Card>
+
+                {/* User & Access Management */}
+                <Card>
+                    <CardHeader>
+                    <CardTitle>User & Access Management</CardTitle>
+                    <CardDescription>Control how users are managed and what they can do.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="defaultRole">Default User Role</Label>
+                        <Select defaultValue={tenantData?.settings?.defaultRole || "user"} disabled={settingsDisabled}>
+                        <SelectTrigger className="max-w-xs">
+                            <SelectValue placeholder="Select a default role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="department_admin">Department Admin</SelectItem>
+                            <SelectItem value="tenant_admin">Tenant Admin</SelectItem>
+                        </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Allowed Authentication Methods</Label>
+                        <div className="flex flex-col space-y-2 pt-2">
+                            <div className="flex items-center space-x-2"><Switch id="auth-password" defaultChecked={tenantData?.settings?.authMethods?.password ?? true} disabled={settingsDisabled} /><Label htmlFor="auth-password">Email & Password</Label></div>
+                            <div className="flex items-center space-x-2"><Switch id="auth-google" defaultChecked={tenantData?.settings?.authMethods?.google ?? true} disabled={settingsDisabled} /><Label htmlFor="auth-google">Google</Label></div>
+                            <div className="flex items-center space-x-2"><Switch id="auth-sso" defaultChecked={tenantData?.settings?.authMethods?.sso ?? false} disabled={settingsDisabled} /><Label htmlFor="auth-sso">Single Sign-On (SSO)</Label></div>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="sessionTimeout">Idle Session Timeout (minutes)</Label>
+                        <Input id="sessionTimeout" type="number" defaultValue={tenantData?.settings?.security?.sessionTimeout || "30"} className="max-w-xs" disabled={settingsDisabled} />
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <Label>Allow Self-Registration</Label>
+                            <p className="text-xs text-muted-foreground">Allow users to sign up using your company's email domain.</p>
+                        </div>
+                        <Switch defaultChecked={tenantData?.settings?.allowSelfRegistration ?? true} disabled={settingsDisabled} />
+                    </div>
+                    </CardContent>
+                </Card>
+                
+                {/* Training & Campaign Settings */}
+                <Card>
+                    <CardHeader>
+                    <CardTitle>Training & Campaign Settings</CardTitle>
+                    <CardDescription>Set rules and defaults for training content and campaigns.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="campaignDuration">Default Campaign Duration (weeks)</Label>
+                        <Input id="campaignDuration" type="number" defaultValue={tenantData?.settings?.training?.defaultCampaignDuration || "4"} className="max-w-xs" disabled={settingsDisabled} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="mandatoryModules">Mandatory Training Modules</Label>
+                        <p className="text-xs text-muted-foreground">Force completion of these modules for all new users.</p>
+                        <Select disabled={settingsDisabled}>
+                            <SelectTrigger className="max-w-xs">
+                                <SelectValue placeholder="Select modules..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {/* Items would be populated from a collection */}
+                                <SelectItem value="m1">Phishing 101</SelectItem>
+                                <SelectItem value="m2">Password Security</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="passingScore">Quiz Passing Score (%)</Label>
+                        <Input id="passingScore" type="number" defaultValue={tenantData?.settings?.training?.passingScore || "80"} className="max-w-xs" disabled={settingsDisabled} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="certValidity">Certificate Validity Period (months)</Label>
+                        <Input id="certValidity" type="number" defaultValue={tenantData?.settings?.training?.certValidity || "12"} className="max-w-xs" disabled={settingsDisabled} />
+                    </div>
+                    </CardContent>
+                </Card>
+
+                {/* Security & Compliance */}
+                <Card>
+                    <CardHeader>
+                    <CardTitle>Security & Compliance</CardTitle>
+                    <CardDescription>Configure tenant-wide security policies.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <Label>Enforce Multi-Factor Authentication (MFA)</Label>
+                                <p className="text-xs text-muted-foreground">Require all users to set up MFA upon their next login.</p>
+                            </div>
+                            <Switch defaultChecked={tenantData?.settings?.security?.mfaRequired} disabled={settingsDisabled} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Password Policy</Label>
+                            <div className="flex items-center gap-4">
+                                <Input type="number" defaultValue={tenantData?.settings?.security?.passwordPolicy?.minLength || "8"} className="w-32" placeholder="Min length" disabled={settingsDisabled} />
+                                <div className="flex items-center space-x-2"><Switch id="policy-uppercase" defaultChecked={tenantData?.settings?.security?.passwordPolicy?.requireUppercase ?? true} disabled={settingsDisabled} /><Label htmlFor="policy-uppercase">Uppercase</Label></div>
+                                <div className="flex items-center space-x-2"><Switch id="policy-number" defaultChecked={tenantData?.settings?.security?.passwordPolicy?.requireNumber ?? true} disabled={settingsDisabled} /><Label htmlFor="policy-number">Number</Label></div>
+                                <div className="flex items-center space-x-2"><Switch id="policy-special" defaultChecked={tenantData?.settings?.security?.passwordPolicy?.requireSpecial ?? true} disabled={settingsDisabled} /><Label htmlFor="policy-special">Special Character</Label></div>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="ipWhitelist">IP Whitelisting</Label>
+                            <p className="text-xs text-muted-foreground">List IP addresses or CIDR ranges allowed to log in. One per line.</p>
+                            <Textarea id="ipWhitelist" placeholder="e.g., 203.0.113.5\n198.51.100.0/24" className="min-h-[100px] font-mono" defaultValue={tenantData?.settings?.security?.ipWhitelist?.join('\n')} disabled={settingsDisabled} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="retentionPolicy">Data Retention Policy (days)</Label>
+                            <Input id="retentionPolicy" type="number" defaultValue={tenantData?.settings?.compliance?.retentionPolicy || "365"} className="max-w-xs" disabled={settingsDisabled} />
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                    {/* Notifications */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Notifications & Communication</CardTitle>
+                        <CardDescription>Manage how the platform communicates with your users.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="reminderCadence">Overdue Training Reminder Cadence (days before)</Label>
+                            <Input id="reminderCadence" placeholder="e.g., 7, 3, 1" defaultValue={tenantData?.settings?.notifications?.reminderCadence?.join(', ') || "7, 3, 1"} className="max-w-xs" disabled={settingsDisabled} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="emailFooter">Custom Email Footer</Label>
+                            <Textarea id="emailFooter" placeholder="e.g., © My Company Inc. All rights reserved." defaultValue={tenantData?.settings?.notifications?.emailFooter} disabled={settingsDisabled} />
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                {/* API Access & Webhooks */}
+                <Card>
+                    <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><KeyRound/>API Access & Webhooks</CardTitle>
+                    <CardDescription>Manage API keys for programmatic access and configure webhooks.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <Label className="font-mono text-sm">api-key-....-xxxx</Label>
+                                <p className="text-xs text-muted-foreground">Last used: 2 hours ago</p>
+                            </div>
+                            <Button variant="destructive" size="sm" disabled={settingsDisabled}>Revoke</Button>
+                        </div>
+                        <Button variant="outline" disabled={settingsDisabled}>Generate New API Key</Button>
+                        <Separator />
+                        <div className="space-y-2">
+                            <Label htmlFor="webhookUrl" className="flex items-center gap-2"><Webhook/>Webhook Endpoint URL</Label>
+                            <p className="text-xs text-muted-foreground">Send real-time event notifications (e.g., training completion, incident alert) to this URL.</p>
+                            <Input id="webhookUrl" placeholder="https://myapp.com/webhook/cyberaegis" defaultValue={tenantData?.settings?.integrations?.webhookUrl} disabled={settingsDisabled} />
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                {/* Feature Management */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Sparkles/>Feature Management</CardTitle>
+                        <CardDescription>Enable or disable specific platform features for this tenant.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <Label>AI-Powered Tutor</Label>
+                                <p className="text-xs text-muted-foreground">Allow users to access the conversational AI tutor for learning.</p>
+                            </div>
+                            <Switch defaultChecked={tenantData?.settings?.features?.aiTutor ?? true} disabled={settingsDisabled} />
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <Label>Advanced Reporting Beta</Label>
+                                <p className="text-xs text-muted-foreground">Enable access to new, experimental reporting dashboards.</p>
+                            </div>
+                            <Switch defaultChecked={tenantData?.settings?.features?.advancedReporting} disabled={settingsDisabled} />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Data & Reporting */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Data & Reporting</CardTitle>
+                        <CardDescription>Control how data is handled and reported.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="space-y-2">
+                            <Label>Default Report Generation</Label>
+                            <Select defaultValue={tenantData?.settings?.reporting?.schedule || "monthly"} disabled={settingsDisabled}>
+                            <SelectTrigger className="max-w-xs">
+                                <SelectValue placeholder="Select a schedule" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                <SelectItem value="weekly">Weekly</SelectItem>
+                                <SelectItem value="monthly">Monthly</SelectItem>
+                                <SelectItem value="quarterly">Quarterly</SelectItem>
+                            </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <Label>Anonymize User Data in Reports</Label>
+                                <p className="text-xs text-muted-foreground">Hide user names in leaderboards and non-admin reports.</p>
+                            </div>
+                            <Switch defaultChecked={tenantData?.settings?.reporting?.anonymize} disabled={settingsDisabled} />
+                        </div>
+                        <Separator />
+                        <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-semibold">Export Tenant Data</h3>
+                                    <p className="text-sm text-muted-foreground">Request an export of all user progress and campaign data for this tenant.</p>
+                                </div>
+                                <Button variant="outline" disabled={settingsDisabled}>Request Export</Button>
+                            </div>
+                    </CardContent>
+                </Card>
+                
+                {/* Danger Zone */}
+                <Card className="border-destructive">
+                        <CardHeader>
+                            <CardTitle className="text-destructive flex items-center gap-2"><Trash2/>Danger Zone</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-semibold">Deactivate this Tenant</h3>
+                                    <p className="text-sm text-muted-foreground">This will suspend all users and block access to the platform. This action is reversible.</p>
+                                </div>
+                                <Button variant="destructive" disabled={settingsDisabled}>Deactivate Tenant</Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                <div className="flex justify-end pt-4">
+                        <Button disabled={settingsDisabled}>Save All Changes</Button>
+                </div>
+            </>
+        )}
 
     </div>
   );
@@ -290,7 +341,7 @@ function TenantSettings() {
 
 export default function AdminSettingsPage() {
   return (
-    <Tabs defaultValue="general">
+    <Tabs defaultValue="tenant">
       <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="general">General</TabsTrigger>
         <TabsTrigger value="tenant">Tenant</TabsTrigger>
