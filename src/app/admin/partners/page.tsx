@@ -46,7 +46,7 @@ const statusVariant: Record<PartnerRequest['status'], 'secondary' | 'outline' | 
   archived: 'destructive'
 };
 
-const priorityVariant: Record<string, 'secondary' | 'outline' | 'warning' | 'destructive'> = {
+const priorityVariant: Record<string, 'secondary' | 'outline' | 'destructive'> = {
   low: 'secondary',
   medium: 'outline',
   high: 'destructive',

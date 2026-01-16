@@ -1,9 +1,9 @@
 
 'use client';
 
-import { BarChart, LineChart, PieChart, AreaChart, TrendingUp, Users, Clock, CheckCircle, BarChart3, Building, Map, Gauge, ListFilter } from 'lucide-react';
+import { TrendingUp, Users, Clock, CheckCircle, BarChart3, Building, Map, Gauge, ListFilter } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ResponsiveContainer, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Pie, Cell, Line } from 'recharts';
+import { ResponsiveContainer, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Pie, Cell, Line, BarChart as RechartsBarChart, LineChart } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -36,9 +36,9 @@ const requestsByCountryData = [
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const leadFunnelData = [
-    { stage: 'New', value: 1000, fill: '#8884d8' },
-    { stage: 'Contacted', value: 650, fill: '#83a6ed' },
-    { stage: 'Converted', value: 150, fill: '#82ca9d' },
+    { stage: 'New', value: 1000, fill: 'hsl(var(--chart-1))' },
+    { stage: 'Contacted', value: 650, fill: 'hsl(var(--chart-2))' },
+    { stage: 'Converted', value: 150, fill: 'hsl(var(--chart-3))' },
 ];
 
 const recentLeadsData = [
@@ -103,13 +103,13 @@ export default function PartnerAnalyticsPage() {
                     <CardHeader><CardTitle className="font-headline flex items-center gap-2"><Building/>Top 5 Industries</CardTitle><CardDescription>Most common industries among new leads.</CardDescription></CardHeader>
                     <CardContent>
                          <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={requestsByIndustryData} layout="vertical">
+                            <RechartsBarChart data={requestsByIndustryData} layout="vertical">
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis type="number" />
                                 <YAxis dataKey="industry" type="category" width={80} />
                                 <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))' }}/>
                                 <Bar dataKey="value" fill="hsl(var(--primary))" name="Requests" />
-                            </BarChart>
+                            </RechartsBarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
@@ -135,7 +135,7 @@ export default function PartnerAnalyticsPage() {
                     <CardHeader><CardTitle className="font-headline flex items-center gap-2"><ListFilter/>Conversion Funnel</CardTitle></CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={250}>
-                             <BarChart data={leadFunnelData} layout="vertical" margin={{ left: 20 }}>
+                             <RechartsBarChart data={leadFunnelData} layout="vertical" margin={{ left: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="stage" type="category" hide />
@@ -145,7 +145,7 @@ export default function PartnerAnalyticsPage() {
                                         <Cell key={`cell-${index}`} fill={entry.fill} />
                                     ))}
                                 </Bar>
-                            </BarChart>
+                            </RechartsBarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
@@ -166,7 +166,10 @@ export default function PartnerAnalyticsPage() {
                                             <div className="font-medium">{lead.company}</div>
                                             <div className="text-xs text-muted-foreground">{lead.industry}</div>
                                         </TableCell>
-                                        <TableCell className="text-right"><Progress value={lead.score} className="w-24" /><span>{lead.score}</span></TableCell>
+                                        <TableCell className="text-right flex items-center justify-end gap-2">
+                                            <span>{lead.score}</span>
+                                            <Progress value={lead.score} className="w-24" />
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
