@@ -62,7 +62,7 @@ function LoginForm() {
                 title: "Account Activated!",
                 description: "Your password has been set and you are now logged in.",
              });
-             window.location.href = '/training';
+             router.push('/training');
         } else {
             setError(result.error || 'An unexpected error occurred.');
         }
@@ -77,9 +77,9 @@ function LoginForm() {
                 description: "You have been successfully logged in.",
             });
             if (result.role === 'Admin' || result.role === 'SuperAdmin' || email === 'wokwemba@safaricom.co.ke') {
-                window.location.href = '/admin';
+                router.push('/admin');
             } else {
-                window.location.href = '/training';
+                router.push('/training');
             }
         } else {
              if (result.isInvited) {
@@ -117,9 +117,9 @@ function LoginForm() {
         description: "You have been successfully logged in with Google.",
       });
       if (result.role === 'Admin' || result.role === 'SuperAdmin' || auth.currentUser?.email === 'wokwemba@safaricom.co.ke') {
-        window.location.href = '/admin';
+        router.push('/admin');
       } else {
-        window.location.href = '/training';
+        router.push('/training');
       }
     } else {
       setError(result.error || 'An unexpected error occurred during Google sign-in.');

@@ -42,7 +42,7 @@ export default function SignupPage() {
         title: "Account Created!",
         description: "You have been successfully signed up.",
       });
-      window.location.href = '/training';
+      router.push('/training');
     } else {
       setError(result.error || 'An unexpected error occurred.');
     }
