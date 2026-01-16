@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface DynamicFormProps {
   fields: FormField[];
@@ -108,27 +109,29 @@ export function DynamicForm({ fields, formData, onFormChange, isDisabled }: Dyna
         );
       case 'checkbox-group':
         return (
-            <div className="space-y-2">
-            {field.options?.map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                <Checkbox
-                    id={`${field.name}-${option}`}
-                    checked={formData[field.name]?.includes(option)}
-                    onCheckedChange={(checked) => {
-                    const currentValues = formData[field.name] || [];
-                    const newValues = checked
-                        ? [...currentValues, option]
-                        : currentValues.filter((v: string) => v !== option);
-                    onFormChange(field.name, newValues);
-                    }}
-                    disabled={isDisabled}
-                />
-                <Label htmlFor={`${field.name}-${option}`} className="font-normal">
-                    {option}
-                </Label>
-                </div>
-            ))}
-            </div>
+            <ScrollArea className="h-72 w-full rounded-md border p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {field.options?.map((option) => (
+                    <div key={option} className="flex items-center space-x-2">
+                    <Checkbox
+                        id={`${field.name}-${option}`}
+                        checked={formData[field.name]?.includes(option)}
+                        onCheckedChange={(checked) => {
+                        const currentValues = formData[field.name] || [];
+                        const newValues = checked
+                            ? [...currentValues, option]
+                            : currentValues.filter((v: string) => v !== option);
+                        onFormChange(field.name, newValues);
+                        }}
+                        disabled={isDisabled}
+                    />
+                    <Label htmlFor={`${field.name}-${option}`} className="font-normal text-sm">
+                        {option}
+                    </Label>
+                    </div>
+                ))}
+              </div>
+            </ScrollArea>
         );
       default:
         return null;
