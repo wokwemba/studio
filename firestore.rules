@@ -34,7 +34,7 @@ service cloud.firestore {
     // Users can update their own preferences.
     match /users/{userId} {
       allow read: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) || isOwnRecord(userId);
-      allow create: if isSuperAdmin() || isTenantAdmin(request.resource.data.tenantId);
+      allow create: if isSuperAdmin() || isTenantAdmin(request.resource.data.tenantId) || isOwnRecord(userId);
       allow update: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) ||
                        (isOwnRecord(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['preferences', 'lastLogin', 'displayName', 'photoURL']));
       allow delete: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId);
