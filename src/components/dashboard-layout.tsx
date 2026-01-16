@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useUser } from "@/firebase";
 import { useEffect } from "react";
 
-const unauthenticatedRoutes = ["/login", "/signup"];
+const unauthenticatedRoutes = ["/login", "/signup", "/partner-registration"];
 const publicRoutes = ["/"]; // This is the public landing page
 
 async function clearSessionCookie() {
@@ -91,5 +91,3 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return null; 
 }
-
-    

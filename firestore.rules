@@ -16,6 +16,13 @@ service cloud.firestore {
     function isOwnRecord(userId) {
       return request.auth.uid == userId;
     }
+    
+    // PARTNER REQUESTS: Allow anyone to submit a partnership request.
+    match /partner_requests/{requestId} {
+      allow create: if true;
+      // Reading/writing should be restricted to admins
+      allow read, update, delete: if isSuperAdmin();
+    }
 
     // TENANTS: Only Super Admins can manage tenants. Tenant admins can read their own tenant doc.
     match /tenants/{tenantId} {

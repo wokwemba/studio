@@ -13,12 +13,15 @@ export default function Home() {
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
                 The next-generation platform for AI-powered cybersecurity training, risk management, and compliance.
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap justify-center gap-4">
                 <Button asChild size="lg">
                     <Link href="/login">Login</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
                     <Link href="/signup">Sign Up</Link>
+                </Button>
+                 <Button asChild variant="secondary" size="lg">
+                    <Link href="/partner-registration">Register as Partner</Link>
                 </Button>
             </div>
         </div>
