@@ -1,3 +1,4 @@
+'use client';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -7,17 +8,6 @@ const PUBLIC_ROUTES = [
   '/signup',
   '/partner-registration',
   '/flashcards',
-];
-
-const PROTECTED_ROOT_ROUTES = [
-  '/admin',
-  '/training',
-  '/certificates',
-  '/leaderboard',
-  '/profile',
-  '/risk-profile',
-  '/simulations',
-  '/tutor',
 ];
 
 export function middleware(req: NextRequest) {
@@ -41,14 +31,19 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  /*
-    * Match all request paths except for the ones starting with:
-    * - api/ (API routes)
-    * - _next/static (static files)
-    * - _next/image (image optimization files)
-    * - favicon.ico (favicon file)
-    */
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ]
+    '/admin/:path*',
+    '/training/:path*',
+    '/certificates/:path*',
+    '/leaderboard/:path*',
+    '/profile/:path*',
+    '/risk-profile/:path*',
+    '/simulations/:path*',
+    '/tutor/:path*',
+    '/phishing-engine/:path*',
+    '/vapt/:path*',
+    '/incident-response/:path*',
+    '/system-audit/:path*',
+    '/custom-training/:path*',
+  ],
 };

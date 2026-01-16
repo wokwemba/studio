@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/firebase/auth';
-import { signUpWithEmail } from '@/firebase/auth';
+import { useAuth, signUpWithEmail } from '@/firebase';
 import { ShieldCheck, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -43,11 +42,7 @@ export default function SignupPage() {
         title: "Account Created!",
         description: "You have been successfully signed up.",
       });
-      if (result.role === 'Admin' || result.role === 'SuperAdmin') {
-        router.push('/admin');
-      } else {
-        router.push('/training');
-      }
+      window.location.href = '/training';
     } else {
       setError(result.error || 'An unexpected error occurred.');
     }

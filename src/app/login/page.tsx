@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, signInWithEmail, signInWithGoogle, resetInvitedUserPassword } from '@/firebase/auth';
+import { useAuth, signInWithEmail, signInWithGoogle, resetInvitedUserPassword } from '@/firebase';
 import { ShieldCheck, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -62,7 +62,7 @@ function LoginForm() {
                 title: "Account Activated!",
                 description: "Your password has been set and you are now logged in.",
              });
-             router.push('/training');
+             window.location.href = '/training';
         } else {
             setError(result.error || 'An unexpected error occurred.');
         }
@@ -77,9 +77,9 @@ function LoginForm() {
                 description: "You have been successfully logged in.",
             });
             if (result.role === 'Admin' || result.role === 'SuperAdmin' || email === 'wokwemba@safaricom.co.ke') {
-                router.push('/admin');
+                window.location.href = '/admin';
             } else {
-                router.push('/training');
+                window.location.href = '/training';
             }
         } else {
              if (result.isInvited) {
@@ -117,9 +117,9 @@ function LoginForm() {
         description: "You have been successfully logged in with Google.",
       });
       if (result.role === 'Admin' || result.role === 'SuperAdmin' || auth.currentUser?.email === 'wokwemba@safaricom.co.ke') {
-        router.push('/admin');
+        window.location.href = '/admin';
       } else {
-        router.push('/training');
+        window.location.href = '/training';
       }
     } else {
       setError(result.error || 'An unexpected error occurred during Google sign-in.');

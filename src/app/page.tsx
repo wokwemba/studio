@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAuth as useFirebaseAuth } from '@/firebase/auth';
-import { signInAnonymously } from '@/firebase/auth';
+import { useAuth as useFirebaseAuth, signInAnonymously } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader, ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText } from 'lucide-react';
