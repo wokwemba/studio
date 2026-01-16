@@ -16,7 +16,7 @@ import { LayoutDashboard, Users, Building, GitPullRequest, ClipboardList, BookCo
 const adminNavLinks = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/users', label: 'Users', icon: Users },
-    { href: '/admin/tenants', label: 'Tenants', icon: Building },
+    { href: '/admin/partners', label: 'Partners', icon: Building },
     { href: '/admin/campaigns', label: 'Campaigns', icon: GitPullRequest },
     { href: '/admin/simulations', label: 'Service Requests', icon: ClipboardList },
     { href: '/admin/content', label: 'Content', icon: BookCopy },
