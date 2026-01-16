@@ -11,7 +11,7 @@ import { useUser } from "@/firebase";
 import { useEffect } from "react";
 
 const unauthenticatedRoutes = ["/login", "/signup", "/partner-registration"];
-const publicRoutes = ["/", "/training"]; // This is the public landing page
+const publicRoutes = ["/"]; // This is the public landing page
 
 async function clearSessionCookie() {
     try {
