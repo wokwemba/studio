@@ -29,7 +29,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requireRole="Admin">
       <div className="space-y-6">
           <Card>
               <Menubar className="border-none flex-wrap h-auto">

@@ -49,8 +49,7 @@ import {
   SidebarGroupLabel,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { useAuthContext } from "@/components/auth/AuthProvider";
 
 const mainLinks = [
   { href: "/training", label: "My Training", icon: BookOpenCheck },
@@ -79,37 +78,19 @@ const trainingLinks = [
 export function SidebarNav() {
   const pathname = usePathname();
   const { state } = useSidebar();
-  const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
-
-  const userDocRef = useMemoFirebase(
-    () => (user ? doc(firestore, "users", user.uid) : null),
-    [user, firestore]
-  );
-  const { data: userData, isLoading: isUserDataLoading } = useDoc<{roleId: string}>(userDocRef);
-
-  const userRoleDocRef = useMemoFirebase(
-    () => (firestore && userData?.roleId ? doc(firestore, "roles", userData.roleId) : null),
-    [firestore, userData]
-  );
-  const { data: roleData, isLoading: isRoleDataLoading } = useDoc<{name: 'User' | 'Admin' | 'SuperAdmin'}>(userDocRef);
-
-  const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin' || user?.email === 'wokwemba@safaricom.co.ke';
+  const { user, role, loading } = useAuthContext();
+  
+  const userIsAdmin = role === 'Admin' || role === 'SuperAdmin' || user?.email === 'wokwemba@safaricom.co.ke';
   
   const isActive = (href: string) => {
-    // Admin is a parent route, so it should be active for all sub-routes
     if (href === "/admin") {
       return pathname.startsWith("/admin");
     }
-    // The "My Training" link should only be active for its main page and direct sub-pages, not other top-level links that also start with /training.
     if (href === "/training") {
         return pathname === '/training' || pathname.startsWith('/training/');
     }
-    // For all other links, we want an exact match to avoid highlighting parent links incorrectly.
     return pathname === href || pathname.startsWith(href + '/');
   };
-  
-  const isLoading = isUserLoading || isUserDataLoading || isRoleDataLoading;
 
   if (user?.isAnonymous) {
     return (
@@ -202,16 +183,16 @@ export function SidebarNav() {
                 </SidebarMenuItem>
             ))}
         </SidebarGroup>
-      {isLoading && state === 'expanded' && (
+      {loading && state === 'expanded' && (
         <>
         <SidebarSeparator />
           <div className="p-2 flex items-center gap-2 text-xs text-muted-foreground">
             <Loader className="w-4 h-4 animate-spin" />
-            <span>Loading Admin Console...</span>
+            <span>Verifying access...</span>
           </div>
         </>
       )}
-      {userIsAdmin && (
+      {userIsAdmin && !loading && (
       <>
         <SidebarSeparator />
          <SidebarMenuItem>
@@ -232,5 +213,3 @@ export function SidebarNav() {
     </SidebarMenu>
   );
 }
-
-    
