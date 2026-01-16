@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCollection, useFirestore, useMemoFirebase, useUser, updateDocumentNonBlocking } from '@/firebase';
 import { collection, query, where, orderBy, doc } from 'firebase/firestore';
-import { Loader, Target, MoreVertical, CheckCircle, XCircle, Trash2, Eye } from 'lucide-react';
+import { Loader, ClipboardList, MoreVertical, CheckCircle, XCircle, Trash2, Eye } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
@@ -36,6 +36,12 @@ const statusVariant: Record<SimulationRequest['status'], 'secondary' | 'outline'
 
 function RequestDetailsDialog({ request, isOpen, onOpenChange }: { request: SimulationRequest, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
     if (!request) return null;
+    
+    const formatLabel = (key: string) => {
+        if (!key) return '';
+        const result = key.replace(/([A-Z])/g, ' $1');
+        return result.charAt(0).toUpperCase() + result.slice(1);
+    }
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -57,7 +63,7 @@ function RequestDetailsDialog({ request, isOpen, onOpenChange }: { request: Simu
                                     <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
                                         {Object.entries(sim.details).map(([key, value]) => (
                                             <div key={key} className="p-2 bg-muted/50 rounded-md">
-                                                <dt className="font-semibold capitalize">{key.replace(/([A-Z])/g, ' $1')}</dt>
+                                                <dt className="font-semibold">{formatLabel(key)}</dt>
                                                 <dd className="text-muted-foreground whitespace-pre-wrap break-words">
                                                     {typeof value === 'boolean' ? (value ? 'Yes' : 'No')
                                                      : Array.isArray(value) ? value.join(', ')
@@ -103,24 +109,24 @@ export default function AdminSimulationsPage() {
     <Card>
       <CardHeader>
         <CardTitle className="font-headline flex items-center gap-2">
-            <Target className="h-6 w-6 text-primary" />
-            <span>Simulation Requests</span>
+            <ClipboardList className="h-6 w-6 text-primary" />
+            <span>Service Requests</span>
         </CardTitle>
-        <CardDescription>Review, approve, and manage user-submitted simulation requests.</CardDescription>
+        <CardDescription>Review, approve, and manage all user-submitted service and simulation requests.</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
             <div className="flex justify-center items-center h-64"><Loader className="w-8 h-8 animate-spin" /></div>
         ) : !requests || requests.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
-                <p>No simulation requests found.</p>
+                <p>No service requests found.</p>
             </div>
         ) : (
             <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead>User</TableHead>
-                        <TableHead>Requested Simulations</TableHead>
+                        <TableHead>Items Requested</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead><span className="sr-only">Actions</span></TableHead>

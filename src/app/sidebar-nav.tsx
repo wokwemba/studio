@@ -64,7 +64,7 @@ const servicesLinks = [
     { href: "/vapt", label: "VAPT", icon: ScanLine },
     { href: "/incident-response", label: "Incident Response", icon: ClipboardList },
     { href: "/system-audit", label: "System Audit", icon: ClipboardCheck },
-    { href: "/custom-training", label: "Custom Training", icon: BookUser },
+    { href: "/custom-training", label: "Awareness Training", icon: BookUser },
 ]
 
 const trainingLinks = [

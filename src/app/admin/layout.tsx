@@ -11,14 +11,14 @@ import {
 } from "@/components/ui/menubar";
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
-import { LayoutDashboard, Users, Building, GitPullRequest, Target, BookCopy, ShieldAlert, BarChart3, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Building, GitPullRequest, ClipboardList, BookCopy, ShieldAlert, BarChart3, Settings } from 'lucide-react';
 
 const adminNavLinks = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/tenants', label: 'Tenants', icon: Building },
     { href: '/admin/campaigns', label: 'Campaigns', icon: GitPullRequest },
-    { href: '/admin/simulations', label: 'Simulations', icon: Target },
+    { href: '/admin/simulations', label: 'Service Requests', icon: ClipboardList },
     { href: '/admin/content', label: 'Content', icon: BookCopy },
     { href: '/admin/incidents', label: 'Incidents', icon: ShieldAlert },
     { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },

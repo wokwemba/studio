@@ -24,7 +24,7 @@ const formFields: FormField[] = [
     { name: 'consent', label: 'I confirm this is a formal request for new training content.', type: 'checkbox' },
 ];
 
-const requestType = "Customized Training Request";
+const requestType = "Cyber Security Awareness Training Request";
 
 export default function CustomTrainingPage() {
     const [formData, setFormData] = useState<Record<string, any>>({});
