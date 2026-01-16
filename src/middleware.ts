@@ -13,37 +13,62 @@ const sessionOptions = {
 export async function middleware(request: NextRequest) {
   const session = await getIronSession<{ token?: string, role?: string, isAnonymous?: boolean }>(request.cookies, sessionOptions);
   const { pathname } = request.nextUrl;
+
   const userIsLoggedIn = !!session.token;
   const userRole = session.role;
   const userIsAnonymous = !!session.isAnonymous;
-
+  
+  const publicRoutes = ['/', '/partner-registration'];
+  const authRoutes = ['/login', '/signup'];
+  const isPublicRoute = publicRoutes.includes(pathname);
+  const isAuthRoute = authRoutes.includes(pathname);
   const isAdminRoute = pathname.startsWith('/admin');
 
-  // If an anonymous user tries to access anything other than flashcards or auth pages, redirect them.
-  if (userIsAnonymous && pathname !== '/flashcards' && pathname !== '/login' && pathname !== '/signup') {
+  // Handle anonymous users first
+  if (userIsLoggedIn && userIsAnonymous) {
+      if (pathname === '/flashcards' || isAuthRoute) {
+          return NextResponse.next(); // Allow access to flashcards and auth pages
+      }
+      // Redirect anonymous users from anywhere else to flashcards
       const url = request.nextUrl.clone();
       url.pathname = '/flashcards';
       return NextResponse.redirect(url);
   }
-
-  // If a logged-in (but not anonymous) user tries to access login/signup, redirect to their dashboard.
-  if (userIsLoggedIn && !userIsAnonymous && (pathname === '/login' || pathname === '/signup')) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/training';
-    return NextResponse.redirect(url);
-  }
-
-  // If a non-admin user tries to access an admin route, redirect them to their dashboard.
-  if (isAdminRoute && userIsLoggedIn && userRole !== 'Admin' && userRole !== 'SuperAdmin' && session.token.email !== 'wokwemba@safaricom.co.ke') {
-    const url = request.nextUrl.clone();
-    url.pathname = '/training';
-    return NextResponse.redirect(url);
-  }
-
-  // If a user is not logged in and tries to access a protected admin route, they will
-  // be handled by the client-side logic in DashboardLayout, which is more robust
-  // for handling ongoing sign-in flows. We can let this pass through.
   
+  // Handle authenticated (non-anonymous) users
+  if (userIsLoggedIn && !userIsAnonymous) {
+    // If user is on a public or auth route, redirect to their dashboard
+    if (isPublicRoute || isAuthRoute) {
+      const dashboardUrl = (userRole === 'Admin' || userRole === 'SuperAdmin') ? '/admin' : '/training';
+      const url = request.nextUrl.clone();
+      url.pathname = dashboardUrl;
+      return NextResponse.redirect(url);
+    }
+
+    // If a non-admin user tries to access an admin route, redirect them
+    if (isAdminRoute && userRole !== 'Admin' && userRole !== 'SuperAdmin') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/training';
+      return NextResponse.redirect(url);
+    }
+
+    // Otherwise, allow access to the requested protected route
+    return NextResponse.next();
+  }
+
+  // Handle unauthenticated users
+  if (!userIsLoggedIn) {
+      // Allow access to public and auth routes
+      if (isPublicRoute || isAuthRoute) {
+          return NextResponse.next();
+      }
+      
+      // For any other route, redirect to login
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+  }
+
   return NextResponse.next();
 }
 
@@ -60,5 +85,3 @@ export const config = {
     '/((?!api/auth|_next/static|_next/image|favicon.ico).*)',
   ],
 };
-
-    

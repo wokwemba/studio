@@ -1,61 +1,29 @@
 
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Sidebar, SidebarContent, SidebarHeader } from "@/components/ui/sidebar";
 import { SidebarNav } from "@/components/sidebar-nav";
 import Header from "@/components/header";
 import { ShieldCheck, Loader } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/firebase";
-import { useEffect } from "react";
 
 const unauthenticatedRoutes = ["/login", "/signup", "/partner-registration"];
-const publicRoutes = ["/"]; // This is the public landing page
-
-async function clearSessionCookie() {
-    try {
-        await fetch('/api/auth', {
-            method: 'DELETE',
-        });
-    } catch (error) {
-        console.error("Failed to clear session cookie:", error);
-    }
-}
+const publicRoutes = ["/"];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
-  const router = useRouter();
   const pathname = usePathname();
-
-  useEffect(() => {
-    if (isUserLoading) {
-      return; 
-    }
-
-    const isAuthRoute = unauthenticatedRoutes.includes(pathname);
-    const isPublicRoute = publicRoutes.includes(pathname);
-
-    if (user) {
-      if (isAuthRoute) {
-        // If logged in, redirect from auth pages to the main training dashboard
-        router.push('/training');
-      } else if (pathname === '/') {
-        // If logged in and at the root, redirect to the training dashboard
-        router.push('/training');
-      }
-    } else {
-      // User is not logged in.
-      clearSessionCookie();
-      if (!isPublicRoute && !isAuthRoute) {
-        router.push('/login');
-      }
-    }
-  }, [user, isUserLoading, router, pathname]);
   
+  // The middleware should handle all redirects.
+  // This component now focuses on rendering the correct layout state.
   const isAuthPage = unauthenticatedRoutes.includes(pathname);
+  const isPublicPage = publicRoutes.includes(pathname);
   
-  if (isUserLoading && !isAuthPage && !publicRoutes.includes(pathname)) {
+  const showLoader = isUserLoading && !isAuthPage && !isPublicPage;
+
+  if (showLoader) {
       return (
         <div className="flex items-center justify-center min-h-screen bg-background">
           <Loader className="h-16 w-16 animate-spin text-primary" />
@@ -63,10 +31,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       );
   }
   
-  if (isAuthPage || (!user && publicRoutes.includes(pathname))) {
+  // If it's a public or auth page, just render the content without the dashboard shell.
+  // The middleware ensures that a logged-in user won't see these pages.
+  if (isAuthPage || (!user && isPublicPage)) {
     return <>{children}</>;
   }
   
+  // If we have any kind of user (full or anonymous), show the dashboard layout.
+  // The middleware has already ensured they are on an accessible page.
   if (user) {
     return (
         <div className="min-h-screen w-full flex">
@@ -89,5 +61,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  return null; 
+  // This case should ideally not be reached due to middleware.
+  // It acts as a fallback to prevent rendering a broken state.
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <Loader className="h-16 w-16 animate-spin text-primary" />
+    </div>
+  );
 }
