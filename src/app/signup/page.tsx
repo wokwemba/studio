@@ -45,9 +45,9 @@ export default function SignupPage() {
         description: "You have been successfully signed up.",
       });
       if (result.role === 'Admin' || result.role === 'SuperAdmin') {
-        router.push('/admin');
+        window.location.href = '/admin';
       } else {
-        router.push('/training');
+        window.location.href = '/training';
       }
     } else {
       setError(result.error || 'An unexpected error occurred.');
