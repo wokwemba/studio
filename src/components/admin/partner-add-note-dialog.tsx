@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -102,3 +103,5 @@ export function AddNoteDialog({ partner, isOpen, onOpenChange }: AddNoteDialogPr
     </Dialog>
   );
 }
+
+    
