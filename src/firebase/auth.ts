@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Auth,
@@ -11,6 +10,8 @@ import {
   User,
   updatePassword,
   getAuth,
+  setPersistence,
+  browserLocalPersistence,
 } from 'firebase/auth';
 import { setDoc, doc, getDoc, getDocs, getFirestore, Firestore, updateDoc, collection, query, where, addDoc, deleteDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from './errors';
@@ -269,7 +270,9 @@ export async function signInWithGoogle(
 ): Promise<{ success: boolean; role?: string; error?: string }> {
   const firestore = getFirestore(auth.app);
   try {
+    await setPersistence(auth, browserLocalPersistence);
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
     const userCredential = await signInWithPopup(auth, provider);
     const roleName = await createUserProfile(userCredential.user);
      await logAuditEvent(firestore, {
