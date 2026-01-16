@@ -1,6 +1,36 @@
 
 {
   "entities": {
+    "Campaign": {
+        "title": "Training Campaign",
+        "type": "object",
+        "description": "A structured training campaign, often AI-generated.",
+        "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "duration": { "type": "string" },
+            "audience": { "type": "string" },
+            "modules": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": { "type": "string" },
+                        "title": { "type": "string" },
+                        "description": { "type": "string" }
+                    }
+                }
+            },
+            "activities": { "type": "array", "items": { "type": "string" } },
+            "kpis": { "type": "string" },
+            "status": { "type": "string", "enum": ["draft", "scheduled", "active", "completed"] },
+            "type": { "type": "string", "enum": ["training", "phishing"] },
+            "start_date": { "type": "string", "format": "date-time" },
+            "end_date": { "type": "string", "format": "date-time" },
+            "tenantId": { "type": "string" }
+        },
+        "required": ["title", "description", "status", "tenantId"]
+    },
     "PartnerRequest": {
       "title": "Partner Request",
       "type": "object",
@@ -574,6 +604,7 @@
   "firestore": {
     "/partner_requests/{requestId}": { "schema": { "$ref": "#/entities/PartnerRequest" }, "description": "Collection of partnership registration requests." },
     "/tenants/{tenantId}": { "schema": { "$ref": "#/entities/Tenant" }, "description": "Top-level collection of tenants." },
+    "/tenants/{tenantId}/campaigns/{campaignId}": { "schema": { "$ref": "#/entities/Campaign" }, "description": "Training campaigns for a specific tenant." },
     "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "Top-level collection for all users." },
     "/trainingModules/{moduleId}": { "schema": { "$ref": "#/entities/TrainingModule" }, "description": "Global library of training modules." },
     "/userProgress/{progressId}": { "schema": { "$ref": "#/entities/UserProgress" }, "description": "Tracks user progress in modules." },
