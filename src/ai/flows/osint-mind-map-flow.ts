@@ -18,7 +18,7 @@ const prompt = ai.definePrompt({
   output: { schema: RiskDetectionMapOutputSchema },
   prompt: `You are an AI assistant that simulates an OSINT (Open-Source Intelligence) investigation. Given a target and a list of categories, you will generate a plausible report based on what publicly available information might exist.
 
-First, identify if the target is an email, domain, username, or something else.
+First, identify if the target is an email, domain, username, phone number, or something else.
 
 For each requested category, provide a simulated analysis. If a category is not relevant to the target type, state that. For example, 'Domain WHOIS' is not relevant for an email target.
 

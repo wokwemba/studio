@@ -11,4 +11,6 @@ import '@/ai/flows/chat-flow.ts';
 import '@/ai/flows/generate-flashcards-flow.ts';
 import '@/ai/flows/sms-fraud-flow.ts';
 import '@/ai/flows/osint-mind-map-flow.ts';
+import '@/ai/flows/email-phishing-flow.ts';
+import '@/ai/flows/whatsapp-fraud-flow.ts';
 import '@/ai/genkit';

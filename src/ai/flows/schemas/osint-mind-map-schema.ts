@@ -12,10 +12,11 @@ const FindingSchema = z.object({
 });
 
 export const RiskDetectionMapOutputSchema = z.object({
-  targetType: z.enum(['email', 'domain', 'username', 'other']).describe('The identified type of the target.'),
+  targetType: z.enum(['email', 'domain', 'username', 'phone', 'other']).describe('The identified type of the target.'),
   emailAnalysis: FindingSchema.optional().describe('Analysis related to the email address (e.g., validity, associated accounts).'),
   domainAnalysis: FindingSchema.optional().describe('Analysis related to a domain name (e.g., WHOIS data, subdomains, related IPs).'),
   usernameAnalysis: FindingSchema.optional().describe('Analysis of where a username appears online across different platforms.'),
+  phoneAnalysis: FindingSchema.optional().describe('Analysis related to a phone number (e.g., carrier, line type, associated accounts).'),
   breachData: FindingSchema.optional().describe('Information on appearances in known (simulated) data breaches.'),
   socialMedia: FindingSchema.optional().describe('Links to and summaries of associated social media profiles.'),
   reputation: FindingSchema.optional().describe('Overall reputation summary based on search engine results and other factors.'),
