@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -6,7 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Accordion, AccordionContent, AccordionItem } from '@/components/ui/accordion';
+import * as AccordionPrimitive from '@radix-ui/react-accordion';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { simulationData } from './data';
 import { Target, Send, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -151,20 +153,26 @@ export default function SimulationsPage() {
           <Accordion type="multiple" className="w-full">
             {simulationData.map((sim) => (
               <AccordionItem value={sim.id} key={sim.id}>
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-4">
+                <AccordionPrimitive.Header className="flex w-full items-center">
+                  <div className="p-4">
                     <Checkbox
                       id={`checkbox-${sim.id}`}
                       checked={selectedSimulations.has(sim.id)}
                       onCheckedChange={(checked) => handleCheckboxChange(sim.id, checked)}
-                      onClick={(e) => e.stopPropagation()} // Prevent accordion from toggling when clicking checkbox
                       disabled={isSubmitting}
                     />
+                  </div>
+                  <AccordionPrimitive.Trigger
+                    className={cn(
+                      "flex flex-1 items-center justify-between py-4 pr-4 font-medium transition-all hover:no-underline [&[data-state=open]>svg]:rotate-180"
+                    )}
+                  >
                     <Label htmlFor={`checkbox-${sim.id}`} className="font-semibold text-base cursor-pointer text-left">
                       {sim.type}
                     </Label>
-                  </div>
-                </AccordionTrigger>
+                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+                  </AccordionPrimitive.Trigger>
+                </AccordionPrimitive.Header>
                 <AccordionContent>
                   <div className="pl-12 pr-4 pt-2 pb-4 space-y-4">
                     <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">{sim.description}</p>
