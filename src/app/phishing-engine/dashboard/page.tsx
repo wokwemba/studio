@@ -9,12 +9,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader, Wand2, BarChart, AlertTriangle, Sigma, Banknote } from 'lucide-react';
+import { Loader, Wand2, BarChart, AlertTriangle, Sigma, Banknote, GitBranch, Search, Share2, Users, FileText, Globe, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { detectSmsFraud } from '@/ai/flows/sms-fraud-flow';
 import type { SmsFraudOutput, SmsFraudInput } from '@/ai/flows/schemas/sms-fraud-schema';
+import { runRiskDetectionAnalysis, type RiskDetectionMapOutput } from '@/ai/flows/osint-mind-map-flow';
+import { MindMapNode } from '@/components/phishing-engine/mind-map-node';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 
 type SmsAnalysis = SmsFraudOutput & {
     id: string;
@@ -32,16 +38,45 @@ const exampleMessages = {
         senderId: '27128',
         message: 'Dear customer, Do not forget your subscription to Baseplay Games & Apps for Ksh 20.0/day. To access your account and enjoy the service visit https://bzm.tv/s/J38ro75iw.644. Cancel? Send STOPBG to 27128. Help? support@baseplay.co'
     }
-}
+};
+
+const iconMap = {
+    emailAnalysis: FileText,
+    domainAnalysis: Globe,
+    usernameAnalysis: Users,
+    breachData: Shield,
+    socialMedia: Share2,
+    reputation: GitBranch,
+};
+
+const osintCategories = [
+    'Username Search', 'Email Analysis', 'Domain WHOIS', 'Subdomain Enumeration', 
+    'IP Address Analysis', 'Associated Social Media', 'Data Breach Exposure', 
+    'Reputation Analysis', 'Associated Documents', 'Reverse Image Search', 
+    'Phone Number Lookup', 'Geolocation Analysis', 'Dark Web Mentions', 
+    'Company Information', 'Employee Lookup', 'Code Repository Search', 
+    'Vulnerability Scan', 'DNS Records', 'Website Technology', 'Historical Archives'
+];
 
 export default function PhishingEngineDashboard() {
+    // State for SMS Analysis
     const [formData, setFormData] = useState<SmsFraudInput>({ senderId: '', message: '' });
     const [analysisResult, setAnalysisResult] = useState<SmsFraudOutput | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    
+    // State for Risk Detection Map
+    const [target, setTarget] = useState('example.com');
+    const [isRiskMapping, setIsRiskMapping] = useState(false);
+    const [riskMapError, setRiskMapError] = useState<string | null>(null);
+    const [riskMapResults, setRiskMapResults] = useState<RiskDetectionMapOutput | null>(null);
+    const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set(['Email Analysis', 'Domain WHOIS', 'Data Breach Exposure']));
+
+    // Common Hooks
     const { toast } = useToast();
     const { user } = useUser();
     const firestore = useFirestore();
 
+    // SMS Analysis Data Fetching
     const analysesQuery = useMemoFirebase(
         () => (user ? query(collection(firestore, `users/${user.uid}/sms_analyses`), orderBy('analyzedAt', 'desc')) : null),
         [user, firestore]
@@ -62,7 +97,7 @@ export default function PhishingEngineDashboard() {
     }, [analyses]);
 
 
-    const handleAnalyze = async (e: FormEvent) => {
+    const handleSmsAnalyze = async (e: FormEvent) => {
         e.preventDefault();
         if (!formData.message.trim() || !formData.senderId.trim() || !user || !firestore) {
             toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide both Sender ID and Message text.' });
@@ -95,6 +130,44 @@ export default function PhishingEngineDashboard() {
             setIsAnalyzing(false);
         }
     };
+    
+    // Risk Detection Map handlers
+    const handleCategoryChange = (category: string, checked: boolean | 'indeterminate') => {
+        const newSelected = new Set(selectedCategories);
+        if (checked) {
+            newSelected.add(category);
+        } else {
+            newSelected.delete(category);
+        }
+        setSelectedCategories(newSelected);
+    };
+
+    const handleOsintAnalyze = async (e: FormEvent) => {
+        e.preventDefault();
+        if (!target.trim()) {
+            toast({ variant: 'destructive', title: 'Target Required', description: 'Please enter a target to analyze.' });
+            return;
+        }
+        if (selectedCategories.size === 0) {
+            toast({ variant: 'destructive', title: 'Categories Required', description: 'Please select at least one category to investigate.' });
+            return;
+        }
+
+        setIsRiskMapping(true);
+        setRiskMapError(null);
+        setRiskMapResults(null);
+
+        try {
+            const analysisResults = await runRiskDetectionAnalysis({ target, categories: Array.from(selectedCategories) });
+            setRiskMapResults(analysisResults);
+        } catch (err: any) {
+            console.error("OSINT Analysis failed:", err);
+            setRiskMapError(err.message || 'The AI service may be temporarily unavailable.');
+        } finally {
+            setIsRiskMapping(false);
+        }
+    };
+
 
     const riskBadgeVariant: Record<string, 'success' | 'outline' | 'destructive'> = {
         'Low Risk': 'success',
@@ -102,114 +175,241 @@ export default function PhishingEngineDashboard() {
         'High Risk': 'destructive',
     };
     
+    const resultEntries = riskMapResults ? Object.entries(riskMapResults).filter(([key, value]) => key !== 'targetType' && value) : [];
+
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold">SMS Fraud Detection Dashboard</h1>
+            <h1 className="text-2xl font-bold">Phishing Detector Engine</h1>
+             <Tabs defaultValue="sms-analysis">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="sms-analysis">SMS Fraud Detector</TabsTrigger>
+                    <TabsTrigger value="risk-detection">Risk Detection Map</TabsTrigger>
+                </TabsList>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Analyzed</CardTitle><Sigma className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{metrics.total}</div><p className="text-xs text-muted-foreground">transactions analyzed</p></CardContent></Card>
-                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">High-Risk Alerts</CardTitle><AlertTriangle className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{metrics.highRisk}</div><p className="text-xs text-muted-foreground">transactions flagged</p></CardContent></Card>
-                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Average Risk Score</CardTitle><BarChart className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{metrics.avgScore.toFixed(1)}%</div><p className="text-xs text-muted-foreground">average calculated risk</p></CardContent></Card>
-                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Potential Fraud Value</CardTitle><Banknote className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">Ksh {metrics.potentialFraudValue.toLocaleString()}</div><p className="text-xs text-muted-foreground">from high-risk transactions</p></CardContent></Card>
-            </div>
-            
-            <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Analyze SMS Message</CardTitle>
-                        <CardDescription>Enter an SMS message and sender ID to check for fraud.</CardDescription>
-                    </CardHeader>
-                     <form onSubmit={handleAnalyze}>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="senderId">Sender ID</Label>
-                                <Input id="senderId" placeholder="e.g., MPESA or +254712345678" value={formData.senderId} onChange={e => setFormData({...formData, senderId: e.target.value})} disabled={isAnalyzing} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="message">Message Text</Label>
-                                <Textarea id="message" placeholder="Paste the SMS message here..." className="min-h-32" value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} disabled={isAnalyzing} />
-                            </div>
-                        </CardContent>
-                        <CardFooter className="flex-col items-start gap-4">
-                            <Button type="submit" disabled={isAnalyzing || !formData.message || !formData.senderId}>
-                                {isAnalyzing && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                                Analyze Message
-                            </Button>
-                             <div className="space-y-2">
-                                <Label className="text-xs text-muted-foreground">Quick Test</Label>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => setFormData(exampleMessages.legit)}>Load Legitimate Example</Button>
-                                    <Button variant="outline" size="sm" onClick={() => setFormData(exampleMessages.fraud)}>Load Fraudulent Example</Button>
+                <TabsContent value="sms-analysis" className="mt-6">
+                    <div className="space-y-6">
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Analyzed</CardTitle><Sigma className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{metrics.total}</div><p className="text-xs text-muted-foreground">transactions analyzed</p></CardContent></Card>
+                            <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">High-Risk Alerts</CardTitle><AlertTriangle className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{metrics.highRisk}</div><p className="text-xs text-muted-foreground">transactions flagged</p></CardContent></Card>
+                            <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Average Risk Score</CardTitle><BarChart className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{metrics.avgScore.toFixed(1)}%</div><p className="text-xs text-muted-foreground">average calculated risk</p></CardContent></Card>
+                            <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Potential Fraud Value</CardTitle><Banknote className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">Ksh {metrics.potentialFraudValue.toLocaleString()}</div><p className="text-xs text-muted-foreground">from high-risk transactions</p></CardContent></Card>
+                        </div>
+                        
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Analyze SMS Message</CardTitle>
+                                    <CardDescription>Enter an SMS message and sender ID to check for fraud.</CardDescription>
+                                </CardHeader>
+                                <form onSubmit={handleSmsAnalyze}>
+                                    <CardContent className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="senderId">Sender ID</Label>
+                                            <Input id="senderId" placeholder="e.g., MPESA or +254712345678" value={formData.senderId} onChange={e => setFormData({...formData, senderId: e.target.value})} disabled={isAnalyzing} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="message">Message Text</Label>
+                                            <Textarea id="message" placeholder="Paste the SMS message here..." className="min-h-32" value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} disabled={isAnalyzing} />
+                                        </div>
+                                    </CardContent>
+                                    <CardFooter className="flex-col items-start gap-4">
+                                        <Button type="submit" disabled={isAnalyzing || !formData.message || !formData.senderId}>
+                                            {isAnalyzing && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                                            Analyze Message
+                                        </Button>
+                                        <div className="space-y-2">
+                                            <Label className="text-xs text-muted-foreground">Quick Test</Label>
+                                            <div className="flex gap-2">
+                                                <Button variant="outline" size="sm" onClick={() => setFormData(exampleMessages.legit)}>Load Legitimate Example</Button>
+                                                <Button variant="outline" size="sm" onClick={() => setFormData(exampleMessages.fraud)}>Load Fraudulent Example</Button>
+                                            </div>
+                                        </div>
+                                    </CardFooter>
+                                </form>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Analysis Result</CardTitle>
+                                    <CardDescription>The AI-powered verdict on your submitted message.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="min-h-[300px] flex items-center justify-center">
+                                    {isAnalyzing ? <Loader className="w-8 h-8 animate-spin" /> :
+                                    !analysisResult ? <p className="text-sm text-muted-foreground">Submit a message to see the analysis here.</p> :
+                                    <div className="space-y-4 w-full">
+                                        <div className="flex justify-between items-center">
+                                            <h3 className="text-lg font-bold">{analysisResult.verdict}</h3>
+                                            <Badge variant={riskBadgeVariant[analysisResult.verdict] || 'secondary'}>{analysisResult.riskScore.toFixed(0)}%</Badge>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">{analysisResult.explanation}</p>
+                                        <div>
+                                            <h4 className="font-semibold text-sm">Indicators:</h4>
+                                            <ul className="list-disc list-inside text-sm text-muted-foreground">
+                                                {analysisResult.indicators.map((ind, i) => <li key={i}>{ind}</li>)}
+                                            </ul>
+                                        </div>
+                                        {analysisResult.potentialFraudAmount && (
+                                            <p className="text-sm font-semibold">Potential Fraudulent Amount: <span className="font-bold text-destructive">{analysisResult.currency} {analysisResult.potentialFraudAmount.toLocaleString()}</span></p>
+                                        )}
+                                    </div>
+                                    }
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Recent Transactions</CardTitle>
+                                <CardDescription>A list of recently analyzed transactions.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {analysesLoading ? <div className="flex justify-center p-8"><Loader className="w-6 h-6 animate-spin" /></div> :
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Sender</TableHead>
+                                            <TableHead>Message</TableHead>
+                                            <TableHead className="text-right">Risk</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {analyses?.slice(0, 4).map(analysis => (
+                                            <TableRow key={analysis.id}>
+                                                <TableCell className="font-medium">{analysis.senderId}</TableCell>
+                                                <TableCell className="max-w-md truncate">{analysis.message}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Badge variant={riskBadgeVariant[analysis.verdict] || 'secondary'}>{analysis.verdict} ({analysis.riskScore}%)</Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                        {(!analyses || analyses.length === 0) && (
+                                            <TableRow>
+                                                <TableCell colSpan={3} className="text-center text-muted-foreground">No analyses yet.</TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                                }
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="risk-detection" className="mt-6">
+                    <div className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="font-headline flex items-center gap-2">
+                                    <GitBranch />
+                                    Risk Detection Map
+                                </CardTitle>
+                                <CardDescription>
+                                    Enter a target and select categories to generate a simulated Open-Source Intelligence report.
+                                </CardDescription>
+                            </CardHeader>
+                            <form onSubmit={handleOsintAnalyze}>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <Label htmlFor="osint-target">Target</Label>
+                                            <div className="flex gap-2">
+                                                <Input 
+                                                    id="osint-target"
+                                                    value={target}
+                                                    onChange={e => setTarget(e.target.value)}
+                                                    placeholder="e.g., example.com, user@test.com, or testuser"
+                                                    disabled={isRiskMapping}
+                                                />
+                                                <Button type="submit" disabled={isRiskMapping} className="w-32">
+                                                    {isRiskMapping ? <Loader className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                                                    <span className="ml-2 hidden sm:inline">Analyze</span>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <Accordion type="single" collapsible>
+                                            <AccordionItem value="item-1">
+                                                <AccordionTrigger>Investigation Categories ({selectedCategories.size} selected)</AccordionTrigger>
+                                                <AccordionContent>
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2">
+                                                    {osintCategories.map(category => (
+                                                        <div key={category} className="flex items-center space-x-2">
+                                                            <Checkbox
+                                                                id={category}
+                                                                checked={selectedCategories.has(category)}
+                                                                onCheckedChange={(checked) => handleCategoryChange(category, checked)}
+                                                            />
+                                                            <Label htmlFor={category} className="text-sm font-normal cursor-pointer">{category}</Label>
+                                                        </div>
+                                                    ))}
+                                                    </div>
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        </Accordion>
+                                    </div>
+                                </CardContent>
+                            </form>
+                        </Card>
+
+                        {isRiskMapping && (
+                            <Card>
+                                <CardContent className="p-8 flex flex-col items-center justify-center gap-4">
+                                    <Loader className="w-10 h-10 animate-spin text-primary" />
+                                    <p className="text-muted-foreground">AI is running the analysis...</p>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {riskMapError && (
+                            <Card className="bg-destructive/10 border-destructive">
+                                <CardHeader>
+                                    <CardTitle>Analysis Failed</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p>{riskMapError}</p>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {riskMapResults && (
+                            <div className="relative min-h-[500px] flex items-center justify-center">
+                                {/* Central Node */}
+                                <MindMapNode title={target} isCentral>
+                                    <p className="text-xs text-center text-muted-foreground capitalize">Target: {riskMapResults.targetType}</p>
+                                </MindMapNode>
+
+                                {/* Lines would be complex, so we'll arrange nodes around the center */}
+                                <div className="absolute inset-0 w-full h-full">
+                                    {resultEntries.map(([key, value], index) => {
+                                        const angle = (index / resultEntries.length) * 2 * Math.PI;
+                                        const x = 50 + 40 * Math.cos(angle);
+                                        const y = 50 + 35 * Math.sin(angle);
+                                        const Icon = (iconMap as any)[key] || GitBranch;
+
+                                        return (
+                                            <div
+                                                key={key}
+                                                className="absolute"
+                                                style={{
+                                                    left: `${x}%`,
+                                                    top: `${y}%`,
+                                                    transform: 'translate(-50%, -50%)',
+                                                }}
+                                            >
+                                                <MindMapNode title={key.replace(/([A-Z])/g, ' $1')} icon={Icon}>
+                                                    <p className="text-xs font-semibold italic text-muted-foreground mb-2">&quot;{value.summary}&quot;</p>
+                                                    <ul className="text-xs list-disc list-inside space-y-1">
+                                                        {value.data.map((item: string, i: number) => <li key={i}>{item}</li>)}
+                                                    </ul>
+                                                </MindMapNode>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
-                        </CardFooter>
-                    </form>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Analysis Result</CardTitle>
-                        <CardDescription>The AI-powered verdict on your submitted message.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="min-h-[300px] flex items-center justify-center">
-                        {isAnalyzing ? <Loader className="w-8 h-8 animate-spin" /> :
-                         !analysisResult ? <p className="text-sm text-muted-foreground">Submit a message to see the analysis here.</p> :
-                         <div className="space-y-4 w-full">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-bold">{analysisResult.verdict}</h3>
-                                <Badge variant={riskBadgeVariant[analysisResult.verdict] || 'secondary'}>{analysisResult.riskScore.toFixed(0)}%</Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{analysisResult.explanation}</p>
-                            <div>
-                                <h4 className="font-semibold text-sm">Indicators:</h4>
-                                <ul className="list-disc list-inside text-sm text-muted-foreground">
-                                    {analysisResult.indicators.map((ind, i) => <li key={i}>{ind}</li>)}
-                                </ul>
-                            </div>
-                             {analysisResult.potentialFraudAmount && (
-                                <p className="text-sm font-semibold">Potential Fraudulent Amount: <span className="font-bold text-destructive">{analysisResult.currency} {analysisResult.potentialFraudAmount.toLocaleString()}</span></p>
-                            )}
-                         </div>
-                        }
-                    </CardContent>
-                </Card>
-            </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Recent Transactions</CardTitle>
-                    <CardDescription>A list of recently analyzed transactions.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                     {analysesLoading ? <div className="flex justify-center p-8"><Loader className="w-6 h-6 animate-spin" /></div> :
-                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Sender</TableHead>
-                                <TableHead>Message</TableHead>
-                                <TableHead className="text-right">Risk</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {analyses?.slice(0, 4).map(analysis => (
-                                <TableRow key={analysis.id}>
-                                    <TableCell className="font-medium">{analysis.senderId}</TableCell>
-                                    <TableCell className="max-w-md truncate">{analysis.message}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Badge variant={riskBadgeVariant[analysis.verdict] || 'secondary'}>{analysis.verdict} ({analysis.riskScore}%)</Badge>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                             {(!analyses || analyses.length === 0) && (
-                                <TableRow>
-                                    <TableCell colSpan={3} className="text-center text-muted-foreground">No analyses yet.</TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                     </Table>
-                    }
-                </CardContent>
-            </Card>
+                        )}
+                    </div>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

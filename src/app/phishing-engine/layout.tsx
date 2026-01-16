@@ -15,7 +15,6 @@ const navLinks = [
     { href: '/phishing-engine/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/phishing-engine/transactions', label: 'Transactions', icon: FileText },
     { href: '/phishing-engine/alerts', label: 'Alerts', icon: AlertTriangle },
-    { href: '/phishing-engine/osint-mindmap', label: 'Risk Detection Map', icon: GitBranch },
     { href: '/phishing-engine/reports', label: 'Reports', icon: FileText },
 ];
 
