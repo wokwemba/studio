@@ -38,6 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
 
   useEffect(() => {
+    // Apply theme from local storage on initial load
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.classList.add(savedTheme);
+
     if (!auth || !firestore) {
       setLoading(false);
       return;
