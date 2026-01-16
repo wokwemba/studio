@@ -32,14 +32,14 @@ export async function middleware(request: NextRequest) {
   if (userIsLoggedIn && !userIsAnonymous) {
     // If user is on a public or auth route, redirect to their dashboard
     if (isPublicRoute || isAuthRoute) {
-      const dashboardUrl = (userRole === 'Admin' || userRole === 'SuperAdmin') ? '/admin' : '/training';
+      const dashboardUrl = (userRole === 'Admin' || userRole === 'SuperAdmin' || userRole === 'Super Admin') ? '/admin' : '/training';
       const url = request.nextUrl.clone();
       url.pathname = dashboardUrl;
       return NextResponse.redirect(url);
     }
 
     // If a non-admin user tries to access an admin route, redirect them
-    if (isAdminRoute && userRole !== 'Admin' && userRole !== 'SuperAdmin') {
+    if (isAdminRoute && userRole !== 'Admin' && userRole !== 'SuperAdmin' && userRole !== 'Super Admin') {
       const url = request.nextUrl.clone();
       url.pathname = '/training';
       return NextResponse.redirect(url);
