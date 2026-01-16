@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Upload } from 'lucide-react';
+import { Upload, KeyRound, Webhook, Sparkles, Trash2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 
 
@@ -175,6 +175,54 @@ function TenantSettings() {
               </div>
           </CardContent>
       </Card>
+      
+      {/* API Access & Webhooks */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><KeyRound/>API Access & Webhooks</CardTitle>
+          <CardDescription>Manage API keys for programmatic access and configure webhooks.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                    <Label className="font-mono text-sm">api-key-....-xxxx</Label>
+                    <p className="text-xs text-muted-foreground">Last used: 2 hours ago</p>
+                </div>
+                <Button variant="destructive" size="sm">Revoke</Button>
+            </div>
+            <Button variant="outline">Generate New API Key</Button>
+            <Separator />
+             <div className="space-y-2">
+                <Label htmlFor="webhookUrl" className="flex items-center gap-2"><Webhook/>Webhook Endpoint URL</Label>
+                 <p className="text-xs text-muted-foreground">Send real-time event notifications (e.g., training completion, incident alert) to this URL.</p>
+                <Input id="webhookUrl" placeholder="https://myapp.com/webhook/cyberaegis" />
+            </div>
+        </CardContent>
+      </Card>
+      
+      {/* Feature Management */}
+      <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Sparkles/>Feature Management</CardTitle>
+            <CardDescription>Enable or disable specific platform features for this tenant.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                      <Label>AI-Powered Tutor</Label>
+                      <p className="text-xs text-muted-foreground">Allow users to access the conversational AI tutor for learning.</p>
+                  </div>
+                  <Switch defaultChecked />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                      <Label>Advanced Reporting Beta</Label>
+                      <p className="text-xs text-muted-foreground">Enable access to new, experimental reporting dashboards.</p>
+                  </div>
+                  <Switch />
+              </div>
+          </CardContent>
+      </Card>
 
       {/* Data & Reporting */}
       <Card>
@@ -204,8 +252,32 @@ function TenantSettings() {
                   </div>
                   <Switch />
               </div>
+              <Separator />
+               <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="font-semibold">Export Tenant Data</h3>
+                        <p className="text-sm text-muted-foreground">Request an export of all user progress and campaign data for this tenant.</p>
+                    </div>
+                    <Button variant="outline">Request Export</Button>
+                </div>
           </CardContent>
       </Card>
+      
+       {/* Danger Zone */}
+       <Card className="border-destructive">
+            <CardHeader>
+                <CardTitle className="text-destructive flex items-center gap-2"><Trash2/>Danger Zone</CardTitle>
+            </CardHeader>
+            <CardContent>
+                 <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="font-semibold">Deactivate this Tenant</h3>
+                        <p className="text-sm text-muted-foreground">This will suspend all users and block access to the platform. This action is reversible.</p>
+                    </div>
+                    <Button variant="destructive">Deactivate Tenant</Button>
+                </div>
+            </CardContent>
+        </Card>
 
        <div className="flex justify-end pt-4">
             <Button>Save All Changes</Button>
