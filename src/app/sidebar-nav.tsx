@@ -34,6 +34,9 @@ import {
   BookOpenCheck,
   FlaskConical,
   BrainCircuit,
+  ScanLine,
+  ClipboardList,
+  ClipboardCheck,
 } from "lucide-react";
 
 import {
@@ -52,9 +55,17 @@ const mainLinks = [
   { href: "/training", label: "My Training", icon: BookOpenCheck },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/simulations", label: "Request Simulation", icon: FlaskConical },
+  { href: "/phishing-engine/dashboard", label: "Phishing Detector", icon: ScanLine },
   { href: "/certificates", label: "My Certificates", icon: FileText },
   { href: "/profile", label: "My Profile", icon: User },
 ];
+
+const servicesLinks = [
+    { href: "/vapt", label: "VAPT", icon: ScanLine },
+    { href: "/incident-response", label: "Incident Response", icon: ClipboardList },
+    { href: "/system-audit", label: "System Audit", icon: ClipboardCheck },
+    { href: "/custom-training", label: "Custom Training", icon: BookUser },
+]
 
 const trainingLinks = [
     { href: "/training/module", label: "Training Generator", icon: Wand2 },
@@ -85,16 +96,16 @@ export function SidebarNav() {
   const userIsAdmin = roleData?.name === 'Admin' || roleData?.name === 'SuperAdmin' || user?.email === 'wokwemba@safaricom.co.ke';
   
   const isActive = (href: string) => {
-    // Exact match for the main training dashboard
-    if (href === "/training" && pathname === "/training") {
-      return true;
+    // Admin is a parent route, so it should be active for all sub-routes
+    if (href === "/admin") {
+      return pathname.startsWith("/admin");
     }
-    // Match for nested routes, but not the parent itself unless it's an exact match
-    if (href !== "/" && pathname.startsWith(href) && pathname !== href) {
-        return true;
+    // The "My Training" link should only be active for its main page and direct sub-pages, not other top-level links that also start with /training.
+    if (href === "/training") {
+        return pathname === '/training' || pathname.startsWith('/training/');
     }
-    // For top-level links, we want an exact match.
-    return pathname === href;
+    // For all other links, we want an exact match to avoid highlighting parent links incorrectly.
+    return pathname === href || pathname.startsWith(href + '/');
   };
   
   const isLoading = isUserLoading || isUserDataLoading || isRoleDataLoading;
@@ -105,7 +116,7 @@ export function SidebarNav() {
         <SidebarMenuItem key={link.href}>
           <SidebarMenuButton
             asChild
-            isActive={pathname.startsWith(link.href)}
+            isActive={isActive(link.href)}
             className="font-headline"
             tooltip={link.label}
           >
@@ -116,6 +127,26 @@ export function SidebarNav() {
           </SidebarMenuButton>
         </SidebarMenuItem>
       ))}
+       <SidebarSeparator />
+        <SidebarGroup>
+            <SidebarGroupLabel>Services</SidebarGroupLabel>
+            {servicesLinks.map((link) => (
+                 <SidebarMenuItem key={link.href}>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={pathname.startsWith(link.href)}
+                        className="font-headline"
+                        tooltip={link.label}
+                        size="sm"
+                    >
+                        <Link href={link.href}>
+                            <link.icon className="h-4 w-4" />
+                            {state === 'expanded' && <span>{link.label}</span>}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))}
+        </SidebarGroup>
        <SidebarSeparator />
         <SidebarGroup>
             <SidebarGroupLabel>AI & Learning Tools</SidebarGroupLabel>
@@ -151,7 +182,7 @@ export function SidebarNav() {
          <SidebarMenuItem>
             <SidebarMenuButton
                 asChild
-                isActive={pathname.startsWith('/admin')}
+                isActive={isActive('/admin')}
                 className="font-headline"
                 tooltip="Admin Panel"
             >
