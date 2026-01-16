@@ -3,7 +3,7 @@
 
 import { usePathname } from "next/navigation";
 import { Sidebar, SidebarContent, SidebarHeader } from "@/components/ui/sidebar";
-import { SidebarNav } from "@/components/sidebar-nav";
+import { SidebarNav } from "@/app/sidebar-nav";
 import Header from "@/components/header";
 import { ShieldCheck, Loader } from "lucide-react";
 import Link from "next/link";
