@@ -37,6 +37,11 @@ service cloud.firestore {
         allow read, write: if isOwnRecord(userId);
         allow read: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId);
       }
+
+      // SMS ANALYSIS: Users can manage their own analysis results.
+      match /sms_analyses/{analysisId} {
+        allow read, write: if isOwnRecord(userId);
+      }
     }
 
     // USER PROGRESS: Users can manage their own progress. Admins can view progress within their tenant.

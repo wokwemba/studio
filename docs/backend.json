@@ -486,6 +486,25 @@
         "lastUpdated": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "tenantId", "overallScore", "riskLevel"]
+    },
+    "SmsAnalysis": {
+      "title": "SMS Analysis",
+      "type": "object",
+      "description": "Represents the result of an AI-powered SMS fraud analysis.",
+      "properties": {
+        "userId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "message": { "type": "string" },
+        "verdict": { "type": "string", "enum": ["Low Risk", "Medium Risk", "High Risk"] },
+        "riskScore": { "type": "number" },
+        "explanation": { "type": "string" },
+        "recommendation": { "type": "string" },
+        "indicators": { "type": "array", "items": { "type": "string" } },
+        "potentialFraudAmount": { "type": "number" },
+        "currency": { "type": "string" },
+        "analyzedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "senderId", "message", "verdict", "riskScore", "analyzedAt"]
     }
   },
   "auth": {
@@ -503,6 +522,7 @@
     "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles." },
     "/subscription_plans/{planId}": { "schema": { "$ref": "#/entities/SubscriptionPlan" }, "description": "Defines the available subscription plans." },
     "/compliance_rules/{ruleId}": { "schema": { "$ref": "#/entities/ComplianceRule" }, "description": "Global library of compliance rules and mappings." },
-    "/risk_scores/{userId}": { "schema": { "$ref": "#/entities/RiskScore" }, "description": "Calculated risk scores for users." }
+    "/risk_scores/{userId}": { "schema": { "$ref": "#/entities/RiskScore" }, "description": "Calculated risk scores for users." },
+    "/users/{userId}/sms_analyses/{analysisId}": { "schema": { "$ref": "#/entities/SmsAnalysis" }, "description": "Stores the results of SMS fraud analyses for a specific user." }
   }
 }

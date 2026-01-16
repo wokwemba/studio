@@ -53,7 +53,7 @@ const mainLinks = [
   { href: "/training", label: "My Training", icon: BookOpenCheck },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/simulations", label: "Request Simulation", icon: FlaskConical },
-  { href: "/phishing-detector", label: "Phishing Detector", icon: ScanLine },
+  { href: "/phishing-engine/dashboard", label: "Phishing Engine", icon: ScanLine },
   { href: "/certificates", label: "My Certificates", icon: FileText },
   { href: "/profile", label: "My Profile", icon: User },
 ];
@@ -96,7 +96,7 @@ export function SidebarNav() {
         return pathname === '/training' || pathname.startsWith('/training/');
     }
     // For all other links, we want an exact match to avoid highlighting parent links incorrectly.
-    return pathname === href;
+    return pathname === href || pathname.startsWith(href + '/');
   };
   
   const isLoading = isUserLoading || isUserDataLoading || isRoleDataLoading;
