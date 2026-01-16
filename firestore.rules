@@ -111,10 +111,11 @@ service cloud.firestore {
       allow write: if isSuperAdmin() || isTenantAdmin(request.resource.data.tenantId);
     }
 
-    // AUDIT LOGS: Only allow creation. No one can read/update/delete from the client.
+    // AUDIT LOGS: Only allow creation by authenticated users and reading by Super Admins.
     match /audit_logs/{logId} {
       allow create: if request.auth.uid != null;
-      allow read, update, delete: if false;
+      allow read: if isSuperAdmin();
+      allow update, delete: if false;
     }
 
     // ADMIN IMPERSONATION: Only the admin themselves can read/write their own session.
