@@ -4,68 +4,60 @@ import { getIronSession } from 'iron-session';
 import { sessionOptions } from '@/lib/session';
 
 export async function middleware(request: NextRequest) {
-  const session = await getIronSession<{ token?: string, role?: string, isAnonymous?: boolean }>(request.cookies, sessionOptions);
+  const session = await getIronSession<{ token?: string; role?: string, isAnonymous?: boolean }>(
+    request.cookies,
+    sessionOptions
+  );
   const { pathname } = request.nextUrl;
 
-  const userIsLoggedIn = !!session.token;
-  const userRole = session.role;
-  const userIsAnonymous = !!session.isAnonymous;
-  
+  const isLoggedIn = !!session.token;
+  const isAnonymous = session.isAnonymous === true;
+  const isAdmin = session.role === 'Admin' || session.role === 'SuperAdmin' || session.role === 'Super Admin';
+
   const publicRoutes = ['/', '/partner-registration'];
   const authRoutes = ['/login', '/signup'];
-  const isPublicRoute = publicRoutes.includes(pathname);
-  const isAuthRoute = authRoutes.includes(pathname);
+  const anonymousAllowedRoutes = ['/flashcards', ...authRoutes, ...publicRoutes];
   const isAdminRoute = pathname.startsWith('/admin');
 
-  // Handle anonymous users first
-  if (userIsLoggedIn && userIsAnonymous) {
-      if (pathname === '/flashcards' || isAuthRoute) {
-          return NextResponse.next(); // Allow access to flashcards and auth pages
-      }
-      // Redirect anonymous users from anywhere else to flashcards
-      const url = request.nextUrl.clone();
-      url.pathname = '/flashcards';
-      return NextResponse.redirect(url);
+  // --- Anonymous User Flow ---
+  if (isLoggedIn && isAnonymous) {
+    // If anonymous, only allow access to anonymous-allowed routes.
+    if (anonymousAllowedRoutes.includes(pathname)) {
+      return NextResponse.next();
+    }
+    // Redirect from any other page to the main anonymous page.
+    return NextResponse.redirect(new URL('/flashcards', request.url));
   }
   
-  // Handle authenticated (non-anonymous) users
-  if (userIsLoggedIn && !userIsAnonymous) {
-    // If user is on a public or auth route, redirect to their dashboard
-    if (isPublicRoute || isAuthRoute) {
-      const dashboardUrl = (userRole === 'Admin' || userRole === 'SuperAdmin' || userRole === 'Super Admin') ? '/admin' : '/training';
-      const url = request.nextUrl.clone();
-      url.pathname = dashboardUrl;
-      return NextResponse.redirect(url);
+  // --- Authenticated (Full) User Flow ---
+  if (isLoggedIn && !isAnonymous) {
+    // If logged in, redirect away from public/auth pages to their dashboard
+    if (publicRoutes.includes(pathname) || authRoutes.includes(pathname)) {
+        const destination = isAdmin ? '/admin' : '/training';
+        return NextResponse.redirect(new URL(destination, request.url));
     }
-
-    // If a non-admin user tries to access an admin route, redirect them
-    if (isAdminRoute && userRole !== 'Admin' && userRole !== 'SuperAdmin' && userRole !== 'Super Admin') {
-      const url = request.nextUrl.clone();
-      url.pathname = '/training';
-      return NextResponse.redirect(url);
+    // If a non-admin tries to access an admin route, redirect to training dashboard
+    if (isAdminRoute && !isAdmin) {
+        return NextResponse.redirect(new URL('/training', request.url));
     }
-
-    // Otherwise, allow access to the requested protected route
+    // Otherwise, they are good to go.
     return NextResponse.next();
   }
-
-  // Handle unauthenticated users
-  if (!userIsLoggedIn) {
-      // Allow access to public and auth routes
-      if (isPublicRoute || isAuthRoute) {
-          return NextResponse.next();
-      }
-      
-      // For any other route, redirect to login
-      const url = request.nextUrl.clone();
-      url.pathname = '/login';
-      return NextResponse.redirect(url);
+  
+  // --- Unauthenticated User Flow ---
+  if (!isLoggedIn) {
+    // Allow access to public and auth routes
+    if (publicRoutes.includes(pathname) || authRoutes.includes(pathname)) {
+      return NextResponse.next();
+    }
+    // For any other protected route, redirect to login
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // Fallback, should not be reached
   return NextResponse.next();
 }
 
-// Configure the matcher to run on specific paths
 export const config = {
   matcher: [
     /*
