@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -5,7 +6,7 @@ import Link from 'next/link';
 import { useAuth, signInAnonymously } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff, Key, Users, ShieldAlert, Blocks } from 'lucide-react';
+import { Loader, ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff, Key, Users, ShieldAlert, Blocks, ShieldQuestion } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
@@ -84,6 +85,12 @@ export default function Home() {
             title: 'API Security Lab',
             description: 'Practice finding and exploiting common API vulnerabilities in a safe, sandboxed environment.',
             href: '/api-security-lab'
+        },
+         {
+            icon: ShieldQuestion,
+            title: 'Interactive Threat Scenarios',
+            description: 'Engage in realistic, story-driven security challenges to test your decision-making skills.',
+            href: '/threat-scenarios'
         },
         {
             icon: ScanLine,

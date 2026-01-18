@@ -38,6 +38,7 @@ import {
   ClipboardList,
   ClipboardCheck,
   Key,
+  ShieldQuestion,
 } from "lucide-react";
 
 import {
@@ -80,6 +81,7 @@ const gamesLinks = [
     { href: "/escape-room", label: "Escape Room", icon: Key },
     { href: "/vulnerability-challenge", label: "Vuln Challenge", icon: ShieldAlert },
     { href: "/api-security-lab", label: "API Security Lab", icon: Blocks },
+    { href: "/threat-scenarios", label: "Threat Scenarios", icon: ShieldQuestion },
 ];
 
 const securityOpsLinks = [

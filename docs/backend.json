@@ -1,6 +1,60 @@
 
 {
   "entities": {
+    "ThreatScenario": {
+      "title": "Threat Scenario",
+      "type": "object",
+      "description": "Represents a structured, interactive training scenario or 'Serious Game'.",
+      "properties": {
+        "slug": { "type": "string", "description": "A unique, URL-friendly identifier for the scenario." },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "difficulty": { "type": "string", "enum": ["easy", "medium", "hard", "expert"] },
+        "introStory": { "type": "string", "description": "The initial narrative to set the scene for the user." },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stepId": { "type": "string" },
+              "title": { "type": "string" },
+              "content": { "type": "string" },
+              "type": { "type": "string", "enum": ["multiple-choice", "audio-challenge"] },
+              "assetUrl": { "type": "string", "format": "uri", "description": "URL to an image, audio, or video file for the step." },
+              "choices": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "choiceId": { "type": "string" },
+                    "text": { "type": "string" }
+                  },
+                  "required": ["choiceId", "text"]
+                }
+              },
+              "correctChoiceId": { "type": "string" },
+              "feedback": {
+                "type": "object",
+                "properties": {
+                  "correct": { "type": "string" },
+                  "incorrect": { "type": "string" }
+                },
+                "required": ["correct", "incorrect"]
+              }
+            },
+            "required": ["stepId", "title", "content", "type", "choices", "correctChoiceId", "feedback"]
+          }
+        },
+        "scoring": {
+          "type": "object",
+          "properties": {
+            "pointsPerCorrect": { "type": "number" }
+          }
+        }
+      },
+      "required": ["slug", "title", "description", "introStory", "steps"]
+    },
     "Campaign": {
         "title": "Training Campaign",
         "type": "object",
@@ -619,6 +673,7 @@
     "/risk_scores/{userId}": { "schema": { "$ref": "#/entities/RiskScore" }, "description": "Calculated risk scores for users." },
     "/users/{userId}/sms_analyses/{analysisId}": { "schema": { "$ref": "#/entities/SmsAnalysis" }, "description": "Stores the results of SMS fraud analyses for a specific user." },
     "/admin_impersonation/{adminId}": { "schema": { "$ref": "#/entities/AdminImpersonation" }, "description": "Stores active admin impersonation sessions." },
-    "/audit_logs/{logId}": { "schema": { "$ref": "#/entities/AuditLog" }, "description": "Collection of system-wide audit trail events." }
+    "/audit_logs/{logId}": { "schema": { "$ref": "#/entities/AuditLog" }, "description": "Collection of system-wide audit trail events." },
+    "/threat_scenarios/{scenarioId}": { "schema": { "$ref": "#/entities/ThreatScenario" }, "description": "Library of interactive 'Serious Game' training scenarios." }
   }
 }
