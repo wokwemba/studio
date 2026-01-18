@@ -66,7 +66,7 @@ const servicesLinks = [
     { href: "/vapt", label: "VAPT Console", icon: ScanLine },
     { href: "/incident-response", label: "Incident Response", icon: ClipboardList },
     { href: "/system-audit", label: "System Audit", icon: ClipboardCheck },
-]
+];
 
 const trainingLinks = [
     { href: "/training/module", label: "Training Generator", icon: Wand2 },
@@ -74,15 +74,21 @@ const trainingLinks = [
     { href: "/flashcards", label: "Flashcards", icon: Copy },
     { href: "/training/history", label: "Training History", icon: History },
     { href: "/training/achievements", label: "Achievements", icon: Trophy },
-]
+];
 
 const threatIntelLinks = [
     { href: "/dark-web-monitor", label: "Dark Web Monitor", icon: ShieldOff },
+    { href: "/threat-intelligence/actors", label: "Threat Actor Profiles", icon: Users },
 ];
 
 const gamesLinks = [
     { href: "/escape-room", label: "Escape Room", icon: Key },
-]
+    { href: "/vulnerability-challenge", label: "Vuln Challenge", icon: ShieldAlert },
+];
+
+const securityOpsLinks = [
+    { href: "/incident-response-playbook", label: "IR Playbook Generator", icon: ClipboardList },
+];
 
 export function SidebarNav() {
   const pathname = usePathname();
@@ -181,6 +187,26 @@ export function SidebarNav() {
             <SidebarGroupLabel>Games &amp; Challenges</SidebarGroupLabel>
             {gamesLinks.map((link) => (
                     <SidebarMenuItem key={link.href}>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={pathname.startsWith(link.href)}
+                        className="font-headline"
+                        tooltip={link.label}
+                        size="sm"
+                    >
+                        <Link href={link.href}>
+                            <link.icon className="h-4 w-4" />
+                            {state === 'expanded' && <span>{link.label}</span>}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))}
+        </SidebarGroup>
+        <SidebarSeparator />
+        <SidebarGroup>
+            <SidebarGroupLabel>Security Operations</SidebarGroupLabel>
+            {securityOpsLinks.map((link) => (
+                 <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton
                         asChild
                         isActive={pathname.startsWith(link.href)}

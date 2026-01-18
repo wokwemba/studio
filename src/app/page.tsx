@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth, signInAnonymously } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff, Key } from 'lucide-react';
+import { Loader, ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff, Key, Users, ShieldAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
@@ -62,6 +62,36 @@ export default function Home() {
             href: '/escape-room'
         },
         {
+            icon: ShieldAlert,
+            title: 'Vulnerability Challenge',
+            description: 'A gamified challenge to test your ability to prioritize and manage security vulnerabilities.',
+            href: '/vulnerability-challenge'
+        },
+        {
+            icon: ClipboardList,
+            title: 'IR Playbook Generator',
+            description: 'Use AI to generate detailed Incident Response playbooks for various security scenarios.',
+            href: '/incident-response-playbook'
+        },
+        {
+            icon: Users,
+            title: 'Threat Actor Profiler',
+            description: 'Generate and study profiles of known cyber threat actors and APT groups.',
+            href: '/threat-intelligence/actors'
+        },
+        {
+            icon: ScanLine,
+            title: 'Phishing Detector Engine',
+            description: 'Analyze suspicious SMS, email, and WhatsApp messages for fraud and phishing attempts.',
+            href: '/phishing-engine/dashboard'
+        },
+         {
+            icon: ShieldOff,
+            title: 'Dark Web Monitor',
+            description: 'Simulate a scan of the dark web for mentions of your company and keywords.',
+            href: '/dark-web-monitor'
+        },
+        {
             icon: ScanLine,
             title: 'VAPT Console',
             description: 'Request professional vulnerability assessments and penetration testing.',
@@ -69,7 +99,7 @@ export default function Home() {
         },
         {
             icon: FileBadge,
-            title: 'Compliance &amp; Reporting',
+            title: 'Compliance & Reporting',
             description: 'Manage compliance requirements and generate detailed reports for your organization.',
             href: '/admin/analytics'
         },
@@ -84,18 +114,6 @@ export default function Home() {
             title: 'Gamified Leaderboard',
             description: 'Compete with your colleagues and climb the ranks based on your security score.',
             href: '/leaderboard'
-        },
-        {
-            icon: ScanLine, // Reusing icon, it fits well
-            title: 'Phishing Detector Engine',
-            description: 'Analyze suspicious SMS, email, and WhatsApp messages for fraud and phishing attempts.',
-            href: '/phishing-engine/dashboard'
-        },
-         {
-            icon: ShieldOff,
-            title: 'Dark Web Monitor',
-            description: 'Simulate a scan of the dark web for mentions of your company and keywords.',
-            href: '/dark-web-monitor'
         },
         {
             icon: FileText,

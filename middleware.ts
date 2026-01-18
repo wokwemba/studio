@@ -46,5 +46,9 @@ export const config = {
     '/system-audit/:path*',
     '/custom-training/:path*',
     '/dark-web-monitor/:path*',
+    '/incident-response-playbook/:path*',
+    '/threat-intelligence/:path*',
+    '/vulnerability-challenge/:path*',
+    '/escape-room/:path*',
   ],
 };
