@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -137,5 +136,3 @@ export function EditTenantDialog({ isOpen, onOpenChange, tenant }: EditTenantDia
     </Dialog>
   );
 }
-
-    
