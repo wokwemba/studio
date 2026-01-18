@@ -65,7 +65,7 @@ const servicesLinks = [
     { href: "/vapt", label: "VAPT Console", icon: ScanLine },
     { href: "/incident-response", label: "Incident Response", icon: ClipboardList },
     { href: "/system-audit", label: "System Audit", icon: ClipboardCheck },
-]
+];
 
 const trainingLinks = [
     { href: "/training/module", label: "Training Generator", icon: Wand2 },
@@ -73,7 +73,7 @@ const trainingLinks = [
     { href: "/flashcards", label: "Flashcards", icon: Copy },
     { href: "/training/history", label: "Training History", icon: History },
     { href: "/training/achievements", label: "Achievements", icon: Trophy },
-]
+];
 
 const threatIntelLinks = [
     { href: "/dark-web-monitor", label: "Dark Web Monitor", icon: ShieldOff },
