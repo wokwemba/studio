@@ -9,11 +9,12 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader, Wand2, ClipboardList, ChevronRight } from 'lucide-react';
+import { Loader, Wand2, ClipboardList, ChevronRight, GitBranch } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MindMapNode } from '@/components/phishing-engine/mind-map-node';
 
 function IrPlaybookPage() {
     const [formData, setFormData] = useState<GenerateIrPlaybookInput>({
@@ -119,23 +120,60 @@ function IrPlaybookPage() {
                         <CardDescription>{playbook.incidentSummary}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Accordion type="multiple" defaultValue={playbook.phases.map(p => p.phaseName)} className="w-full">
-                            {playbook.phases.map((phase) => (
-                                <AccordionItem value={phase.phaseName} key={phase.phaseName}>
-                                    <AccordionTrigger className="font-semibold text-lg">{phase.phaseName}</AccordionTrigger>
-                                    <AccordionContent>
-                                        <ul className="space-y-3 pl-4">
-                                        {phase.steps.map((step, index) => (
-                                            <li key={index} className="flex items-start gap-3">
-                                                <ChevronRight className="w-4 h-4 mt-1 text-primary" />
-                                                <span>{step}</span>
-                                            </li>
-                                        ))}
-                                        </ul>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
+                        <Tabs defaultValue="list-view">
+                            <TabsList className="grid w-full grid-cols-2 mb-4">
+                                <TabsTrigger value="list-view">
+                                    <ClipboardList className="mr-2" />
+                                    List View
+                                </TabsTrigger>
+                                <TabsTrigger value="mind-map-view">
+                                    <GitBranch className="mr-2" />
+                                    Mind Map
+                                </TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="list-view">
+                                <Accordion type="multiple" defaultValue={playbook.phases.map(p => p.phaseName)} className="w-full">
+                                    {playbook.phases.map((phase) => (
+                                        <AccordionItem value={phase.phaseName} key={phase.phaseName}>
+                                            <AccordionTrigger className="font-semibold text-lg">{phase.phaseName}</AccordionTrigger>
+                                            <AccordionContent>
+                                                <ul className="space-y-3 pl-4">
+                                                {phase.steps.map((step, index) => (
+                                                    <li key={index} className="flex items-start gap-3">
+                                                        <ChevronRight className="w-4 h-4 mt-1 text-primary" />
+                                                        <span>{step}</span>
+                                                    </li>
+                                                ))}
+                                                </ul>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
+                            </TabsContent>
+                            <TabsContent value="mind-map-view">
+                                <div className="relative min-h-[600px] flex items-center justify-center p-4 bg-muted/20 rounded-lg overflow-hidden">
+                                    <MindMapNode title={playbook.playbookTitle} isCentral>
+                                        <p className="text-xs text-center text-muted-foreground capitalize">Incident Playbook</p>
+                                    </MindMapNode>
+                                    <div className="absolute inset-0 w-full h-full">
+                                        {playbook.phases.map((phase, index) => {
+                                            const angle = (index / playbook.phases.length) * 2 * Math.PI;
+                                            const x = 50 + 40 * Math.cos(angle);
+                                            const y = 50 + 35 * Math.sin(angle);
+                                            return (
+                                                <div key={phase.phaseName} className="absolute" style={{left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)'}}>
+                                                    <MindMapNode title={phase.phaseName}>
+                                                        <ul className="text-xs list-disc list-inside space-y-1 text-left">
+                                                            {phase.steps.map((step, i) => <li key={i}>{step}</li>)}
+                                                        </ul>
+                                                    </MindMapNode>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </TabsContent>
+                        </Tabs>
                     </CardContent>
                 </Card>
             )}
