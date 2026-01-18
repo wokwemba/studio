@@ -53,8 +53,6 @@ import { doc } from "firebase/firestore";
 
 const mainLinks = [
   { href: "/training", label: "My Training", icon: BookOpenCheck },
-  { href: "/custom-training", label: "Cybersecurity Awareness Training Console", icon: BookUser },
-  { href: "/vapt", label: "VAPT Console", icon: ScanLine },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/simulations", label: "Request Simulation", icon: FlaskConical },
   { href: "/phishing-engine/dashboard", label: "Phishing Detector", icon: ScanLine },
@@ -63,6 +61,8 @@ const mainLinks = [
 ];
 
 const servicesLinks = [
+    { href: "/custom-training", label: "Custom Training", icon: BookUser },
+    { href: "/vapt", label: "VAPT Console", icon: ScanLine },
     { href: "/incident-response", label: "Incident Response", icon: ClipboardList },
     { href: "/system-audit", label: "System Audit", icon: ClipboardCheck },
 ]

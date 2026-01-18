@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth, signInAnonymously } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText } from 'lucide-react';
+import { Loader, ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
@@ -57,8 +57,8 @@ export default function Home() {
         },
         {
             icon: ScanLine,
-            title: 'VAPT & Audit Services',
-            description: 'Request professional vulnerability assessments, penetration testing, and system audits.',
+            title: 'VAPT Console',
+            description: 'Request professional vulnerability assessments and penetration testing.',
             href: '/vapt'
         },
         {
@@ -82,8 +82,14 @@ export default function Home() {
         {
             icon: ScanLine, // Reusing icon, it fits well
             title: 'Phishing Detector Engine',
-            description: 'Analyze suspicious SMS messages for fraud and phishing attempts with our AI engine.',
+            description: 'Analyze suspicious SMS, email, and WhatsApp messages for fraud and phishing attempts.',
             href: '/phishing-engine/dashboard'
+        },
+         {
+            icon: ShieldOff,
+            title: 'Dark Web Monitor',
+            description: 'Simulate a scan of the dark web for mentions of your company and keywords.',
+            href: '/dark-web-monitor'
         },
         {
             icon: FileText,
@@ -102,6 +108,18 @@ export default function Home() {
             title: 'Automated Campaign Builder',
             description: 'Let AI design end-to-end security awareness campaigns for your organization.',
             href: '/admin/campaigns'
+        },
+        {
+            icon: BookUser,
+            title: 'Custom Training',
+            description: 'Request the creation of bespoke training modules tailored to your specific needs.',
+            href: '/custom-training'
+        },
+        {
+            icon: ClipboardCheck,
+            title: 'System Audit',
+            description: 'Request a formal audit of a system, application, or process against a specific framework.',
+            href: '/system-audit'
         }
     ];
 
@@ -131,7 +149,7 @@ export default function Home() {
              <div className="w-full max-w-7xl mx-auto py-16 mt-10">
                 <h2 className="text-3xl font-bold font-headline mb-12">Explore Our Tools</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {features.map((feature) => (
+                    {features.sort(() => .5 - Math.random()).slice(0, 16).map((feature) => (
                          <Link href={feature.href} key={feature.title}>
                             <Card className="text-left h-full hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer">
                                 <CardHeader>
