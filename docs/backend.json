@@ -202,7 +202,6 @@
         "role": { "type": "string", "enum": ["super_admin", "tenant_admin", "department_admin", "employee"] },
         "department": { "type": "string" },
         "jobTitle": { "type": "string" },
-        "employeeId": { "type": "string" },
         "status": { "type": "string", "enum": ["active", "invited", "suspended", "archived"] },
         "risk": { "type": "string", "enum": ["Low", "Medium", "High"], "description": "The user's overall risk level." },
         "trainingStats": {
@@ -674,6 +673,6 @@
     "/users/{userId}/sms_analyses/{analysisId}": { "schema": { "$ref": "#/entities/SmsAnalysis" }, "description": "Stores the results of SMS fraud analyses for a specific user." },
     "/admin_impersonation/{adminId}": { "schema": { "$ref": "#/entities/AdminImpersonation" }, "description": "Stores active admin impersonation sessions." },
     "/audit_logs/{logId}": { "schema": { "$ref": "#/entities/AuditLog" }, "description": "Collection of system-wide audit trail events." },
-    "/threat_scenarios/{scenarioId}": { "schema": { "$ref": "#/entities/ThreatScenario" }, "description": "Library of interactive 'Serious Game' training scenarios." }
+    "threat_scenarios/{scenarioId}": { "schema": { "$ref": "#/entities/ThreatScenario" }, "description": "Library of interactive 'Serious Game' training scenarios." }
   }
 }

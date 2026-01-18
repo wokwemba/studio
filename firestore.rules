@@ -53,8 +53,7 @@ service cloud.firestore {
 
       // SMS ANALYSIS: Users can manage their own analysis results.
       match /sms_analyses/{analysisId} {
-        allow read: if isOwnRecord(userId);
-        allow write: if isOwnRecord(userId);
+        allow read, write: if isOwnRecord(userId);
       }
     }
 
@@ -127,6 +126,12 @@ service cloud.firestore {
     // ADMIN IMPERSONATION: Only the admin themselves can read/write their own session.
     match /admin_impersonation/{adminId} {
       allow read, write: if request.auth.uid == adminId;
+    }
+
+    // THREAT SCENARIOS: Readable by authenticated users, writable by Super Admins.
+    match /threat_scenarios/{scenarioId} {
+        allow read: if request.auth.uid != null;
+        allow write: if isSuperAdmin();
     }
   }
 }
