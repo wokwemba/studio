@@ -42,7 +42,7 @@ service cloud.firestore {
       allow read: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) || isOwnRecord(userId);
       allow create: if isOwnRecord(userId) || isSuperAdmin() || isTenantAdmin(request.resource.data.tenantId);
       allow update: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) ||
-                       (isOwnRecord(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['preferences', 'lastLogin', 'displayName', 'photoURL', 'risk', 'assignedTenants']));
+                       (isOwnRecord(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['preferences', 'lastLogin', 'displayName', 'photoURL', 'risk', 'assignedTenants', 'department']));
       allow delete: if isSuperAdmin() || isTenantAdmin(get(/databases/$(database)/documents/users/$(userId)).data.tenantId) || (resource.data.status == 'Invited' && resource.data.email == request.auth.token.email);
 
       // TRAINING RESULTS: Users can read their own training results. Admins can read results for users in their tenant.

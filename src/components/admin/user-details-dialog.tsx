@@ -42,6 +42,7 @@ interface UserDetailsDialogProps {
 
 const FormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  department: z.string().optional(),
   risk: z.enum(['Low', 'Medium', 'High']),
   assignedTenants: z.array(z.string()).optional(),
 });
@@ -62,6 +63,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
     defaultValues: { 
         name: user.name, 
         risk: user.risk,
+        department: user.department || '',
         assignedTenants: user.assignedTenants || [user.tenantId]
     },
   });
@@ -78,6 +80,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
         const updates: Partial<UserProfile> = {};
         if (data.name !== user.name) updates.name = data.name;
         if (data.risk !== user.risk) updates.risk = data.risk;
+        if (data.department !== user.department) updates.department = data.department;
         
         // Check for changes in assigned tenants
         const initialTenants = new Set(user.assignedTenants || [user.tenantId]);
@@ -111,7 +114,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
     onOpenChange(false);
     setTimeout(() => {
         setIsEditing(false);
-        form.reset({ name: user.name, risk: user.risk, assignedTenants: user.assignedTenants || [user.tenantId] });
+        form.reset({ name: user.name, risk: user.risk, department: user.department || '', assignedTenants: user.assignedTenants || [user.tenantId] });
     }, 200);
   }
   
@@ -147,6 +150,19 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
                           <FormLabel>Display Name</FormLabel>
                           <FormControl>
                               <Input placeholder="Enter user's full name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="department"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Department</FormLabel>
+                          <FormControl>
+                              <Input placeholder="e.g., Finance, IT" {...field} />
                           </FormControl>
                           <FormMessage />
                           </FormItem>
@@ -239,6 +255,10 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
                     <div className="grid grid-cols-3 items-center gap-4">
                         <Label className="text-right text-muted-foreground">Role</Label>
                         <p className="col-span-2 font-medium">{roleName}</p>
+                    </div>
+                     <div className="grid grid-cols-3 items-center gap-4">
+                        <Label className="text-right text-muted-foreground">Department</Label>
+                        <p className="col-span-2 font-medium">{user.department || 'N/A'}</p>
                     </div>
                      <div className="grid grid-cols-3 items-center gap-4">
                         <Label className="text-right text-muted-foreground">Risk Level</Label>

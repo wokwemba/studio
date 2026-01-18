@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -6,7 +7,7 @@ import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from '@
 import { collection, query, where, doc } from 'firebase/firestore';
 import { type UserProfile } from '@/app/admin/users/page';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader, Users, CheckCircle, Percent, Shield, Activity, BarChart, Calendar, MessageSquare, AlertTriangle, ShieldCheck, ShieldClose, ShieldQuestion, Mail, GitPullRequest, Target, FileText, Bell, Settings } from 'lucide-react';
+import { Loader, Users, CheckCircle, Percent, Shield, Activity, BarChart, Calendar, MessageSquare, AlertTriangle, ShieldCheck, ShieldQuestion, Mail, GitPullRequest, Target, FileText, Bell, Settings, TrendingDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { ResponsiveContainer, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, BarChart as RechartsBarChart, LineChart } from 'recharts';
 import { AiInsights } from '../dashboard/ai-insights';
@@ -25,15 +26,6 @@ function AdminMetricCard({ title, value, icon: Icon }: { title: string; value: s
   );
 }
 
-// Placeholder data
-const departmentPerformanceData = [
-    { name: 'IT Dept', completion: 95, status: 'high' },
-    { name: 'Finance', completion: 88, status: 'high' },
-    { name: 'Sales', completion: 65, status: 'medium' },
-    { name: 'HR', completion: 92, status: 'high' },
-    { name: 'Marketing', completion: 45, status: 'low' },
-];
-
 const quickActions = [
     { label: "Invite Users", icon: Mail, href: "/admin/users"},
     { label: "Assign Training", icon: GitPullRequest, href: "/admin/campaigns"},
@@ -49,23 +41,13 @@ const upcomingDeadlines = [
     { text: "Quarterly Compliance Report Due", date: "Nov 1" },
 ];
 
-const complianceIcons: Record<string, React.ReactElement> = {
-    high: <ShieldCheck className="h-5 w-5 text-success" />,
-    medium: <ShieldQuestion className="h-5 w-5 text-yellow-500" />,
-    low: <AlertTriangle className="h-5 w-5 text-destructive" />,
-};
+const riskScoreMap: Record<string, number> = { 'High': 20, 'Medium': 50, 'Low': 100, };
 
-const riskDistributionData = [
-  { name: 'Low', users: 120, fill: 'hsl(var(--success))' },
-  { name: 'Medium', users: 45, fill: 'hsl(var(--primary))' },
-  { name: 'High', users: 15, fill: 'hsl(var(--destructive))' },
-];
-
-const engagementData = [
-  { month: 'May', modules: 150 },
-  { month: 'Jun', modules: 210 },
-  { month: 'Jul', modules: 250 },
-  { month: 'Aug', modules: 230 },
+const phishingSusceptibilityData = [
+  { month: 'May', rate: 28 },
+  { month: 'Jun', rate: 22 },
+  { month: 'Jul', rate: 15 },
+  { month: 'Aug', rate: 12 },
 ];
 
 
@@ -95,6 +77,25 @@ export function CorporateAdminDashboard() {
 
   const isLoading = isAuthLoading || isAdminUserDataLoading || usersLoading || tenantLoading;
 
+  const departmentRiskData = useMemo(() => {
+    if (!users) return [];
+    const depts: Record<string, { totalScore: number; count: number }> = {};
+    users.forEach(user => {
+      const deptName = user.department || 'Unassigned';
+      if (!depts[deptName]) depts[deptName] = { totalScore: 0, count: 0 };
+      depts[deptName].count++;
+      depts[deptName].totalScore += riskScoreMap[user.risk] || 0;
+    });
+
+    return Object.entries(depts)
+      .map(([name, data]) => ({
+        name,
+        avgRisk: data.totalScore / data.count,
+      }))
+      .sort((a, b) => a.avgRisk - b.avgRisk);
+  }, [users]);
+
+
   if (isLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -121,39 +122,36 @@ export function CorporateAdminDashboard() {
         <div className="lg:col-span-2 space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">Department Performance</CardTitle>
-                    <CardDescription>Completion rates and compliance across your organization.</CardDescription>
+                    <CardTitle className="font-headline">Department Risk Profile</CardTitle>
+                    <CardDescription>Average risk scores across departments. Lower is better.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ul className="space-y-4">
-                        {departmentPerformanceData.map(dept => (
-                            <li key={dept.name} className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    {complianceIcons[dept.status]}
-                                    <div>
-                                        <p className="font-semibold">{dept.name}</p>
-                                        <p className="text-sm text-muted-foreground">{dept.completion}% Completion</p>
-                                    </div>
-                                </div>
-                                <Button variant="outline" size="sm">View</Button>
-                            </li>
-                        ))}
-                    </ul>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <RechartsBarChart data={departmentRiskData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
+                            <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}/>
+                            <Bar dataKey="avgRisk" fill="hsl(var(--primary))" name="Avg. Risk Score" radius={[4, 4, 0, 0]} />
+                        </RechartsBarChart>
+                    </ResponsiveContainer>
                 </CardContent>
             </Card>
              <div className="grid md:grid-cols-2 gap-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline">User Risk Distribution</CardTitle>
+                        <CardTitle className="font-headline">Phishing Susceptibility</CardTitle>
+                        <CardDescription>Tenant-wide click rate on phishing simulations over time.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={250}>
-                            <RechartsBarChart data={riskDistributionData}>
-                                <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}/>
-                                <Bar dataKey="users" radius={[4, 4, 0, 0]} />
-                            </RechartsBarChart>
+                            <LineChart data={phishingSusceptibilityData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
+                                <XAxis dataKey="month" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} unit="%" />
+                                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }} />
+                                <Line type="monotone" dataKey="rate" stroke="hsl(var(--destructive))" name="Click Rate" />
+                            </LineChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
@@ -163,7 +161,7 @@ export function CorporateAdminDashboard() {
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={250}>
-                            <LineChart data={engagementData}>
+                            <LineChart data={phishingSusceptibilityData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
                                 <XAxis dataKey="month" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />

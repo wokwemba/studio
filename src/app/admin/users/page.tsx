@@ -54,6 +54,7 @@ export type UserProfile = {
   name: string;
   email: string;
   roleId: string;
+  department?: string;
   avatarId?: string;
   photoURL?: string;
   status: 'Active' | 'Invited' | 'Suspended';
