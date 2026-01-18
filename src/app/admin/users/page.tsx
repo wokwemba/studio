@@ -61,6 +61,11 @@ export type UserProfile = {
   risk: 'Low' | 'Medium' | 'High';
   tenantId: string;
   assignedTenants?: string[];
+  trainingStats?: {
+    completedModules?: number;
+    totalModules?: number;
+    avgScore?: number;
+  };
 };
 
 const statusVariant: Record<UserProfile['status'], 'success' | 'secondary' | 'destructive'> = {
@@ -99,6 +104,7 @@ function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, 
       <TableCell>
         <Badge variant={statusVariant[user.status]}>{user.status}</Badge>
       </TableCell>
+      <TableCell>{user.department || 'N/A'}</TableCell>
       <TableCell>{roleName}</TableCell>
       <TableCell className="text-right">
         <DropdownMenu>
@@ -230,7 +236,8 @@ export default function AdminUsersPage() {
     return users.filter(
       (user) =>
         user.name.toLowerCase().includes(lowercasedTerm) ||
-        user.email.toLowerCase().includes(lowercasedTerm)
+        user.email.toLowerCase().includes(lowercasedTerm) ||
+        user.department?.toLowerCase().includes(lowercasedTerm)
     );
   }, [users, searchTerm]);
 
@@ -255,7 +262,7 @@ export default function AdminUsersPage() {
             <div className="relative mt-4">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input 
-                    placeholder="Search by name or email..." 
+                    placeholder="Search by name, email, or department..." 
                     className="pl-8 w-full sm:w-80"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -271,6 +278,7 @@ export default function AdminUsersPage() {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Department</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead><span className="sr-only">Actions</span></TableHead>
                 </TableRow>

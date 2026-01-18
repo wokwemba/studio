@@ -41,8 +41,6 @@ const upcomingDeadlines = [
     { text: "Quarterly Compliance Report Due", date: "Nov 1" },
 ];
 
-const riskScoreMap: Record<string, number> = { 'High': 20, 'Medium': 50, 'Low': 100, };
-
 const phishingSusceptibilityData = [
   { month: 'May', rate: 28 },
   { month: 'Jun', rate: 22 },
@@ -76,23 +74,29 @@ export function CorporateAdminDashboard() {
   const { data: tenantData, isLoading: tenantLoading } = useDoc<{stats?: { totalUsers: number, completionRate: number, avgScore: number}, risk: 'Low' | 'Medium' | 'High'}>(tenantDocRef);
 
   const isLoading = isAuthLoading || isAdminUserDataLoading || usersLoading || tenantLoading;
-
-  const departmentRiskData = useMemo(() => {
+  
+  const departmentCompletionData = useMemo(() => {
     if (!users) return [];
-    const depts: Record<string, { totalScore: number; count: number }> = {};
+    const depts: Record<string, { totalCompletion: number; userCount: number }> = {};
     users.forEach(user => {
       const deptName = user.department || 'Unassigned';
-      if (!depts[deptName]) depts[deptName] = { totalScore: 0, count: 0 };
-      depts[deptName].count++;
-      depts[deptName].totalScore += riskScoreMap[user.risk] || 0;
+      if (!depts[deptName]) depts[deptName] = { totalCompletion: 0, userCount: 0 };
+      
+      const stats = user.trainingStats;
+      const completionRate = (stats && stats.totalModules && stats.completedModules && stats.totalModules > 0)
+        ? (stats.completedModules / stats.totalModules) * 100
+        : 0;
+
+      depts[deptName].userCount++;
+      depts[deptName].totalCompletion += completionRate;
     });
 
     return Object.entries(depts)
       .map(([name, data]) => ({
         name,
-        avgRisk: data.totalScore / data.count,
+        avgCompletion: data.userCount > 0 ? data.totalCompletion / data.userCount : 0,
       }))
-      .sort((a, b) => a.avgRisk - b.avgRisk);
+      .sort((a, b) => b.avgCompletion - a.avgCompletion);
   }, [users]);
 
 
@@ -122,17 +126,17 @@ export function CorporateAdminDashboard() {
         <div className="lg:col-span-2 space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">Department Risk Profile</CardTitle>
-                    <CardDescription>Average risk scores across departments. Lower is better.</CardDescription>
+                    <CardTitle className="font-headline">Department Training Completion</CardTitle>
+                    <CardDescription>Average training completion rates across departments.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                        <RechartsBarChart data={departmentRiskData}>
+                        <RechartsBarChart data={departmentCompletionData}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
+                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} unit="%" />
                             <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}/>
-                            <Bar dataKey="avgRisk" fill="hsl(var(--primary))" name="Avg. Risk Score" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="avgCompletion" fill="hsl(var(--primary))" name="Avg. Completion" radius={[4, 4, 0, 0]} />
                         </RechartsBarChart>
                     </ResponsiveContainer>
                 </CardContent>
