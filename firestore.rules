@@ -29,6 +29,11 @@ service cloud.firestore {
     match /tenants/{tenantId} {
       allow read: if isSuperAdmin() || (isTenantAdmin(tenantId) && isOwnRecord(request.auth.uid));
       allow write: if isSuperAdmin();
+
+      // CAMPAIGNS: Managed by Tenant Admins and Super Admins for their own tenant.
+      match /campaigns/{campaignId} {
+        allow read, write: if isSuperAdmin() || isTenantAdmin(tenantId);
+      }
     }
 
     // USERS: Super Admins can manage all users. Tenant Admins can manage users in their tenant.

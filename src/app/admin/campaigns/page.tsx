@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader, GitPullRequest, List, CheckCircle, BarChart, CalendarClock, MoreVertical } from 'lucide-react';
+import { Loader, GitPullRequest, List, CheckCircle, BarChart, MoreVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
@@ -258,5 +258,3 @@ export default function AdminCampaignsPage() {
     </div>
   );
 }
-
-    

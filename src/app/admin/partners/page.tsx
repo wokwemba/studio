@@ -52,13 +52,6 @@ const priorityVariant: Record<string, 'secondary' | 'outline' | 'destructive'> =
   high: 'destructive',
 };
 
-const PriorityIcon = ({priority}: {priority?: PartnerRequest['priority']}) => {
-    if (priority === 'high') return <Star className="h-4 w-4 text-destructive fill-destructive" />;
-    if (priority === 'medium') return <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />;
-    return <Star className="h-4 w-4 text-muted" />;
-}
-
-
 function PartnerDetailsDialog({ request, isOpen, onOpenChange }: { request: PartnerRequest | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
     if (!request) return null;
 
@@ -78,8 +71,8 @@ function PartnerDetailsDialog({ request, isOpen, onOpenChange }: { request: Part
                         <div><p className="font-semibold">Email</p><p className="text-muted-foreground">{request.email}</p></div>
                         <div><p className="font-semibold">Phone</p><p className="text-muted-foreground">{request.phone}</p></div>
                         <div><p className="font-semibold">Country</p><p className="text-muted-foreground">{request.country}</p></div>
-                         <div><p className="font-semibold">Status</p><div><Badge variant={statusVariant[request.status]}>{request.status}</Badge></div></div>
-                         <div><p className="font-semibold">Priority</p><div><Badge variant={priorityVariant[request.priority || 'low']}>{request.priority || 'low'}</Badge></div></div>
+                         <div><div className="font-semibold">Status</div><div><Badge variant={statusVariant[request.status]}>{request.status}</Badge></div></div>
+                         <div><div className="font-semibold">Priority</div><div><Badge variant={priorityVariant[request.priority || 'low']}>{request.priority || 'low'}</Badge></div></div>
                     </div>
                     {request.message && (
                         <div>

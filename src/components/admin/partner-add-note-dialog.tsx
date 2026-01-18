@@ -103,5 +103,3 @@ export function AddNoteDialog({ partner, isOpen, onOpenChange }: AddNoteDialogPr
     </Dialog>
   );
 }
-
-    

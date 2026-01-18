@@ -46,6 +46,7 @@ import { ROLES } from '@/lib/roles';
 export type Role = {
   id: string;
   name: 'User' | 'Admin' | 'SuperAdmin';
+  permissions: string[];
 };
 
 export type UserProfile = {

@@ -11,10 +11,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 type TrainingModule = {
     id: string;
+    title: string;
     category: string;
-    difficulty: string;
-    aiAdaptive: boolean;
+    difficulty: 'easy' | 'medium' | 'hard';
     duration: number;
+    aiAdaptive?: boolean;
 };
 
 const difficultyVariant: Record<string, 'secondary' | 'outline' | 'destructive'> = {
@@ -54,24 +55,24 @@ export default function AdminContentPage() {
             <Table>
                 <TableHeader>
                     <TableRow>
+                        <TableHead>Title</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Difficulty</TableHead>
                         <TableHead>Duration (min)</TableHead>
-                        <TableHead>AI Adaptive</TableHead>
                          <TableHead><span className="sr-only">Actions</span></TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {modules.map(module => (
                         <TableRow key={module.id}>
-                            <TableCell className="font-medium">{module.category}</TableCell>
+                            <TableCell className="font-medium">{module.title}</TableCell>
+                            <TableCell>{module.category}</TableCell>
                             <TableCell>
                                 <Badge variant={difficultyVariant[module.difficulty] || 'secondary'}>
                                     {module.difficulty}
                                 </Badge>
                             </TableCell>
                             <TableCell>{module.duration}</TableCell>
-                            <TableCell>{module.aiAdaptive ? 'Yes' : 'No'}</TableCell>
                             <TableCell className="text-right">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
