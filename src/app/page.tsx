@@ -149,7 +149,7 @@ export default function Home() {
              <div className="w-full max-w-7xl mx-auto py-16 mt-10">
                 <h2 className="text-3xl font-bold font-headline mb-12">Explore Our Tools</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {features.sort(() => .5 - Math.random()).slice(0, 16).map((feature) => (
+                    {features.slice(0, 16).map((feature) => (
                          <Link href={feature.href} key={feature.title}>
                             <Card className="text-left h-full hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer">
                                 <CardHeader>
