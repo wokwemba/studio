@@ -75,6 +75,10 @@ const trainingLinks = [
     { href: "/training/achievements", label: "Achievements", icon: Trophy },
 ]
 
+const threatIntelLinks = [
+    { href: "/dark-web-monitor", label: "Dark Web Monitor", icon: ShieldOff },
+];
+
 export function SidebarNav() {
   const pathname = usePathname();
   const { state } = useSidebar();
@@ -152,6 +156,26 @@ export function SidebarNav() {
             <SidebarGroupLabel>AI & Learning Tools</SidebarGroupLabel>
             {trainingLinks.map((link) => (
                  <SidebarMenuItem key={link.href}>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={pathname.startsWith(link.href)}
+                        className="font-headline"
+                        tooltip={link.label}
+                        size="sm"
+                    >
+                        <Link href={link.href}>
+                            <link.icon className="h-4 w-4" />
+                            {state === 'expanded' && <span>{link.label}</span>}
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))}
+        </SidebarGroup>
+        <SidebarSeparator />
+        <SidebarGroup>
+            <SidebarGroupLabel>Threat Intelligence</SidebarGroupLabel>
+            {threatIntelLinks.map((link) => (
+                    <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton
                         asChild
                         isActive={pathname.startsWith(link.href)}

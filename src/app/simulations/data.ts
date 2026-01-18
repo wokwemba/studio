@@ -335,7 +335,7 @@ export type FormField = {
     },
     {
         id: 'sim-15',
-        type: 'Social Engineering Call Simulation',
+        type: 'Vishing (Voice Phishing) Simulation',
         description: 'Conducts simulated vishing (voice phishing) calls to test employee resilience.',
         fields: [
             { name: 'phoneNumbers', label: 'Target Phone Numbers (Test Only)', type: 'textarea', placeholder: 'List of internal numbers to call.' },
@@ -389,6 +389,32 @@ export type FormField = {
             { name: 'consent', label: 'I have authorization to test this application.', type: 'checkbox' },
         ]
     },
+    {
+      id: 'sim-20',
+      type: 'Invoice & Payment Fraud Simulation',
+      description: 'Simulates a targeted attack on finance departments using fake invoices and urgent payment requests.',
+      fields: [
+        { name: 'targetGroup', label: 'Target Department', type: 'select', options: ['Finance', 'Accounting', 'Procurement'] },
+        { name: 'numAccounts', label: 'Number of Test Accounts', type: 'text', placeholder: 'e.g., 10' },
+        { name: 'fakeVendorName', label: 'Fake Vendor Name', type: 'text', placeholder: 'e.g., "Global IT Solutions"' },
+        { name: 'invoiceAmount', label: 'Fake Invoice Amount', type: 'text', placeholder: 'e.g., $15,250.00' },
+        { name: 'urgencyLevel', label: 'Urgency Level', type: 'select', options: ['High (Due Today)', 'Medium (Due This Week)', 'Low (Net 30)'] },
+        { name: 'approvalWorkflow', label: 'Current Approval Workflow', type: 'textarea', placeholder: 'Briefly describe the payment approval process to be tested.' },
+        { name: 'consent', label: 'I confirm this exercise is approved by the head of the target department.', type: 'checkbox' },
+      ],
+    },
+    {
+      id: 'sim-21',
+      type: 'Executive Impersonation (Whaling) Simulation',
+      description: 'Crafts a highly targeted email appearing to come from a senior executive to trick employees into performing a specific action.',
+      fields: [
+        { name: 'impersonatedExecutive', label: 'Executive to Impersonate', type: 'text', placeholder: 'e.g., "John Doe, CEO"' },
+        { name: 'targetEmployee', label: 'Target Employee(s)', type: 'textarea', placeholder: 'e.g., "jane.smith@example.com (Executive Assistant)"' },
+        { name: 'requestedAction', label: 'Action to Request', type: 'textarea', placeholder: 'e.g., "Requesting you to purchase 10x $500 gift cards", "Asking to transfer funds to a new account for a secret acquisition."' },
+        { name: 'deliveryMethod', label: 'Delivery Method', type: 'select', options: ['Email', 'SMS'] },
+        { name: 'consent', label: 'I confirm I have authorization for this targeted test.', type: 'checkbox' },
+      ],
+    },
   ];
   
   
@@ -400,6 +426,7 @@ export type FormField = {
     
 
     
+
 
 
 

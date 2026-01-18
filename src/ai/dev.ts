@@ -13,4 +13,5 @@ import '@/ai/flows/sms-fraud-flow.ts';
 import '@/ai/flows/osint-mind-map-flow.ts';
 import '@/ai/flows/email-phishing-flow.ts';
 import '@/ai/flows/whatsapp-fraud-flow.ts';
+import '@/ai/flows/dark-web-simulation-flow.ts';
 import '@/ai/genkit';
