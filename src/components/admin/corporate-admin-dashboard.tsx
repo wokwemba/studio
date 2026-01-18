@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -10,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Loader, Users, CheckCircle, Percent, Shield, Activity, BarChart, Calendar, MessageSquare, AlertTriangle, ShieldCheck, ShieldClose, ShieldQuestion, Mail, GitPullRequest, Target, FileText, Bell, Settings } from 'lucide-react';
 import { Button } from '../ui/button';
 import { ResponsiveContainer, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, BarChart as RechartsBarChart, LineChart } from 'recharts';
+import { AiInsights } from '../dashboard/ai-insights';
 
 function AdminMetricCard({ title, value, icon: Icon }: { title: string; value: string | number; icon: React.ElementType }) {
   return (
@@ -177,6 +177,7 @@ export function CorporateAdminDashboard() {
             </div>
         </div>
         <div className="space-y-6">
+            <AiInsights />
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline">Quick Actions</CardTitle>
