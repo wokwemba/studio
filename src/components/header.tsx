@@ -18,10 +18,10 @@ import Link from "next/link";
 import { doc } from 'firebase/firestore';
 import { useAuthContext } from "./auth/AuthProvider";
 import { logout } from "@/lib/logout";
-
+import { stopImpersonation } from "@/lib/impersonation";
 
 export default function Header() {
-  const { user, role } = useAuthContext();
+  const { user, role, isImpersonating, realUser } = useAuthContext();
   const auth = useAuth();
   const router = useRouter();
   const firestore = useFirestore();
@@ -32,9 +32,14 @@ export default function Header() {
   );
   const { data: userData } = useDoc<{ photoURL?: string; avatarId?: string }>(userDocRef);
 
-  const handleLogout = () => {
-    if (!user || !auth || !firestore) return;
-    logout({ auth, firestore, user, role, router });
+  const handleLogoutOrStopImpersonation = async () => {
+    if (!firestore) return;
+
+    if (isImpersonating && realUser) {
+      await stopImpersonation(firestore, { uid: realUser.uid, email: realUser.email, role });
+    } else if (user && auth) {
+      await logout({ auth, firestore, user, role, router });
+    }
   };
 
   const userAvatar = userData?.photoURL 
@@ -75,14 +80,16 @@ export default function Header() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>{isImpersonating ? `Impersonating: ${user?.displayName}` : 'My Account'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href="/profile">Profile</Link>
             </DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogoutOrStopImpersonation}>
+                {isImpersonating ? 'Stop Impersonating' : 'Logout'}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -76,18 +76,19 @@ const trainingLinks = [
     { href: "/training/achievements", label: "Achievements", icon: Trophy },
 ];
 
-const threatIntelLinks = [
-    { href: "/dark-web-monitor", label: "Dark Web Monitor", icon: ShieldOff },
-    { href: "/threat-intelligence/actors", label: "Threat Actor Profiles", icon: Users },
-];
-
 const gamesLinks = [
     { href: "/escape-room", label: "Escape Room", icon: Key },
     { href: "/vulnerability-challenge", label: "Vuln Challenge", icon: ShieldAlert },
+    { href: "/api-security-lab", label: "API Security Lab", icon: Blocks },
 ];
 
 const securityOpsLinks = [
     { href: "/incident-response-playbook", label: "IR Playbook Generator", icon: ClipboardList },
+];
+
+const threatIntelLinks = [
+    { href: "/dark-web-monitor", label: "Dark Web Monitor", icon: ShieldOff },
+    { href: "/threat-intelligence/actors", label: "Threat Actor Profiles", icon: Users },
 ];
 
 export function SidebarNav() {
@@ -164,7 +165,7 @@ export function SidebarNav() {
         </SidebarGroup>
        <SidebarSeparator />
         <SidebarGroup>
-            <SidebarGroupLabel>AI &amp; Learning Tools</SidebarGroupLabel>
+            <SidebarGroupLabel>AI & Learning Tools</SidebarGroupLabel>
             {trainingLinks.map((link) => (
                  <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton
