@@ -104,4 +104,8 @@ export const topics = [
   "Digital Footprint Management",
   "Child Online Safety",
   "Remote Work Security",
+  "Psychological Manipulation Tactics",
+  "Building Cognitive Resilience to Social Engineering",
+  "Detecting Influence and Persuasion",
+  "Advanced CEO Fraud Scenarios",
 ];

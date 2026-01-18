@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth, signInAnonymously } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff } from 'lucide-react';
+import { Loader, ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff, Key } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
@@ -56,6 +56,12 @@ export default function Home() {
             href: '/tutor'
         },
         {
+            icon: Key,
+            title: 'Cyber Escape Room',
+            description: 'Test your problem-solving skills in a high-pressure, simulated incident scenario.',
+            href: '/escape-room'
+        },
+        {
             icon: ScanLine,
             title: 'VAPT Console',
             description: 'Request professional vulnerability assessments and penetration testing.',
@@ -63,7 +69,7 @@ export default function Home() {
         },
         {
             icon: FileBadge,
-            title: 'Compliance & Reporting',
+            title: 'Compliance &amp; Reporting',
             description: 'Manage compliance requirements and generate detailed reports for your organization.',
             href: '/admin/analytics'
         },
@@ -149,7 +155,7 @@ export default function Home() {
              <div className="w-full max-w-7xl mx-auto py-16 mt-10">
                 <h2 className="text-3xl font-bold font-headline mb-12">Explore Our Tools</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {features.slice(0, 16).map((feature) => (
+                    {features.map((feature) => (
                          <Link href={feature.href} key={feature.title}>
                             <Card className="text-left h-full hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer">
                                 <CardHeader>
