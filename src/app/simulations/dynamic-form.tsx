@@ -109,6 +109,27 @@ export function DynamicForm({ fields, formData, onFormChange, isDisabled }: Dyna
         );
       case 'checkbox-group':
         return (
+          <>
+            <div className="flex gap-2 mb-2">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onFormChange(field.name, field.options || [])}
+                    disabled={isDisabled}
+                >
+                    Select All
+                </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onFormChange(field.name, [])}
+                    disabled={isDisabled}
+                >
+                    Deselect All
+                </Button>
+            </div>
             <ScrollArea className="h-72 w-full rounded-md border p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {field.options?.map((option) => (
@@ -132,6 +153,7 @@ export function DynamicForm({ fields, formData, onFormChange, isDisabled }: Dyna
                 ))}
               </div>
             </ScrollArea>
+          </>
         );
       default:
         return null;
