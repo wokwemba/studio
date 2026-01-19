@@ -19,17 +19,6 @@ type TrainingResult = {
   completedAt: string; // ISO String
 };
 
-const requiredTraining = [
-    { id: 'rt1', title: 'Phishing Awareness', dueDate: '2 days', status: 'in-progress', icon: AlertTriangle, href: '/training/module' },
-    { id: 'rt2', title: 'Password Security', dueDate: '1 week', status: 'not-started', icon: Clock, href: '/training/module' },
-    { id: 'rt3', title: 'Data Privacy', dueDate: 'Completed', status: 'completed', icon: Check, href: '/training/module' },
-];
-
-const securityTip = {
-    title: "Security Tip of the Day",
-    content: "Never share your password via email, even with IT support. Legitimate requests will be handled through official channels."
-};
-
 function UserTrainingDashboard() {
   const { user, loading: isAuthLoading } = useAuthContext();
   const firestore = useFirestore();
@@ -56,7 +45,7 @@ function UserTrainingDashboard() {
   const metrics = useMemo(() => {
     const stats = userData?.trainingStats || {};
     return [
-        { label: 'Compliance', value: `${stats.complianceScore || 85}%`, subValue: 'Overall' },
+        { label: 'Compliance', value: `${stats.complianceScore || 0}%`, subValue: 'Overall' },
         { label: 'Completed', value: `${stats.completedModules || 0}/${stats.totalModules || 0}`, subValue: 'Modules' },
         { label: 'Avg Score', value: `${stats.avgScore || 0}%`, subValue: 'All quizzes' },
         { label: 'Risk', value: userData?.risk || 'N/A', subValue: 'Current Level' },
@@ -105,47 +94,15 @@ function UserTrainingDashboard() {
                         <CardTitle className='font-headline'>Required Training</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ul className="space-y-3">
-                            {requiredTraining.map(item => (
-                                <li key={item.id} className="flex items-center justify-between p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className={cn("p-1.5 rounded-full",
-                                            item.status === 'in-progress' && "bg-yellow-500/20 text-yellow-500",
-                                            item.status === 'not-started' && "bg-red-500/20 text-red-500",
-                                            item.status === 'completed' && "bg-green-500/20 text-green-500",
-                                        )}>
-                                            <item.icon className="h-5 w-5"/>
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold">{item.title}</p>
-                                            <p className="text-xs text-muted-foreground">Due: {item.dueDate}</p>
-                                        </div>
-                                    </div>
-                                    <Button size="sm" variant={item.status === 'completed' ? 'outline' : 'default'}>
-                                        {item.status === 'in-progress' ? 'Continue' : item.status === 'completed' ? 'Review' : 'Start'}
-                                    </Button>
-                                </li>
-                            ))}
-                        </ul>
+                       <div className="text-center text-muted-foreground py-10">
+                            <p>You have no required training at the moment.</p>
+                            <p className="text-sm">Assigned training will appear here.</p>
+                        </div>
                     </CardContent>
                 </ClickableCard>
             </div>
             
             <div className="space-y-6">
-                {/* Security Tip */}
-                 <ClickableCard>
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2"><Lightbulb className="text-primary"/>{securityTip.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-muted-foreground">{securityTip.content}</p>
-                        <div className="flex gap-2 mt-4">
-                            <Button variant="outline" size="sm">Report Suspicious Email</Button>
-                            <Button variant="ghost" size="sm">More Tips</Button>
-                        </div>
-                    </CardContent>
-                </ClickableCard>
-
                 {/* Recent Certificates */}
                 <ClickableCard href='/certificates'>
                     <CardHeader>

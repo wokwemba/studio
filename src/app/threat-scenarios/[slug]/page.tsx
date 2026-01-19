@@ -3,15 +3,16 @@
 
 import { useState } from 'react';
 import { notFound } from 'next/navigation';
-import { threatScenarios } from '../data';
-import { type Choice } from '../types';
+import { type Choice, type ThreatScenario } from '../types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, XCircle, Trophy, Repeat, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, Trophy, Repeat, ArrowRight, Loader } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 type GameState = {
   currentStepIndex: number;
@@ -23,8 +24,10 @@ type GameState = {
 };
 
 export default function ScenarioPlayerPage({ params }: { params: { slug: string } }) {
-  const scenario = threatScenarios.find(s => s.slug === params.slug);
-
+  const firestore = useFirestore();
+  const scenarioRef = useMemoFirebase(() => firestore ? doc(firestore, 'threat_scenarios', params.slug) : null, [firestore, params.slug]);
+  const { data: scenario, isLoading } = useDoc<ThreatScenario>(scenarioRef);
+  
   const [gameState, setGameState] = useState<GameState>({
     currentStepIndex: -1, // -1 indicates intro screen
     selectedChoiceId: null,
@@ -33,6 +36,14 @@ export default function ScenarioPlayerPage({ params }: { params: { slug: string 
     score: 0,
     isFinished: false,
   });
+
+  if (isLoading) {
+    return (
+        <div className="flex justify-center items-center h-screen">
+            <Loader className="w-10 h-10 animate-spin" />
+        </div>
+    );
+  }
 
   if (!scenario) {
     notFound();
@@ -108,7 +119,7 @@ export default function ScenarioPlayerPage({ params }: { params: { slug: string 
       <CardHeader>
         <Progress value={progress} className="mb-4" />
         <CardTitle className="font-headline flex items-center gap-2">
-            {step.icon && <step.icon className="h-5 w-5 text-primary" />}
+            {/* Icons are not serializable from Firestore, so we'll omit them for now */}
             <span>{`Step ${gameState.currentStepIndex + 1}: ${step.title}`}</span>
         </CardTitle>
         <CardDescription>{step.content}</CardDescription>
@@ -117,11 +128,10 @@ export default function ScenarioPlayerPage({ params }: { params: { slug: string 
         {step.type === 'audio-challenge' && (
             <div className="my-4">
                 <audio controls className="w-full">
-                    {/* Placeholder: A real implementation needs a valid audio source */}
                     <source src={step.assetUrl} type="audio/mpeg" />
                     Your browser does not support the audio element.
                 </audio>
-                 <p className="text-xs text-center text-muted-foreground mt-2">Note: This is a placeholder audio player.</p>
+                 <p className="text-xs text-center text-muted-foreground mt-2">Note: Audio playback requires a valid URL in the scenario data.</p>
             </div>
         )}
         <RadioGroup
