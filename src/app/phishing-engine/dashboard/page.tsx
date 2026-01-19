@@ -29,17 +29,6 @@ type SmsAnalysis = SmsFraudOutput & {
     analyzedAt: string; // ISO string
 };
 
-const exampleMessages = {
-    legit: {
-        senderId: 'Hustler Fund',
-        message: 'Dear Customer, you have an overdue Hustler Fund loan of KES 1617.61 that was due on 24/11/2025. Please dial *254# to repay and grow your credit limit.'
-    },
-    fraud: {
-        senderId: '27128',
-        message: 'Dear customer, Do not forget your subscription to Baseplay Games & Apps for Ksh 20.0/day. To access your account and enjoy the service visit https://bzm.tv/s/J38ro75iw.644. Cancel? Send STOPBG to 27128. Help? support@baseplay.co'
-    }
-};
-
 const iconMap = {
     emailAnalysis: FileText,
     domainAnalysis: Globe,
@@ -241,7 +230,6 @@ export default function PhishingEngineDashboard() {
                                             {isAnalyzingSms && <Loader className="mr-2 h-4 w-4 animate-spin" />}
                                             Analyze Message
                                         </Button>
-                                        <div className="space-y-2"><Label className="text-xs text-muted-foreground">Quick Test</Label><div className="flex gap-2"><Button type="button" variant="outline" size="sm" onClick={() => setSmsFormData(exampleMessages.legit)}>Load Legitimate Example</Button><Button type="button" variant="outline" size="sm" onClick={() => setSmsFormData(exampleMessages.fraud)}>Load Fraudulent Example</Button></div></div>
                                     </CardFooter>
                                 </form>
                             </Card>
