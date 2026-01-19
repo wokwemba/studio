@@ -38,7 +38,21 @@ const darkWebSimulationFlow = ai.defineFlow(
     outputSchema: DarkWebSimulationOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+    const maxRetries = 3;
+    let attempt = 0;
+    while (attempt < maxRetries) {
+      try {
+        const { output } = await prompt(input);
+        return output!;
+      } catch (error) {
+        attempt++;
+        if (attempt >= maxRetries) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+    // This part should be unreachable
+    throw new Error('Failed to get a response from the AI service after multiple retries.');
   }
 );
