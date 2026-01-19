@@ -1,16 +1,16 @@
-
 'use client';
 
+import { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, Building, Users, Activity, BarChart, Calendar, MessageSquare, AlertTriangle, ShieldCheck, ShieldClose, ShieldQuestion } from 'lucide-react';
+import { Loader, Building, Users, Activity, BarChart, MessageSquare, ShieldCheck, ShieldClose, ShieldQuestion } from 'lucide-react';
 import type { Tenant } from '@/app/admin/tenants/page';
 import type { UserProfile } from '@/app/admin/users/page';
+import type { AuditLog } from '@/docs/backend-schema';
 import { Badge } from '../ui/badge';
 import Link from 'next/link';
-import { ResponsiveContainer, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, BarChart as RechartsBarChart, LineChart } from 'recharts';
 
 
 function SuperAdminMetricCard({ title, value, icon: Icon }: { title: string; value: string | number; icon: React.ElementType }) {
@@ -28,46 +28,10 @@ function SuperAdminMetricCard({ title, value, icon: Icon }: { title: string; val
 }
 
 const complianceIcons: Record<string, React.ReactElement> = {
-    high: <ShieldCheck className="h-5 w-5 text-success" />,
-    medium: <ShieldQuestion className="h-5 w-5 text-yellow-500" />,
-    low: <AlertTriangle className="h-5 w-5 text-destructive" />,
+    active: <ShieldCheck className="h-5 w-5 text-success" />,
+    trial: <ShieldQuestion className="h-5 w-5 text-yellow-500" />,
+    suspended: <ShieldClose className="h-5 w-5 text-destructive" />,
 };
-
-// Placeholder data
-const tenantHealthData = [
-    { name: 'Safaricom PLC', region: 'Africa', compliance: 92, status: 'high' },
-    { name: 'TechCorp', region: 'North America', compliance: 88, status: 'high' },
-    { name: 'GlobalBank', region: 'Europe', compliance: 65, status: 'medium' },
-    { name: 'StartupXYZ', region: 'Asia', compliance: 42, status: 'low' },
-];
-
-const complianceCalendarData = [
-    { date: 'Oct 15', event: 'PCI DSS Training Due', tenants: 5 },
-    { date: 'Oct 31', event: 'GDPR Refresher Due', tenants: 8 },
-    { date: 'Nov 15', event: 'Phishing Simulation', tenants: 'All' },
-];
-
-const recentActivityData = [
-    { text: 'Tenant "Safaricom PLC" added 50 new users' },
-    { text: '3 tenants renewed Enterprise subscription' },
-    { text: 'New training module "AI Security" published' },
-    { text: 'Critical vulnerability alert sent to all admins' },
-];
-
-const platformGrowthData = [
-  { month: 'Apr', users: 400, tenants: 5 },
-  { month: 'May', users: 600, tenants: 7 },
-  { month: 'Jun', users: 900, tenants: 10 },
-  { month: 'Jul', users: 1250, tenants: 12 },
-];
-
-const popularModulesData = [
-  { name: 'Phishing 101', assignments: 5200, fill: 'hsl(var(--chart-1))' },
-  { name: 'Password Security', assignments: 4100, fill: 'hsl(var(--chart-2))' },
-  { name: 'Social Engineering', assignments: 3500, fill: 'hsl(var(--chart-3))' },
-  { name: 'GDPR Basics', assignments: 2800, fill: 'hsl(var(--chart-4))' },
-];
-
 
 export function SuperAdminDashboard() {
   const firestore = useFirestore();
@@ -78,7 +42,18 @@ export function SuperAdminDashboard() {
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
-  const isLoading = tenantsLoading || usersLoading;
+  const auditLogsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'audit_logs'), orderBy('timestamp', 'desc'), limit(4)) : null, [firestore]);
+  const { data: auditLogs, isLoading: auditLogsLoading } = useCollection<AuditLog>(auditLogsQuery);
+
+  const isLoading = tenantsLoading || usersLoading || auditLogsLoading;
+  
+  const avgCompletionRate = useMemo(() => {
+    if (!tenants || tenants.length === 0) return 0;
+    const tenantsWithStats = tenants.filter(t => t.stats && t.stats.completionRate !== undefined);
+    if (tenantsWithStats.length === 0) return 0;
+    const totalCompletion = tenantsWithStats.reduce((acc, tenant) => acc + (tenant.stats!.completionRate || 0), 0);
+    return totalCompletion / tenantsWithStats.length;
+  }, [tenants]);
 
   if (isLoading) {
     return (
@@ -99,29 +74,18 @@ export function SuperAdminDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <SuperAdminMetricCard title="Total Tenants" value={tenants?.length ?? 0} icon={Building} />
         <SuperAdminMetricCard title="Total Users" value={users?.length ?? 0} icon={Users} />
-        <SuperAdminMetricCard title="Completion Rate" value="78%" icon={BarChart} />
-        <SuperAdminMetricCard title="Satisfaction" value="92%" icon={Activity} />
+        <SuperAdminMetricCard title="Avg. Completion" value={`${avgCompletionRate.toFixed(0)}%`} icon={BarChart} />
+        <SuperAdminMetricCard title="Recent Signups (7d)" value="N/A" icon={Activity} />
       </div>
 
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Platform Growth</CardTitle>
-            <CardDescription>User and tenant growth over the last few months.</CardDescription>
+            <CardDescription>A summary of platform entities.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={platformGrowthData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
-                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))' }} />
-                <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="users" stroke="hsl(var(--primary))" name="Users" />
-                <Line yAxisId="right" type="monotone" dataKey="tenants" stroke="hsl(var(--secondary))" name="Tenants" />
-              </LineChart>
-            </ResponsiveContainer>
+          <CardContent className="h-[300px] flex items-center justify-center">
+            <p className="text-muted-foreground">Live growth chart coming soon. This requires historical data snapshots.</p>
           </CardContent>
         </Card>
         <Card>
@@ -129,16 +93,8 @@ export function SuperAdminDashboard() {
             <CardTitle>Most Popular Modules</CardTitle>
             <CardDescription>Top assigned training modules across all tenants.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <RechartsBarChart data={popularModulesData} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" hide/>
-                <YAxis dataKey="name" type="category" width={120} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))' }} />
-                <Bar dataKey="assignments" name="Assignments" layout="vertical" radius={[0, 4, 4, 0]} />
-              </RechartsBarChart>
-            </ResponsiveContainer>
+           <CardContent className="h-[300px] flex items-center justify-center">
+            <p className="text-muted-foreground">Popular modules chart coming soon. This requires aggregation of assignment data.</p>
           </CardContent>
         </Card>
       </div>
@@ -147,17 +103,17 @@ export function SuperAdminDashboard() {
         <Card>
             <CardHeader>
                 <CardTitle>Tenant Health</CardTitle>
-                <CardDescription>Overview of tenant compliance and activity.</CardDescription>
+                <CardDescription>Overview of tenant status and activity.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ul className="space-y-4">
-                    {tenantHealthData.map(tenant => (
-                        <li key={tenant.name} className="flex items-center justify-between">
+                    {tenants?.map(tenant => (
+                        <li key={tenant.id} className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                {complianceIcons[tenant.status]}
+                                {complianceIcons[tenant.status] || <ShieldQuestion className="h-5 w-5 text-muted-foreground" />}
                                 <div>
                                     <p className="font-semibold">{tenant.name} <span className="text-xs text-muted-foreground">({tenant.region})</span></p>
-                                    <p className="text-sm">Compliance: {tenant.compliance}%</p>
+                                    <p className="text-sm capitalize text-muted-foreground">{tenant.status}</p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
@@ -166,6 +122,7 @@ export function SuperAdminDashboard() {
                             </div>
                         </li>
                     ))}
+                    {(!tenants || tenants.length === 0) && <p className="text-center text-muted-foreground py-4">No tenants to display.</p>}
                 </ul>
             </CardContent>
         </Card>
@@ -173,34 +130,27 @@ export function SuperAdminDashboard() {
             <Card>
                 <CardHeader>
                     <CardTitle>Compliance Calendar</CardTitle>
-                    <CardDescription>Upcoming global deadlines and events.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <ul className="space-y-3">
-                        {complianceCalendarData.map(item => (
-                            <li key={item.event} className="flex items-center gap-4">
-                                <Badge variant="secondary" className="w-16 justify-center">{item.date}</Badge>
-                                <div>
-                                    <p className="font-medium text-sm">{item.event}</p>
-                                    <p className="text-xs text-muted-foreground">{item.tenants} tenants</p>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                <CardContent className="h-full flex items-center justify-center">
+                   <p className="text-sm text-muted-foreground">Compliance calendar coming soon.</p>
                 </CardContent>
             </Card>
              <Card>
                 <CardHeader>
                     <CardTitle>Recent Activity</CardTitle>
+                    <CardDescription>A live feed of important system events.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ul className="space-y-3">
-                        {recentActivityData.map(item => (
-                            <li key={item.text} className="flex items-start gap-3">
+                        {auditLogs?.map(log => (
+                            <li key={log.id} className="flex items-start gap-3">
                                 <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                                <p className="text-sm text-muted-foreground">{item.text}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    <span className="font-semibold text-foreground">{log.actorEmail || 'System'}</span> performed action <Badge variant="secondary">{log.action}</Badge>
+                                </p>
                             </li>
                         ))}
+                        {(!auditLogs || auditLogs.length === 0) && <p className="text-center text-muted-foreground py-4">No recent activity.</p>}
                     </ul>
                 </CardContent>
             </Card>

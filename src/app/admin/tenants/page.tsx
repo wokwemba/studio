@@ -16,6 +16,12 @@ export type Tenant = {
     name: string;
     region: string;
     status: 'active' | 'suspended' | 'trial';
+    stats?: {
+        totalUsers?: number;
+        activeUsers?: number;
+        completionRate?: number;
+        avgScore?: number;
+    }
 };
 
 const statusVariant: Record<Tenant['status'], 'success' | 'secondary' | 'destructive'> = {
