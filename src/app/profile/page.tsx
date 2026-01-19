@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, type ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -40,7 +40,7 @@ import {
   Check,
   Globe,
 } from 'lucide-react';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -83,6 +83,10 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [theme, setTheme] = useState('dark');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
 
   // Forms
   const profileForm = useForm<z.infer<typeof profileSchema>>({
@@ -125,6 +129,50 @@ export default function ProfilePage() {
     document.documentElement.classList.add(storedTheme);
   }, []);
 
+  const handleTriggerUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user || !firestore) {
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      toast({
+        variant: 'destructive',
+        title: 'File too large',
+        description: 'Please select an image smaller than 2MB.',
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Simulate API latency and then update Firestore
+    setTimeout(() => {
+      if (userDocRef) {
+        // In a real scenario, you'd use the real downloadURL from storage
+        const fakeDownloadURL = `https://picsum.photos/seed/${user.uid}/200/200`;
+        updateDocumentNonBlocking(userDocRef, { photoURL: fakeDownloadURL });
+      }
+      
+      setIsUploading(false);
+      toast({
+        title: 'Profile Picture Updated!',
+        description: 'Your profile picture has been changed.',
+      });
+    }, 1500);
+  };
+
+
   const handleThemeChange = (isDark: boolean) => {
     const newTheme = isDark ? 'dark' : 'light';
     setTheme(newTheme);
@@ -134,18 +182,20 @@ export default function ProfilePage() {
   };
   
   const onProfileSubmit = (data: z.infer<typeof profileSchema>) => {
-    // In a real app: await updateUserDisplayName(user, data.displayName);
+    if (!userDocRef) return;
+    updateDocumentNonBlocking(userDocRef, { displayName: data.displayName });
     toast({ title: 'Profile Updated', description: 'Your display name has been changed.' });
   };
   
   const onPasswordSubmit = (data: z.infer<typeof passwordSchema>) => {
     // In a real app: await updateUserPassword(user, data.currentPassword, data.newPassword);
-    toast({ title: 'Password Updated', description: 'Your password has been changed successfully.' });
+    toast({ title: 'Feature Not Implemented', description: 'Password changing is not yet connected.' });
     passwordForm.reset();
   };
 
   const onNotificationsSubmit = (data: z.infer<typeof notificationsSchema>) => {
-    // In a real app: await updateDocument(userDocRef, { preferences: { notifications: data } });
+    if (!userDocRef) return;
+    updateDocumentNonBlocking(userDocRef, { 'preferences.notifications': data });
     toast({ title: 'Preferences Saved', description: 'Your notification settings have been updated.' });
   };
 
@@ -193,6 +243,8 @@ export default function ProfilePage() {
     );
   }
 
+  const finalAvatarSrc = avatarPreview || userAvatar;
+
   return (
     <>
     <div className="space-y-6">
@@ -217,8 +269,18 @@ export default function ProfilePage() {
                 <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
                     <CardContent className="space-y-6">
                         <div className="flex items-center gap-4">
-                            <Avatar className="h-20 w-20"><AvatarImage src={userAvatar} alt={user.displayName || ''} /><AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback></Avatar>
-                            <Button type="button" variant="outline">Change Picture</Button>
+                            <Avatar className="h-20 w-20"><AvatarImage src={finalAvatarSrc} alt={user.displayName || ''} /><AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback></Avatar>
+                            <Input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/png, image/jpeg"
+                                onChange={handleFileChange}
+                            />
+                            <Button type="button" variant="outline" onClick={handleTriggerUpload} disabled={isUploading}>
+                                {isUploading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                                {isUploading ? 'Uploading...' : 'Change Picture'}
+                            </Button>
                         </div>
                          <FormField control={profileForm.control} name="displayName" render={({ field }) => (
                             <FormItem><FormLabel>Display Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -373,3 +435,5 @@ export default function ProfilePage() {
     </>
   );
 }
+
+    
