@@ -14,7 +14,6 @@ import { Loader, Wand2, ClipboardList, ChevronRight, GitBranch } from 'lucide-re
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MindMapNode } from '@/components/phishing-engine/mind-map-node';
 
 function IrPlaybookPage() {
     const [formData, setFormData] = useState<GenerateIrPlaybookInput>({
@@ -151,26 +150,26 @@ function IrPlaybookPage() {
                                 </Accordion>
                             </TabsContent>
                             <TabsContent value="mind-map-view">
-                                <div className="relative min-h-[600px] flex items-center justify-center p-4 bg-muted/20 rounded-lg overflow-hidden">
-                                    <MindMapNode title={playbook.playbookTitle} isCentral>
-                                        <p className="text-xs text-center text-muted-foreground capitalize">Incident Playbook</p>
-                                    </MindMapNode>
-                                    <div className="absolute inset-0 w-full h-full">
-                                        {playbook.phases.map((phase, index) => {
-                                            const angle = (index / playbook.phases.length) * 2 * Math.PI;
-                                            const x = 50 + 40 * Math.cos(angle);
-                                            const y = 50 + 35 * Math.sin(angle);
-                                            return (
-                                                <div key={phase.phaseName} className="absolute" style={{left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)'}}>
-                                                    <MindMapNode title={phase.phaseName}>
-                                                        <ul className="text-xs list-disc list-inside space-y-1 text-left">
-                                                            {phase.steps.map((step, i) => <li key={i}>{step}</li>)}
+                                <div className="p-4 bg-muted/20 rounded-lg overflow-x-auto">
+                                    <ul className="tree">
+                                        <li>
+                                            <span className="tree-node text-base font-bold text-primary">{playbook.playbookTitle}</span>
+                                            <ul>
+                                                {playbook.phases.map((phase) => (
+                                                    <li key={phase.phaseName}>
+                                                        <span className="tree-node font-semibold">{phase.phaseName}</span>
+                                                        <ul>
+                                                            {phase.steps.map((step, index) => (
+                                                                <li key={index}>
+                                                                    <span className="tree-node text-xs">{step}</span>
+                                                                </li>
+                                                            ))}
                                                         </ul>
-                                                    </MindMapNode>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </li>
+                                    </ul>
                                 </div>
                             </TabsContent>
                         </Tabs>
