@@ -163,7 +163,7 @@ export default function Home() {
     return (
         <div className="flex flex-col items-center justify-center text-center px-4 bg-background py-20">
             <ShieldCheck className="w-24 h-24 text-primary mb-4 mx-auto" />
-            <h1 className="text-5xl font-bold font-headline mb-4">Cybersecurity Training AND CONSULTANCY</h1>
+            <h1 className="text-5xl font-bold font-headline mb-4">Cybersecurity Training and Consultancy</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
                 Sharpen your skills with AI-powered training modules, realistic simulations, and personalized learning paths.
             </p>
