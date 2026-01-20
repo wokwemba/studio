@@ -9,19 +9,20 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
-import { collection, doc, getDoc } from 'firebase/firestore';
+import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import type { UserProfile } from '@/app/admin/users/page';
 import { useToast } from '@/hooks/use-toast';
-import { Loader, Check, UserCog } from 'lucide-react';
+import { Loader, UserCog } from 'lucide-react';
 import { useAuthContext } from '../auth/AuthProvider';
 import { logAuditEvent } from '@/lib/audit';
 import { ALL_ROLES } from '@/lib/roles';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface EditUserRolesDialogProps {
-  user: UserProfile | null;
+  user: (UserProfile & { roles: any[] }) | null;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }
@@ -40,20 +41,15 @@ export function EditUserRoleDialog({
   const { user: actor } = useAuthContext();
 
   useEffect(() => {
-    if (user && firestore) {
-      const userRolesRef = doc(firestore, 'user_roles', user.id);
-      getDoc(userRolesRef).then(docSnap => {
-        if (docSnap.exists()) {
-          const roles = docSnap.data()?.roles || [];
-          setSelectedRoles(roles);
-          setInitialRoles(roles);
-        } else {
-          setSelectedRoles([]);
-          setInitialRoles([]);
-        }
-      });
+    if (user) {
+      const roleIds = user.roles.map(r => r.id);
+      setSelectedRoles(roleIds);
+      setInitialRoles(roleIds);
+    } else {
+      setSelectedRoles([]);
+      setInitialRoles([]);
     }
-  }, [user, firestore, isOpen]);
+  }, [user, isOpen]);
 
 
   const handleSave = async () => {
@@ -62,7 +58,9 @@ export function EditUserRoleDialog({
     try {
       const userRolesDocRef = doc(firestore, 'user_roles', user.id);
       
-      updateDocumentNonBlocking(userRolesDocRef, { roles: selectedRoles });
+      // Use setDoc with merge to create the document if it doesn't exist.
+      // This is a blocking operation to ensure UI consistency.
+      await setDoc(userRolesDocRef, { roles: selectedRoles }, { merge: true });
       
       await logAuditEvent(firestore, {
           action: 'USER_ROLE_CHANGE',
@@ -99,30 +97,53 @@ export function EditUserRoleDialog({
         : [...prev, roleId]
     );
   }
+  
+  const groupedRoles = ALL_ROLES.sort((a, b) => a.tier - b.tier).reduce((acc, role) => {
+      const tierName = `Tier ${role.tier}`;
+      if (!acc[tierName]) {
+          acc[tierName] = [];
+      }
+      acc[tierName].push(role);
+      return acc;
+  }, {} as Record<string, typeof ALL_ROLES>);
+
 
   if (!user) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><UserCog /> Edit Roles for {user.displayName}</DialogTitle>
           <DialogDescription>
-            Assign one or more roles to this user. This will change their permissions across the platform.
+            Assign or unassign roles to this user. Changes take effect immediately.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 space-y-3">
-          {ALL_ROLES.map((role) => (
-            <div key={role.id} className="flex items-center space-x-2">
-                <Checkbox
-                    id={role.id}
-                    checked={selectedRoles.includes(role.id)}
-                    onCheckedChange={() => handleRoleToggle(role.id)}
-                />
-                <Label htmlFor={role.id} className="font-normal cursor-pointer">{role.name}</Label>
+        <ScrollArea className="max-h-[60vh] pr-4">
+            <div className="space-y-4">
+                {Object.entries(groupedRoles).map(([tier, rolesInTier]) => (
+                    <div key={tier}>
+                        <h4 className="font-semibold text-sm mb-2 text-muted-foreground border-b pb-1">{tier}</h4>
+                        <div className="space-y-3 pl-2">
+                            {rolesInTier.map((role) => (
+                                <div key={role.id} className="flex items-start space-x-3">
+                                    <Checkbox
+                                        id={`role-${role.id}`}
+                                        checked={selectedRoles.includes(role.id)}
+                                        onCheckedChange={() => handleRoleToggle(role.id)}
+                                        className="mt-1"
+                                    />
+                                    <div className='grid gap-1.5 leading-none'>
+                                        <Label htmlFor={`role-${role.id}`} className="font-medium cursor-pointer">{role.name}</Label>
+                                        <p className="text-xs text-muted-foreground">{role.description}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
             </div>
-          ))}
-        </div>
+        </ScrollArea>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>Cancel</Button>
           <Button onClick={handleSave} disabled={isSaving}>

@@ -191,7 +191,7 @@ export default function AdminUsersPage() {
   );
   const { data: userRolesMappings, isLoading: userRolesLoading } = useCollection<UserRoleMapping>(userRolesQuery, { skip: userIds.length === 0 });
 
-  const isLoading = isAuthLoading || usersLoading;
+  const isLoading = isAuthLoading || usersLoading || userRolesLoading;
 
   const combinedUsers = useMemo(() => {
     if (!users) return [];
