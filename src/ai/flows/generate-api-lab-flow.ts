@@ -21,10 +21,12 @@ const prompt = ai.definePrompt({
 The lab should be presented as a puzzle for a developer or security analyst to solve.
 
 **OWASP Category:** {{{category}}}
+{{#if profession}}**User Profession:** {{{profession}}}{{/if}}
+{{#if industry}}**User Industry:** {{{industry}}}{{/if}}
 
 **Instructions:**
 1.  **Title:** Create a clear title for the lab.
-2.  **Scenario:** Write a realistic scenario describing a web application and its API.
+2.  **Scenario:** Write a realistic scenario describing a web application and its API. If a profession and industry are provided, tailor the scenario to them.
 3.  **Vulnerable Code:** Provide a concise code snippet (e.g., Node.js with Express) that contains the specific vulnerability.
 4.  **Mission:** State a clear objective for the user, such as "Identify how to access data you should not be able to see."
 5.  **Question:** Formulate a multiple-choice question that tests the user's understanding of how to exploit or fix the vulnerability.

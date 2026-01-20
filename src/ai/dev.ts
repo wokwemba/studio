@@ -19,4 +19,5 @@ import '@/ai/flows/generate-threat-actor-profile.ts';
 import '@/ai/flows/generate-escape-room-flow.ts';
 import '@/ai/flows/generate-vulnerability-challenge-flow.ts';
 import '@/ai/flows/generate-api-lab-flow.ts';
+import '@/ai/flows/generate-threat-scenario-flow.ts';
 import '@/ai/genkit';

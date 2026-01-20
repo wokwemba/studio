@@ -1,7 +1,8 @@
 import { z } from 'genkit';
 
 export const GenerateThreatActorProfileInputSchema = z.object({
-  actorName: z.string().describe('The name of the threat actor to profile, e.g., "APT28", "FIN7", "Lazarus Group".'),
+  categoryType: z.string().describe('The category to select an actor by (e.g., "motivation", "industry").'),
+  categoryValue: z.string().describe('The specific value within the category (e.g., "Financially Motivated", "Healthcare").'),
 });
 export type GenerateThreatActorProfileInput = z.infer<typeof GenerateThreatActorProfileInputSchema>;
 

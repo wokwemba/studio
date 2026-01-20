@@ -3,7 +3,6 @@
 import { useState, type FormEvent } from 'react';
 import {
   generateThreatActorProfile,
-  type GenerateThreatActorProfileInput,
   type GenerateThreatActorProfileOutput
 } from '@/ai/flows/generate-threat-actor-profile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -13,25 +12,36 @@ import { Label } from '@/components/ui/label';
 import { Loader, Wand2, Users, Shield, MapPin, Dot } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const exampleActors = ["APT28 (Fancy Bear)", "FIN7", "Lazarus Group", "DarkSide"];
+const categoryTypes = [
+    { label: 'By Motivation', value: 'motivation' },
+    { label: 'By Target Industry', value: 'industry' },
+    { label: 'By Region of Origin', value: 'region' },
+];
+const categoryValues: Record<string, string[]> = {
+    motivation: ['Financially Motivated', 'Nation-State Espionage', 'Hacktivism', 'Cybercrime-as-a-Service', 'Data Theft for Competitive Advantage', 'Destructive/Disruptive'],
+    industry: ['Financial Services', 'Healthcare', 'Government & Defense', 'Energy & Utilities', 'Technology', 'Telecommunications'],
+    region: ['Russia-linked', 'China-linked', 'North Korea-linked', 'Iran-linked', 'USA-linked', 'Unattributed/Global'],
+};
 
 function ThreatActorProfilePage() {
-    const [actorName, setActorName] = useState('APT28');
+    const [categoryType, setCategoryType] = useState('motivation');
+    const [categoryValue, setCategoryValue] = useState('Financially Motivated');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [profile, setProfile] = useState<GenerateThreatActorProfileOutput | null>(null);
 
     const handleGenerate = async (e: FormEvent) => {
         e.preventDefault();
-        if (!actorName.trim()) return;
+        if (!categoryType || !categoryValue) return;
 
         setIsLoading(true);
         setError(null);
         setProfile(null);
 
         try {
-            const result = await generateThreatActorProfile({ actorName });
+            const result = await generateThreatActorProfile({ categoryType, categoryValue });
             setProfile(result);
         } catch (err: any) {
             console.error("Profile generation failed:", err);
@@ -55,33 +65,33 @@ function ThreatActorProfilePage() {
                 </CardHeader>
                 <form onSubmit={handleGenerate}>
                     <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="actorName">Threat Actor Name</Label>
-                            <div className="flex gap-2">
-                                <Input 
-                                    id="actorName"
-                                    value={actorName}
-                                    onChange={e => setActorName(e.target.value)}
-                                    placeholder="e.g., APT28, FIN7, Lazarus Group"
-                                    disabled={isLoading}
-                                />
-                                <Button type="submit" disabled={isLoading || !actorName} className="w-40">
-                                    {isLoading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                                    {isLoading ? 'Generating...' : 'Generate Profile'}
-                                </Button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="categoryType">Profile by Category</Label>
+                                <Select value={categoryType} onValueChange={(value) => { setCategoryType(value); setCategoryValue(categoryValues[value][0]); }} disabled={isLoading}>
+                                    <SelectTrigger id="categoryType"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        {categoryTypes.map(type => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                             </div>
-                        </div>
-                         <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground">Or try an example:</Label>
-                            <div className="flex flex-wrap gap-2">
-                                {exampleActors.map(name => (
-                                    <Button key={name} type="button" size="sm" variant="outline" onClick={() => setActorName(name)} disabled={isLoading}>
-                                        {name}
-                                    </Button>
-                                ))}
+                            <div className="space-y-2">
+                                <Label htmlFor="categoryValue">Select...</Label>
+                                <Select value={categoryValue} onValueChange={setCategoryValue} disabled={isLoading}>
+                                    <SelectTrigger id="categoryValue"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        {categoryValues[categoryType].map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                     </CardContent>
+                    <CardFooter>
+                        <Button type="submit" disabled={isLoading || !categoryValue}>
+                            {isLoading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                            {isLoading ? 'Generating...' : 'Generate Profile'}
+                        </Button>
+                    </CardFooter>
                 </form>
             </Card>
 

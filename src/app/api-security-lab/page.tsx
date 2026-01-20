@@ -8,25 +8,39 @@ import { Label } from '@/components/ui/label';
 import { Loader, Blocks, CheckCircle, XCircle, Wand2, Repeat } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { generateApiLab, type GenerateApiLabOutput } from '@/ai/flows/generate-api-lab-flow';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { Combobox } from '@/components/ui/combobox';
+import { roles } from '@/app/training/roles';
+import { industries } from '@/app/training/industries';
 
-const owaspApiTop10 = [
-    "API1:2023 - Broken Object Level Authorization",
-    "API2:2023 - Broken Authentication",
-    "API3:2023 - Broken Object Property Level Authorization",
-    "API4:2023 - Unrestricted Resource Consumption",
-    "API5:2023 - Broken Function Level Authorization",
-    "API6:2023 - Unrestricted Access to Sensitive Business Flows",
-    "API7:2023 - Server Side Request Forgery",
-    "API8:2023 - Security Misconfiguration",
-    "API9:2023 - Improper Inventory Management",
-    "API10:2023 - Unsafe Consumption of APIs",
+
+const owaspApiCategories = [
+    { group: "API1: Broken Object Level Authorization", value: "API1:2023 - Broken Object Level Authorization (General)" },
+    { group: "API1: Broken Object Level Authorization", value: "API1: IDOR allowing unauthorized data access" },
+    { group: "API2: Broken Authentication", value: "API2:2023 - Broken Authentication (General)" },
+    { group: "API2: Broken Authentication", value: "API2: Insecure JWT implementation or validation" },
+    { group: "API2: Broken Authentication", value: "API2: No rate limiting on authentication endpoints" },
+    { group: "API3: Broken Object Property Level Authorization", value: "API3:2023 - Broken Object Property Level Authorization (General)" },
+    { group: "API3: Broken Object Property Level Authorization", value: "API3: Mass Assignment vulnerability" },
+    { group: "API4: Unrestricted Resource Consumption", value: "API4:2023 - Unrestricted Resource Consumption (General)" },
+    { group: "API4: Unrestricted Resource Consumption", value: "API4: API Denial of Service via resource exhaustion" },
+    { group: "API5: Broken Function Level Authorization", value: "API5:2023 - Broken Function Level Authorization (General)" },
+    { group: "API5: Broken Function Level Authorization", value: "API5: User accessing admin-only API function" },
+    { group: "API6: Unrestricted Access to Sensitive Business Flows", value: "API6:2023 - Unrestricted Access to Sensitive Business Flows (General)" },
+    { group: "API7: Server Side Request Forgery", value: "API7:2023 - Server Side Request Forgery (General)" },
+    { group: "API8: Security Misconfiguration", value: "API8:2023 - Security Misconfiguration (General)" },
+    { group: "API9: Improper Inventory Management", value: "API9:2023 - Improper Inventory Management (General)" },
+    { group: "API10: Unsafe Consumption of APIs", value: "API10:2023 - Unsafe Consumption of APIs (General)" },
 ];
 
 function ApiSecurityLabPage() {
     const [lab, setLab] = useState<GenerateApiLabOutput | null>(null);
-    const [selectedCategory, setSelectedCategory] = useState(owaspApiTop10[0]);
+    const [setupConfig, setSetupConfig] = useState({
+        category: owaspApiCategories[0].value,
+        profession: 'Software Developer',
+        industry: 'Technology',
+    });
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isLabStarted, setIsLabStarted] = useState(false);
@@ -40,7 +54,7 @@ function ApiSecurityLabPage() {
         setError(null);
         setLab(null);
         try {
-            const result = await generateApiLab({ category: selectedCategory });
+            const result = await generateApiLab(setupConfig);
             setLab(result);
             setIsLabStarted(true);
         } catch (err: any) {
@@ -87,17 +101,49 @@ function ApiSecurityLabPage() {
                  <div className="space-y-2">
                     <Label htmlFor="category">Vulnerability Category</Label>
                     <Select
-                        value={selectedCategory}
-                        onValueChange={setSelectedCategory}
+                        value={setupConfig.category}
+                        onValueChange={(value) => setSetupConfig(prev => ({ ...prev, category: value }))}
                         disabled={isGenerating}
                     >
                         <SelectTrigger id="category"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                            {owaspApiTop10.map(item => (
-                                <SelectItem key={item} value={item}>{item}</SelectItem>
+                             {Object.entries(owaspApiCategories.reduce((acc, item) => {
+                                (acc[item.group] = acc[item.group] || []).push(item);
+                                return acc;
+                            }, {} as Record<string, typeof owaspApiCategories>)).map(([group, items]) => (
+                                <SelectGroup key={group}>
+                                    <Label className="px-2 py-1.5 text-xs font-semibold">{group}</Label>
+                                    {items.map(item => <SelectItem key={item.value} value={item.value}>{item.value.split(' - ')[1]}</SelectItem>)}
+                                </SelectGroup>
                             ))}
                         </SelectContent>
                     </Select>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="industry">Your Industry</Label>
+                        <Combobox
+                            items={industries.map(i => ({ label: i, value: i }))}
+                            value={setupConfig.industry}
+                            onChange={(value) => setSetupConfig(prev => ({ ...prev, industry: value }))}
+                            placeholder="Select an industry..."
+                            searchPlaceholder="Search industries..."
+                            notfoundText="No industry found."
+                            disabled={isGenerating}
+                        />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="profession">Your Profession</Label>
+                        <Combobox
+                            items={roles.map(r => ({ label: r, value: r }))}
+                            value={setupConfig.profession}
+                            onChange={(value) => setSetupConfig(prev => ({ ...prev, profession: value }))}
+                            placeholder="Select a profession..."
+                            searchPlaceholder="Search professions..."
+                            notfoundText="No profession found."
+                            disabled={isGenerating}
+                        />
+                    </div>
                 </div>
                 {error && <p className="text-destructive text-sm text-center">{error}</p>}
             </CardContent>
@@ -117,7 +163,7 @@ function ApiSecurityLabPage() {
                     <Blocks className="w-6 h-6 text-primary"/>
                     <CardTitle className="font-headline text-2xl">{lab?.title}</CardTitle>
                 </div>
-                <CardDescription>{selectedCategory}</CardDescription>
+                <CardDescription>{setupConfig.category}</CardDescription>
             </CardHeader>
              <AnimatePresence mode="wait">
                 <motion.div

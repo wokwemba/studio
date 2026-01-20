@@ -2,6 +2,8 @@ import { z } from 'genkit';
 
 export const GenerateApiLabInputSchema = z.object({
   category: z.string().describe('The OWASP API Security Top 10 category for the lab.'),
+  profession: z.string().describe('The user\'s profession, to personalize the scenario (e.g., "Software Developer", "Accountant").').optional(),
+  industry: z.string().describe("The industry the user works in, to further tailor the scenario (e.g., 'Healthcare', 'Finance').").optional(),
 });
 export type GenerateApiLabInput = z.infer<typeof GenerateApiLabInputSchema>;
 

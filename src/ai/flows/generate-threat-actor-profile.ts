@@ -16,13 +16,12 @@ const prompt = ai.definePrompt({
   name: 'generateThreatActorProfilePrompt',
   input: { schema: GenerateThreatActorProfileInputSchema },
   output: { schema: GenerateThreatActorProfileOutputSchema },
-  prompt: `You are a senior threat intelligence analyst. Your task is to generate a detailed profile of a well-known cyber threat actor (APT group, cybercrime gang, etc.).
+  prompt: `You are a senior threat intelligence analyst. Your task is to generate a detailed profile of a *representative and well-known* cyber threat actor (APT group, cybercrime gang, etc.) that fits the following description.
 
-Provide a comprehensive but concise summary. The information should be based on publicly available threat intelligence.
+**Category**: {{{categoryType}}}
+**Description**: {{{categoryValue}}}
 
-Threat Actor Name: {{{actorName}}}
-
-Generate the profile including:
+Pick a single, well-known threat actor that best exemplifies this category and generate its profile including:
 - A brief summary of the group.
 - Their primary motivations (e.g., espionage, financial gain).
 - Common target sectors and regions.
