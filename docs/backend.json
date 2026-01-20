@@ -321,6 +321,22 @@
         },
         "required": ["userId", "moduleId", "tenantId", "status"]
     },
+    "UserChallengeAttempt": {
+      "title": "User Challenge Attempt",
+      "type": "object",
+      "description": "Records the result of a user's attempt at a gamified challenge.",
+      "properties": {
+        "userId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "challengeType": { "type": "string", "enum": ["escape-room", "vuln-challenge", "api-lab", "threat-scenario"] },
+        "challengeName": { "type": "string" },
+        "score": { "type": "number" },
+        "maxScore": { "type": "number" },
+        "percentage": { "type": "number" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "tenantId", "challengeType", "challengeName", "score", "maxScore", "percentage", "completedAt"]
+    },
     "Assignment": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "Assignment",
@@ -662,6 +678,7 @@
     "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "Top-level collection for all users." },
     "/trainingModules/{moduleId}": { "schema": { "$ref": "#/entities/TrainingModule" }, "description": "Global library of training modules." },
     "/userProgress/{progressId}": { "schema": { "$ref": "#/entities/UserProgress" }, "description": "Tracks user progress in modules." },
+    "/user_challenge_attempts/{attemptId}": { "schema": { "$ref": "#/entities/UserChallengeAttempt" }, "description": "Collection of all user attempts at gamified challenges." },
     "/assignments/{assignmentId}": { "schema": { "$ref": "#/entities/Assignment" }, "description": "Training assignments for tenants." },
     "/phishingSimulations/{simId}": { "schema": { "$ref": "#/entities/PhishingSimulation" }, "description": "Phishing simulations for tenants." },
     "/phishing_templates/{templateId}": { "schema": { "$ref": "#/entities/PhishingTemplate" }, "description": "Global library of phishing templates." },
@@ -676,3 +693,5 @@
     "/threat_scenarios/{scenarioId}": { "schema": { "$ref": "#/entities/ThreatScenario" }, "description": "Library of interactive 'Serious Game' training scenarios." }
   }
 }
+
+    

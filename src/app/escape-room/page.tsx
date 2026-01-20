@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -15,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { topics } from '@/app/training/topics';
 import { roles } from '@/app/training/roles';
 import { industries } from '@/app/training/industries';
+import { useFirestore, useUser } from '@/firebase';
+import { saveChallengeAttempt } from '@/lib/scoring';
 
 // Type definitions for the game steps, based on the AI flow's output schema
 type GameStep = {
@@ -49,6 +52,9 @@ export default function EscapeRoomPage() {
         industry: 'Finance',
     });
     const [error, setError] = useState<string | null>(null);
+    
+    const { user } = useUser();
+    const firestore = useFirestore();
 
     const handleStartChallenge = async () => {
         setIsGenerating(true);
@@ -84,15 +90,25 @@ export default function EscapeRoomPage() {
     };
 
     const handleNextStep = () => {
-        if (gameState.currentStepIndex < gameSteps.length - 1) {
-            setGameState(prev => ({
+        const isFinishing = gameState.currentStepIndex >= gameSteps.length - 1;
+        if (isFinishing) {
+            setGameState(prev => ({ ...prev, isFinished: true }));
+             if (user && firestore) {
+                saveChallengeAttempt(firestore, user, {
+                    challengeType: 'escape-room',
+                    challengeName: setupConfig.category,
+                    score: gameState.score,
+                    maxScore: gameSteps.length,
+                    percentage: (gameState.score / gameSteps.length) * 100,
+                });
+            }
+        } else {
+             setGameState(prev => ({
                 ...prev,
                 currentStepIndex: prev.currentStepIndex + 1,
                 isAnswered: false,
                 selectedOption: '',
             }));
-        } else {
-            setGameState(prev => ({ ...prev, isFinished: true }));
         }
     };
     
@@ -260,8 +276,8 @@ export default function EscapeRoomPage() {
                     {gameState.isFinished ? 'Play Again' : 'Restart'}
                 </Button>
                  {gameState.isFinished ? null : gameState.isAnswered ? (
-                    <Button onClick={handleNextStep} disabled={!gameState.isCorrect}>
-                        {gameState.isCorrect ? 'Next Step' : 'Try Again on Restart'}
+                    <Button onClick={handleNextStep}>
+                        Next Step
                     </Button>
                  ) : (
                     <Button onClick={handleSubmitAnswer} disabled={!gameState.selectedOption}>
@@ -279,3 +295,5 @@ export default function EscapeRoomPage() {
         </div>
     );
 }
+
+    

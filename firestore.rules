@@ -65,6 +65,13 @@ service cloud.firestore {
       allow delete: if isSuperAdmin() || isOwnRecord(resource.data.userId);
     }
     
+    // USER CHALLENGE ATTEMPTS: Users can create their own attempts. Admins can view attempts within their tenant.
+    match /user_challenge_attempts/{attemptId} {
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow read: if isOwnRecord(resource.data.userId) || isTenantAdmin(resource.data.tenantId) || isSuperAdmin();
+      allow update, delete: if false;
+    }
+
     // TRAINING MODULES: Readable by any authenticated user, writable only by Super Admins.
     match /trainingModules/{moduleId} {
       allow read: if request.auth.uid != null;
@@ -135,3 +142,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

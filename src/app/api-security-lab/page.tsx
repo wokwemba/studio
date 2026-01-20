@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -13,6 +14,8 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Combobox } from '@/components/ui/combobox';
 import { roles } from '@/app/training/roles';
 import { industries } from '@/app/training/industries';
+import { useFirestore, useUser } from '@/firebase';
+import { saveChallengeAttempt } from '@/lib/scoring';
 
 
 const owaspApiCategories = [
@@ -48,6 +51,9 @@ function ApiSecurityLabPage() {
     const [selectedOption, setSelectedOption] = useState('');
     const [isAnswered, setIsAnswered] = useState(false);
     const [isCorrect, setIsCorrect] = useState(false);
+    
+    const { user } = useUser();
+    const firestore = useFirestore();
 
     const handleStartLab = async () => {
         setIsGenerating(true);
@@ -67,12 +73,21 @@ function ApiSecurityLabPage() {
     };
     
     const handleSubmitAnswer = () => {
-        if (!lab) return;
+        if (!lab || !user || !firestore) return;
         const chosenOption = lab.options.find(opt => opt.text === selectedOption);
         if (!chosenOption) return;
 
-        setIsCorrect(chosenOption.isCorrect);
+        const correct = chosenOption.isCorrect;
+        setIsCorrect(correct);
         setIsAnswered(true);
+
+        saveChallengeAttempt(firestore, user, {
+            challengeType: 'api-lab',
+            challengeName: lab.title,
+            score: correct ? 1 : 0,
+            maxScore: 1,
+            percentage: correct ? 100 : 0,
+        });
     };
 
     const handleRestart = () => {
@@ -259,3 +274,5 @@ export default function ProtectedApiSecurityLabPage() {
         </ProtectedRoute>
     );
 }
+
+    

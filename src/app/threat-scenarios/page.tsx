@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -14,6 +15,8 @@ import { roles } from '@/app/training/roles';
 import { industries } from '@/app/training/industries';
 import { generateThreatScenario, type GenerateThreatScenarioOutput } from '@/ai/flows/generate-threat-scenario-flow';
 import type { ThreatScenarioStep, ThreatScenarioStepChoice } from '@/ai/flows/schemas/threat-scenario-schema';
+import { useFirestore, useUser } from '@/firebase';
+import { saveChallengeAttempt } from '@/lib/scoring';
 
 
 const scenarioCategories = [
@@ -55,6 +58,9 @@ export default function ThreatScenariosPage() {
     isFinished: false,
   });
 
+  const { user } = useUser();
+  const firestore = useFirestore();
+
   const handleGenerateScenario = async () => {
     setIsGenerating(true);
     setError(null);
@@ -92,8 +98,19 @@ export default function ThreatScenariosPage() {
   };
 
   const handleNextStep = () => {
-    if (!scenario || gameState.currentStepIndex >= scenario.steps.length - 1) {
+    const isFinishing = !scenario || gameState.currentStepIndex >= scenario.steps.length - 1;
+    if (isFinishing) {
         setGameState(prev => ({ ...prev, isFinished: true }));
+        if (user && firestore && scenario) {
+            const maxScore = scenario.steps.length * (scenario.scoring.pointsPerCorrect || 10);
+            saveChallengeAttempt(firestore, user, {
+                challengeType: 'threat-scenario',
+                challengeName: scenario.title,
+                score: gameState.score,
+                maxScore: maxScore,
+                percentage: (gameState.score / maxScore) * 100,
+            });
+        }
         return;
     }
     setGameState(prev => ({
@@ -329,3 +346,5 @@ export default function ThreatScenariosPage() {
     </div>
   );
 }
+
+    
