@@ -308,7 +308,7 @@ export default function AdminUsersPage() {
                     user={user} 
                     onViewDetails={setUserToView}
                     onEditRole={setUserToEdit}
-                    onResendInvite={(u) => alert(`Resend invite for ${u.name}`)}
+                    onResendInvite={(u) => alert(`Resend invite for ${u.displayName}`)}
                     onSuspendUser={(u) => handleStatusUpdate(u, 'Suspended')}
                     onReactivateUser={(u) => handleStatusUpdate(u, 'Active')}
                     onDeleteUser={setUserToDelete}
@@ -339,7 +339,7 @@ export default function AdminUsersPage() {
             isOpen={!!userToView}
             onOpenChange={(isOpen) => !isOpen && setUserToView(null)}
             user={userToView}
-            isSuperAdmin={isSuperAdmin}
+            isSuperAdmin={!!isSuperAdmin}
           />
       )}
 
