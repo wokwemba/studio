@@ -53,32 +53,23 @@ service cloud.firestore {
       return exists(myPath) && ('tenantId' in get(myPath).data) ? get(myPath).data.tenantId : null;
     }
 
-    // Safely checks if a given user is in the same tenant as the requester.
-    function isUserInTenant(userId) {
-      let userPath = /databases/$(database)/documents/users/$(userId);
-      if (!exists(userPath)) { return false; }
-      let userTenant = get(userPath).data.tenantId;
-      let myTenant = getMyTenantId();
-      return myTenant != null && userTenant == myTenant;
-    }
-
     // ========== COLLECTION RULES ==========
 
     // /users/{userId}
     match /users/{userId} {
-      allow get: if isOwner(userId) || (isTenantAdmin() && isUserInTenant(userId)) || isSuperAdmin() || isSecurityAdmin();
-      allow list: if isSuperAdmin() || isSecurityAdmin();
-      allow create: if (request.auth != null && request.auth.uid == userId) || isSuperAdmin() || isSecurityAdmin();
-      allow update: if isOwner(userId) || isSuperAdmin() || isSecurityAdmin();
+      allow get: if isOwner(userId) || isSuperAdmin() || isSecurityAdmin() || (isTenantAdmin() && resource.data.tenantId == getMyTenantId());
+      allow list: if isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
+      allow create: if (request.auth != null && request.auth.uid == userId) || isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
+      allow update: if isOwner(userId) || isSuperAdmin() || isSecurityAdmin() || (isTenantAdmin() && resource.data.tenantId == getMyTenantId());
       allow delete: if isSuperAdmin() || isSecurityAdmin();
     }
 
     // /user_roles/{userId}
     match /user_roles/{userId} {
-      allow get: if isOwner(userId) || isSuperAdmin() || isSecurityAdmin();
-      allow list: if isSuperAdmin() || isSecurityAdmin();
-      allow create: if (request.auth != null && request.auth.uid == userId) || isSuperAdmin() || isSecurityAdmin();
-      allow update, delete: if isSuperAdmin() || isSecurityAdmin();
+      allow get: if isOwner(userId) || isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
+      allow list: if isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
+      allow create: if (request.auth != null && request.auth.uid == userId) || isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
+      allow update, delete: if isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
     }
 
     // /roles/{roleId}
@@ -118,7 +109,9 @@ service cloud.firestore {
 
     // /userProgress/{progressId}
     match /userProgress/{progressId} {
-      allow read: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow read: if isSuperAdmin() || isSecurityAdmin() || 
+                   (isTenantAdmin() && resource.data.tenantId == getMyTenantId()) ||
+                   (request.auth != null && request.auth.uid == resource.data.userId);
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
       allow delete: if false;
