@@ -15,6 +15,7 @@ export const GenerateEscapeRoomInputSchema = z.object({
     difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of the challenge.'),
     category: z.string().describe('The cybersecurity category for the challenge (e.g., "Network Security", "Phishing").'),
     profession: z.string().describe('The user\'s profession, to personalize the scenario (e.g., "Software Developer", "Accountant").'),
+    industry: z.string().describe("The industry the user works in, to further tailor the scenario (e.g., 'Healthcare', 'Finance')."),
 });
 
 export type GenerateEscapeRoomInput = z.infer<typeof GenerateEscapeRoomInputSchema>;

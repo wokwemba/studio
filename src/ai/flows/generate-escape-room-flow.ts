@@ -24,9 +24,10 @@ The challenge should be a cohesive story where each step logically follows the l
 - **Category:** {{{category}}}
 - **Difficulty:** {{{difficulty}}}
 - **User's Profession:** {{{profession}}}
+- **User's Industry:** {{{industry}}}
 
 **Instructions:**
-1.  Create a scenario that is relevant to the user's **profession** and the chosen **category**.
+1.  Create a scenario that is relevant to the user's **profession**, **industry**, and the chosen **category**.
 2.  Tailor the complexity of the puzzles and the technical jargon to the selected **difficulty**.
 3.  Generate exactly **four** sequential steps.
 4.  For each step, provide a clear title, a detailed scenario, and exactly **three** multiple-choice options.

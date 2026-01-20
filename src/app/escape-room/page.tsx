@@ -13,6 +13,8 @@ import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { topics } from '@/app/training/topics';
+import { roles } from '@/app/training/roles';
+import { industries } from '@/app/training/industries';
 
 // Type definitions for the game steps, based on the AI flow's output schema
 type GameStep = {
@@ -43,7 +45,8 @@ export default function EscapeRoomPage() {
     const [setupConfig, setSetupConfig] = useState({
         difficulty: 'easy',
         category: 'Phishing Awareness',
-        profession: 'Accountant'
+        profession: 'Accountant',
+        industry: 'Finance',
     });
     const [error, setError] = useState<string | null>(null);
 
@@ -133,29 +136,43 @@ export default function EscapeRoomPage() {
                         disabled={isGenerating}
                     />
                 </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="difficulty">Difficulty</Label>
+                    <Select
+                        value={setupConfig.difficulty}
+                        onValueChange={(value: 'easy' | 'medium' | 'hard') => setSetupConfig(prev => ({ ...prev, difficulty: value }))}
+                        disabled={isGenerating}
+                    >
+                        <SelectTrigger id="difficulty"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="easy">Easy</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="hard">Hard</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="difficulty">Difficulty</Label>
-                        <Select
-                            value={setupConfig.difficulty}
-                            onValueChange={(value: 'easy' | 'medium' | 'hard') => setSetupConfig(prev => ({ ...prev, difficulty: value }))}
+                        <Label htmlFor="industry">Your Industry</Label>
+                        <Combobox
+                            items={industries.map(i => ({ label: i, value: i }))}
+                            value={setupConfig.industry}
+                            onChange={(value) => setSetupConfig(prev => ({ ...prev, industry: value }))}
+                            placeholder="Select an industry..."
+                            searchPlaceholder="Search industries..."
+                            notfoundText="No industry found."
                             disabled={isGenerating}
-                        >
-                            <SelectTrigger id="difficulty"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="easy">Easy</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="hard">Hard</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        />
                     </div>
-                    <div className="space-y-2">
+                     <div className="space-y-2">
                         <Label htmlFor="profession">Your Profession</Label>
-                        <Input 
-                            id="profession" 
-                            value={setupConfig.profession} 
-                            onChange={(e) => setSetupConfig(prev => ({ ...prev, profession: e.target.value }))} 
-                            placeholder="e.g., Doctor, Engineer"
+                        <Combobox
+                            items={roles.map(r => ({ label: r, value: r }))}
+                            value={setupConfig.profession}
+                            onChange={(value) => setSetupConfig(prev => ({ ...prev, profession: value }))}
+                            placeholder="Select a profession..."
+                            searchPlaceholder="Search professions..."
+                            notfoundText="No profession found."
                             disabled={isGenerating}
                         />
                     </div>
@@ -163,7 +180,7 @@ export default function EscapeRoomPage() {
                 {error && <p className="text-destructive text-sm text-center">{error}</p>}
             </CardContent>
             <CardFooter>
-                <Button onClick={handleStartChallenge} disabled={isGenerating || !setupConfig.profession}>
+                <Button onClick={handleStartChallenge} disabled={isGenerating || !setupConfig.profession || !setupConfig.industry}>
                     {isGenerating ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
                     {isGenerating ? 'Generating Challenge...' : 'Start Challenge'}
                 </Button>
