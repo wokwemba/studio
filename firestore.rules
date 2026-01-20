@@ -115,7 +115,7 @@ service cloud.firestore {
     // /userProgress/{progressId}
     match /userProgress/{progressId} {
       allow get: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
-      allow list: if isSuperAdmin() || isSecurityAdmin();
+      allow list: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && request.query.where('userId', '==', request.auth.uid));
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
       allow delete: if false;
