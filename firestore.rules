@@ -58,7 +58,7 @@ service cloud.firestore {
       
       allow update: if isOwner(userId) || isSuperAdmin();
       
-      // A user can create their own profile, or a Super Admin can create one.
+      // Allow a user to create their own profile, or a Super Admin to create one.
       allow create: if isOwner(userId) || isSuperAdmin();
       
       allow delete: if isSuperAdmin();
@@ -66,9 +66,9 @@ service cloud.firestore {
 
     match /user_roles/{userId} {
       allow get: if isOwner(userId) || isSuperAdmin();
-      // A user can create their own role document upon signup.
-      allow create: if isOwner(userId) || isSuperAdmin();
-      // Only Super Admins can list all roles or modify them later.
+      // Allow a user to create their own role document upon signup.
+      allow create: if isOwner(userId);
+      // Only Super Admins can manage roles.
       allow list, update, delete: if isSuperAdmin();
     }
     
