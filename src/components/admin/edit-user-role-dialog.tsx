@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader, UserCog } from 'lucide-react';
 import { useAuthContext } from '../auth/AuthProvider';
 import { logAuditEvent } from '@/lib/audit';
-import { ALL_ROLES } from '@/lib/roles';
+import { ALL_ROLES, ROLE_CLIENT_USER } from '@/lib/roles';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { ScrollArea } from '../ui/scroll-area';
@@ -43,8 +43,15 @@ export function EditUserRoleDialog({
   useEffect(() => {
     if (user) {
       const roleIds = user.roles.map(r => r.id);
-      setSelectedRoles(roleIds);
-      setInitialRoles(roleIds);
+      
+      // If the user has no roles, default them to CLIENT_USER in the dialog
+      if (roleIds.length === 0) {
+        setSelectedRoles([ROLE_CLIENT_USER]);
+      } else {
+        setSelectedRoles(roleIds);
+      }
+      
+      setInitialRoles(roleIds); // For audit logging purposes
     } else {
       setSelectedRoles([]);
       setInitialRoles([]);
