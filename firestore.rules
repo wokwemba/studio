@@ -33,6 +33,10 @@ service cloud.firestore {
     function isTenantAdmin() {
       return request.auth != null && (isSuperAdmin() || getUserRoles().hasAny(['TENANT_ADMIN']));
     }
+
+    function isPartnerAdmin() {
+      return request.auth != null && getUserRoles().hasAny(['PARTNER_ADMIN']);
+    }
     
     function isAuditor() {
       return request.auth != null && getUserRoles().hasAny(['AUDITOR']);
@@ -92,7 +96,7 @@ service cloud.firestore {
     
     // /partner_requests/{requestId}
     match /partner_requests/{requestId} {
-      allow read, write: if isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
+      allow read, write: if isSuperAdmin() || isSecurityAdmin() || isTenantAdmin() || isPartnerAdmin();
     }
 
     // /tenants/{tenantId}
@@ -114,7 +118,7 @@ service cloud.firestore {
 
     // /userProgress/{progressId}
     match /userProgress/{progressId} {
-      allow read: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow read: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && resource.data.userId == request.auth.uid) || (isTenantAdmin() && isUserInTenant(resource.data.userId));
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
       allow delete: if false;
