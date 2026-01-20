@@ -16,6 +16,22 @@ service cloud.firestore {
       }
       return [];
     }
+    
+    // Safely compares the tenantId of a target user with the admin's tenantId.
+    function isUserInTenant(userId) {
+      let userPath = /databases/$(database)/documents/users/$(userId);
+      let adminPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      
+      if (!exists(userPath) || !exists(adminPath)) {
+        return false;
+      }
+
+      let userTenantId = get(userPath).data.get('tenantId', null);
+      let adminTenantId = get(adminPath).data.get('tenantId', null);
+      
+      // Ensure tenantIds are not null and are equal before returning true
+      return userTenantId != null && userTenantId == adminTenantId;
+    }
 
     function isOwner(userId) {
       return request.auth.uid == userId;
@@ -39,34 +55,21 @@ service cloud.firestore {
     function isTenantAdmin() {
       return isTier1Admin() || getUserRoles().hasAny(['TENANT_ADMIN', 'PARTNER_ADMIN', 'SUPPORT_ADMIN']);
     }
-    
-    // Safely compares the tenantId of a target user with the admin's tenantId.
-    function isUserInTenant(userId) {
-      let userPath = /databases/$(database)/documents/users/$(userId);
-      let adminPath = /databases/$(database)/documents/users/$(request.auth.uid);
-      
-      if (!exists(userPath) || !exists(adminPath)) {
-        return false;
-      }
-
-      let userTenantId = get(userPath).data.get('tenantId', null);
-      let adminTenantId = get(adminPath).data.get('tenantId', null);
-      
-      // Ensure tenantIds are not null and are equal before returning true
-      return userTenantId != null && userTenantId == adminTenantId;
-    }
 
     // USERS & ROLES
     match /users/{userId} {
       allow get: if isOwner(userId) || (isTenantAdmin() && isUserInTenant(userId)) || isSuperAdmin();
-      allow list: if isSuperAdmin();
+      // Allow list for admins. Per-doc 'get' rules will enforce tenant boundaries.
+      allow list: if isTenantAdmin();
       allow update: if isOwner(userId) || isSuperAdmin();
       allow create, delete: if isSuperAdmin();
     }
 
     match /user_roles/{userId} {
-      allow get: if isOwner(userId) || isSuperAdmin();
-      allow list, write: if isSuperAdmin();
+      allow get: if isOwner(userId) || (isTenantAdmin() && isUserInTenant(userId)) || isSuperAdmin();
+      // Allow list for admins. Per-doc 'get' rules will enforce tenant boundaries.
+      allow list: if isTenantAdmin();
+      allow write: if isSuperAdmin();
     }
     
     match /roles/{roleId} {
@@ -123,7 +126,7 @@ service cloud.firestore {
     
     match /user_challenge_attempts/{attemptId} {
       allow create: if isOwner(request.resource.data.userId);
-      allow read: if isOwner(resource.data.userId) || isTenantAdmin();
+      allow read: if isOwner(resource.data.userId) || (isTenantAdmin() && isUserInTenant(resource.data.userId));
       allow update, delete: if false; // Attempts are immutable
     }
 

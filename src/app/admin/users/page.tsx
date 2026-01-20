@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -160,7 +159,7 @@ export default function AdminUsersPage() {
   const isSuperAdmin = authRoles?.some(r => r.name === 'Domain Administrator' || r.name === 'Security Administrator');
   const tenantId = (currentUser as any)?.tenantId;
 
-  // 1. Fetch all users based on admin level
+  // 1. Fetch users based on admin level
   const usersQuery = useMemoFirebase(
     () => {
         if (!firestore) return null;
@@ -176,16 +175,25 @@ export default function AdminUsersPage() {
   );
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery, { skip: !usersQuery });
 
-  // 2. Fetch all user-role mappings
-  const userRolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'user_roles') : null, [firestore]);
-  const { data: userRolesMappings, isLoading: userRolesLoading } = useCollection<UserRoleMapping>(userRolesQuery);
+  // 2. Fetch roles for the users fetched above. Firestore 'in' query is limited to 30 items.
+  const userIds = useMemo(() => users?.map(u => u.id).slice(0, 30) || [], [users]);
+  
+  const userRolesQuery = useMemoFirebase(
+      () => {
+          if (!firestore || userIds.length === 0) return null;
+          // Use a where-in query to fetch roles only for the visible users
+          return query(collection(firestore, 'user_roles'), where('__name__', 'in', userIds));
+      },
+      [firestore, userIds]
+  );
+  const { data: userRolesMappings, isLoading: userRolesLoading } = useCollection<UserRoleMapping>(userRolesQuery, { skip: userIds.length === 0 });
 
-  const isLoading = isAuthLoading || usersLoading || userRolesLoading;
+  const isLoading = isAuthLoading || usersLoading;
 
   const combinedUsers = useMemo(() => {
-    if (isLoading || !users || !userRolesMappings) return [];
+    if (!users) return [];
 
-    const userRolesMap = new Map(userRolesMappings.map(ur => [ur.id, ur.roles]));
+    const userRolesMap = new Map(userRolesMappings?.map(ur => [ur.id, ur.roles]) || []);
 
     return users.map(user => {
         const roleIds = userRolesMap.get(user.id) || [];
@@ -195,7 +203,7 @@ export default function AdminUsersPage() {
             roles: userRolesData,
         };
     });
-  }, [users, userRolesMappings, isLoading]);
+  }, [users, userRolesMappings]);
 
 
   const handleStatusUpdate = async (user: UserProfile, status: 'Active' | 'Suspended') => {
@@ -354,5 +362,3 @@ export default function AdminUsersPage() {
     </>
   );
 }
-
-  
