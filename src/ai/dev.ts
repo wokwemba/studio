@@ -16,4 +16,5 @@ import '@/ai/flows/whatsapp-fraud-flow.ts';
 import '@/ai/flows/dark-web-simulation-flow.ts';
 import '@/ai/flows/generate-ir-playbook.ts';
 import '@/ai/flows/generate-threat-actor-profile.ts';
+import '@/ai/flows/generate-escape-room-flow.ts';
 import '@/ai/genkit';
