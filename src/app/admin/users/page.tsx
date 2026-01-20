@@ -44,7 +44,7 @@ import { ALL_ROLES } from '@/lib/roles';
 
 export type UserProfile = {
   id: string;
-  name: string;
+  displayName: string;
   email: string;
   department?: string;
   avatarId?: string;
@@ -88,11 +88,11 @@ function UserTableRow({ user, onEditRole, onResendInvite, onSuspendUser, onReact
       <TableCell>
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={userAvatar} alt={user.name} data-ai-hint="person avatar" />
-            <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
+            <AvatarImage src={userAvatar} alt={user.displayName} data-ai-hint="person avatar" />
+            <AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-medium">{user.name}</p>
+            <p className="font-medium">{user.displayName}</p>
             <p className="text-xs text-muted-foreground">{user.email}</p>
           </div>
         </div>
@@ -163,12 +163,15 @@ export default function AdminUsersPage() {
   const usersQuery = useMemoFirebase(
     () => {
         if (!firestore) return null;
+        // SuperAdmins can query the whole collection
         if (isSuperAdmin) {
             return collection(firestore, 'users');
         }
+        // TenantAdmins MUST filter by their tenantId for the security rules to pass
         if (tenantId) {
             return query(collection(firestore, 'users'), where('tenantId', '==', tenantId));
         }
+        // If not a super admin and no tenantId, return null to prevent broad, disallowed queries
         return null;
     },
     [firestore, tenantId, isSuperAdmin]
@@ -212,7 +215,7 @@ export default function AdminUsersPage() {
     if (result.success) {
       toast({
         title: 'User Updated',
-        description: `${user.name} has been ${status.toLowerCase()}.`,
+        description: `${user.displayName} has been ${status.toLowerCase()}.`,
       });
     } else {
       toast({
@@ -230,7 +233,7 @@ export default function AdminUsersPage() {
     if (result.success) {
       toast({
         title: 'User Deleted',
-        description: `${userToDelete.name} has been permanently deleted.`,
+        description: `${userToDelete.displayName} has been permanently deleted.`,
       });
     } else {
       toast({
@@ -249,7 +252,7 @@ export default function AdminUsersPage() {
     const lowercasedTerm = searchTerm.toLowerCase();
     return combinedUsers.filter(
       (user) =>
-        user.name.toLowerCase().includes(lowercasedTerm) ||
+        user.displayName.toLowerCase().includes(lowercasedTerm) ||
         user.email.toLowerCase().includes(lowercasedTerm) ||
         user.department?.toLowerCase().includes(lowercasedTerm) ||
         user.roles.some(r => r.name.toLowerCase().includes(lowercasedTerm))
@@ -347,7 +350,7 @@ export default function AdminUsersPage() {
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete the user
-                    account for <span className='font-bold'>{userToDelete.name}</span> and remove their data from our servers.
+                    account for <span className='font-bold'>{userToDelete.displayName}</span> and remove their data from our servers.
                 </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

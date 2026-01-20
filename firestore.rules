@@ -66,7 +66,7 @@ service cloud.firestore {
     // USERS & ROLES
     match /users/{userId} {
       allow get: if isOwner(userId) || (isTenantAdmin() && isUserInTenant(userId)) || isSuperAdmin();
-      // Super Admins can list all users. Tenant Admins can list users if they provide their tenantId in the query.
+      // Super Admins can list all users. Tenant Admins can list users ONLY if they provide their tenantId in the query.
       allow list: if isSuperAdmin() || (isTenantAdmin() && request.query.where[0][0] == 'tenantId' && request.query.where[0][2] == getAdminTenantId());
       allow update: if isOwner(userId) || isSuperAdmin();
       allow create, delete: if isSuperAdmin();
