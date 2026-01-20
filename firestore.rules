@@ -67,7 +67,7 @@ service cloud.firestore {
     // /users/{userId}
     match /users/{userId} {
       allow get: if isOwner(userId) || (isTenantAdmin() && isUserInTenant(userId)) || isSuperAdmin() || isSecurityAdmin();
-      allow list: if isSuperAdmin() || isSecurityAdmin() || (isTenantAdmin() && getMyTenantId() != null && request.query.where('tenantId', '==', getMyTenantId()));
+      allow list: if isSuperAdmin() || isSecurityAdmin();
       allow create: if (request.auth != null && request.auth.uid == userId) || isSuperAdmin() || isSecurityAdmin();
       allow update: if isOwner(userId) || isSuperAdmin() || isSecurityAdmin();
       allow delete: if isSuperAdmin() || isSecurityAdmin();
@@ -118,7 +118,7 @@ service cloud.firestore {
 
     // /userProgress/{progressId}
     match /userProgress/{progressId} {
-      allow read: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && resource.data.userId == request.auth.uid) || (isTenantAdmin() && isUserInTenant(resource.data.userId));
+      allow read: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
       allow delete: if false;
