@@ -7,13 +7,23 @@ service cloud.firestore {
     // Safely get user roles; return empty array if document doesn't exist
     function getUserRoles() {
       let path = /databases/$(database)/documents/user_roles/$(request.auth.uid);
-      return exists(path) && ('roles' in get(path).data) ? get(path).data.roles : [];
+      // Ensure the document exists AND the 'roles' field is a list before returning.
+      if (exists(path)) {
+        let data = get(path).data;
+        if ('roles' in data && data.roles is list) {
+          return data.roles;
+        }
+      }
+      return [];
     }
     
-    // Safely gets the tenantId of the requesting user.
-    function getMyTenantId() {
-      let myPath = /databases/$(database)/documents/users/$(request.auth.uid);
-      return exists(myPath) && ('tenantId' in get(myPath).data) ? get(myPath).data.tenantId : null;
+    // Helper to get the requesting admin's tenantId safely
+    function getAdminTenantId() {
+        let adminPath = /databases/$(database)/documents/users/$(request.auth.uid);
+        if (exists(adminPath) && 'tenantId' in get(adminPath).data) {
+            return get(adminPath).data.tenantId;
+        }
+        return null;
     }
 
     // Tier 0 - Highest Privilege
@@ -41,16 +51,23 @@ service cloud.firestore {
 
     // USERS & ROLES
     match /users/{userId} {
-      allow get: if isOwner(userId) || isSuperAdmin() || (isTenantAdmin() && getMyTenantId() != null && resource.data.tenantId == getMyTenantId());
-      allow list: if isSuperAdmin() || (isTenantAdmin() && getMyTenantId() != null && request.query.where('tenantId', '==', getMyTenantId()));
+      allow get: if isOwner(userId) || (isTenantAdmin() && getAdminTenantId() != null && resource.data.tenantId == getAdminTenantId());
+      
+      // Allow Admins to list users ONLY within their own tenant
+      allow list: if isSuperAdmin() || (isTenantAdmin() && getAdminTenantId() != null && request.query.where('tenantId', '==', getAdminTenantId()));
+      
       allow update: if isOwner(userId) || isSuperAdmin();
-      allow create, delete: if isSuperAdmin();
+      
+      // A user can create their own profile, or a Super Admin can create one.
+      allow create: if isOwner(userId) || isSuperAdmin();
+      
+      allow delete: if isSuperAdmin();
     }
 
     match /user_roles/{userId} {
       allow get: if isOwner(userId) || isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow write: if isSuperAdmin();
+      // Only Super Admins can list all roles or modify them.
+      allow list, write: if isSuperAdmin();
     }
     
     match /roles/{roleId} {
@@ -82,7 +99,7 @@ service cloud.firestore {
         allow read, write: if isTenantAdmin();
       }
       match /simulationRequests/{requestId} {
-        allow create: if isOwner(request.resource.data.userId);
+        allow create: if request.resource.data.userId == request.auth.uid;
         allow read, update, delete: if isTenantAdmin();
       }
     }
@@ -100,14 +117,14 @@ service cloud.firestore {
     
     // USER-SPECIFIC DATA
     match /userProgress/{progressId} {
-      allow read: if isOwner(resource.data.userId) || (isTenantAdmin() && getMyTenantId() != null && resource.data.tenantId == getMyTenantId());
+      allow read: if isOwner(resource.data.userId) || (isTenantAdmin() && getAdminTenantId() != null && resource.data.tenantId == getAdminTenantId());
       allow create, update: if isOwner(request.resource.data.userId);
       allow delete: if isOwner(resource.data.userId);
     }
     
     match /user_challenge_attempts/{attemptId} {
       allow create: if isOwner(request.resource.data.userId);
-      allow read: if isOwner(resource.data.userId) || (isTenantAdmin() && getMyTenantId() != null && resource.data.tenantId == getMyTenantId());
+      allow read: if isOwner(resource.data.userId) || (isTenantAdmin() && getAdminTenantId() != null && resource.data.tenantId == getAdminTenantId());
       allow update, delete: if false; // Attempts are immutable
     }
 
