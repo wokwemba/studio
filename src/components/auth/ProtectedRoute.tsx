@@ -16,7 +16,7 @@ export default function ProtectedRoute({
   redirectTo = '/login',
   requireRole,
 }: Props) {
-  const { user, role, loading } = useAuthContext();
+  const { user, roles, loading } = useAuthContext();
   const router = useRouter();
 
   useEffect(() => {
@@ -28,22 +28,23 @@ export default function ProtectedRoute({
     }
     
     if (requireRole) {
-      const isSuperAdmin = role === 'SuperAdmin';
-      const isAdmin = role === 'Admin';
-      
       let hasRequiredRole = false;
       if (requireRole === 'Admin') {
-        hasRequiredRole = isAdmin || isSuperAdmin;
+        hasRequiredRole = roles?.some(r => 
+            r.name === 'Domain Administrator' || 
+            r.name === 'Security Administrator' ||
+            r.name === 'Tenant Administrator'
+        ) || false;
       } else {
-        hasRequiredRole = role === requireRole;
+        hasRequiredRole = roles?.some(r => r.name === requireRole) || false;
       }
 
       if (!hasRequiredRole) {
-        router.replace('/'); 
+        router.replace('/training'); // Redirect to a safe default page
       }
     }
 
-  }, [user, role, loading, router, redirectTo, requireRole]);
+  }, [user, roles, loading, router, redirectTo, requireRole]);
 
   if (loading) {
     return <LoadingSkeleton />;
@@ -54,13 +55,15 @@ export default function ProtectedRoute({
   }
   
   if (requireRole) {
-      const isSuperAdmin = role === 'SuperAdmin';
-      const isAdmin = role === 'Admin';
       let hasRequiredRole = false;
       if (requireRole === 'Admin') {
-        hasRequiredRole = isAdmin || isSuperAdmin;
+         hasRequiredRole = roles?.some(r => 
+            r.name === 'Domain Administrator' || 
+            r.name === 'Security Administrator' ||
+            r.name === 'Tenant Administrator'
+        ) || false;
       } else {
-        hasRequiredRole = role === requireRole;
+        hasRequiredRole = roles?.some(r => r.name === requireRole) || false;
       }
 
       if (!hasRequiredRole) return <LoadingSkeleton />;
