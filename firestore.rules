@@ -109,10 +109,16 @@ service cloud.firestore {
 
     // /userProgress/{progressId}
     match /userProgress/{progressId} {
-      // A user can read their own progress, and admins can read any.
-      // This rule works for list queries (e.g., where('userId', '==', auth.uid))
-      allow read: if (isSuperAdmin() || isSecurityAdmin() || isTenantAdmin()) ||
-                   (request.auth != null && request.auth.uid == resource.data.userId);
+      // LIST: A user can list their own documents. An admin cannot list all documents
+      // using this rule, as it would require a custom claim or different data structure.
+      // This rule requires the client query to use `where('userId', '==', request.auth.uid)`.
+      allow list: if request.auth != null && request.auth.uid == resource.data.userId;
+
+      // GET: A user can get their own document, and an admin can get any document.
+      allow get: if (isSuperAdmin() || isSecurityAdmin() || isTenantAdmin()) ||
+                    (request.auth != null && request.auth.uid == resource.data.userId);
+
+      // WRITE: A user can create or update their own progress.
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
       allow delete: if false;
