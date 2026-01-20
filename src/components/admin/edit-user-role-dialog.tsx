@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import {
@@ -62,14 +61,14 @@ export function EditUserRoleDialog({
   const handleSave = () => {
     if (!firestore || !actor || !user) return;
     
-    // Immediately close the dialog and give feedback
+    // Immediately close the dialog and give feedback, per user suggestion.
     onOpenChange(false);
     toast({
       title: 'Roles Updated',
       description: `${user.displayName}'s roles are being updated.`,
     });
 
-    // Defer the database operations to run in the background
+    // Defer the database operations to run in the background (fire-and-forget).
     setTimeout(() => {
         const userRolesDocRef = doc(firestore, 'user_roles', user.id);
         
@@ -84,7 +83,7 @@ export function EditUserRoleDialog({
                 newRoles: selectedRoles.map(rId => ALL_ROLES.find(r => r.id === rId)?.name || rId)
             }
         });
-    }, 50); // 50ms delay to ensure UI updates first
+    }, 0); 
   };
 
   const handleRoleToggle = (roleId: string) => {
