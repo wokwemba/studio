@@ -199,7 +199,7 @@
         "displayName": { "type": "string" },
         "tenantId": { "type": "string", "description": "Primary reference to Tenant." },
         "assignedTenants": { "type": "array", "items": { "type": "string" }, "description": "Array of tenant IDs the user has access to." },
-        "role": { "type": "string", "enum": ["super_admin", "tenant_admin", "department_admin", "employee"] },
+        "roleId": { "type": "string", "description": "Reference to a document in the 'roles' collection." },
         "department": { "type": "string" },
         "jobTitle": { "type": "string" },
         "status": { "type": "string", "enum": ["active", "invited", "suspended", "archived"] },
@@ -246,7 +246,7 @@
         "createdAt": { "type": "string", "format": "date-time" },
         "lastLogin": { "type": "string", "format": "date-time" }
       },
-      "required": ["email", "displayName", "tenantId", "role", "status", "department"]
+      "required": ["email", "displayName", "tenantId", "roleId", "status", "department"]
     },
     "TrainingModule": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -468,10 +468,11 @@
       "title": "Role",
       "type": "object",
       "properties": {
-        "name": { "type": "string", "enum": ["SuperAdmin", "Admin", "User"] },
+        "name": { "type": "string", "enum": ["SuperAdmin", "Admin", "Tenant Admin", "Partner Admin", "Developer", "Client", "User"] },
         "permissions": { "type": "array", "items": { "type": "string" }, "description": "A list of permission keys granted to this role." }
       },
-      "required": ["name"]
+      "required": ["name"],
+      "description": "Defines a user role and its permissions. Expected roles include SuperAdmin, Admin, Tenant Admin, Partner Admin, Developer, Client, and User."
     },
     "SubscriptionPlan": {
         "$schema": "http://json-schema.org/draft-07/schema#",

@@ -60,11 +60,6 @@ export type UserProfile = {
   risk: 'Low' | 'Medium' | 'High';
   tenantId: string;
   assignedTenants?: string[];
-  trainingStats?: {
-    completedModules?: number;
-    totalModules?: number;
-    avgScore?: number;
-  };
 };
 
 const statusVariant: Record<UserProfile['status'], 'success' | 'secondary' | 'destructive'> = {
@@ -83,7 +78,7 @@ function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, 
     onDeleteUser: (user: UserProfile) => void;
     onViewDetails: (user: UserProfile) => void;
 }) {
-  const roleName = roles.find(r => r.id === user.roleId)?.name || 'Unknown';
+  const roleName = user.roleId ? (roles.find(r => r.id === user.roleId)?.name || `ID: ${user.roleId}`) : 'No Role';
   const userAvatar = user.photoURL || PlaceHolderImages.find(p => p.id === user.avatarId)?.imageUrl || '';
   
   return (
