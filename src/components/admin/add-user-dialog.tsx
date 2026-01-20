@@ -22,9 +22,8 @@ import {
 } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useCollection, useFirestore, useMemoFirebase, inviteUserByEmail } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import { type Role } from '@/app/admin/users/page';
+import { useFirestore, inviteUserByEmail } from '@/firebase';
+import { ALL_ROLES } from '@/lib/roles';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from 'lucide-react';
 
@@ -48,14 +47,11 @@ export function AddUserDialog({ isOpen, onOpenChange, tenantId }: AddUserDialogP
     resolver: zodResolver(FormSchema),
   });
 
-  const rolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'roles') : null, [firestore]);
-  const { data: roles, isLoading: rolesLoading } = useCollection<Role>(rolesQuery);
-
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (!firestore) return;
     setIsSaving(true);
     
-    const result = await inviteUserByEmail(firestore, data.email, data.roleId, tenantId);
+    const result = await inviteUserByEmail(firestore, data.email, [data.roleId], tenantId);
 
     if (result.success) {
       toast({
@@ -81,7 +77,7 @@ export function AddUserDialog({ isOpen, onOpenChange, tenantId }: AddUserDialogP
         <DialogHeader>
           <DialogTitle>Add New User</DialogTitle>
           <DialogDescription>
-            Invite a new user to your organization. They will be created with an 'Invited' status.
+            Invite a new user to your organization. They will be created with an 'Invited' status and a default role.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -104,25 +100,19 @@ export function AddUserDialog({ isOpen, onOpenChange, tenantId }: AddUserDialogP
               name="roleId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value} disabled={rolesLoading}>
+                  <FormLabel>Initial Role</FormLabel>
+                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a role for the user" />
+                        <SelectValue placeholder="Select an initial role for the user" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                       {rolesLoading ? (
-                            <div className='flex items-center justify-center p-2'>
-                                <Loader className='w-4 h-4 animate-spin' />
-                            </div>
-                        ) : (
-                            roles?.map((role) => (
-                            <SelectItem key={role.id} value={role.id}>
-                                {role.name}
-                            </SelectItem>
-                            ))
-                        )}
+                        {ALL_ROLES.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                            {role.name}
+                        </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

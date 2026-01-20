@@ -198,8 +198,6 @@
         "email": { "type": "string", "format": "email" },
         "displayName": { "type": "string" },
         "tenantId": { "type": "string", "description": "Primary reference to Tenant." },
-        "assignedTenants": { "type": "array", "items": { "type": "string" }, "description": "Array of tenant IDs the user has access to." },
-        "roleId": { "type": "string", "description": "Reference to a document in the 'roles' collection." },
         "department": { "type": "string" },
         "jobTitle": { "type": "string" },
         "status": { "type": "string", "enum": ["active", "invited", "suspended", "archived"] },
@@ -246,7 +244,7 @@
         "createdAt": { "type": "string", "format": "date-time" },
         "lastLogin": { "type": "string", "format": "date-time" }
       },
-      "required": ["email", "displayName", "tenantId", "roleId", "status", "department"]
+      "required": ["email", "displayName", "tenantId", "status", "department"]
     },
     "TrainingModule": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -468,11 +466,25 @@
       "title": "Role",
       "type": "object",
       "properties": {
-        "name": { "type": "string", "enum": ["SuperAdmin", "Admin", "Tenant Admin", "Partner Admin", "Developer", "Client", "User"] },
+        "name": { "type": "string", "enum": ["SuperAdmin", "Admin", "Tenant Admin", "Partner Admin", "Developer", "Client", "User", "Anonymous"] },
+        "description": { "type": "string" },
         "permissions": { "type": "array", "items": { "type": "string" }, "description": "A list of permission keys granted to this role." }
       },
       "required": ["name"],
-      "description": "Defines a user role and its permissions. Expected roles include SuperAdmin, Admin, Tenant Admin, Partner Admin, Developer, Client, and User."
+      "description": "Defines a user role and its permissions."
+    },
+     "UserRole": {
+      "title": "User Role",
+      "type": "object",
+      "description": "Maps a user to their assigned roles.",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "An array of role IDs assigned to the user."
+        }
+      },
+      "required": ["roles"]
     },
     "SubscriptionPlan": {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -697,6 +709,7 @@
     "/phishing_templates/{templateId}": { "schema": { "$ref": "#/entities/PhishingTemplate" }, "description": "Global library of phishing templates." },
     "/reports/{reportId}": { "schema": { "$ref": "#/entities/Report" }, "description": "Generated reports for tenants." },
     "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles." },
+    "/user_roles/{userId}": { "schema": { "$ref": "#/entities/UserRole" }, "description": "Maps users to their assigned roles." },
     "/subscription_plans/{planId}": { "schema": { "$ref": "#/entities/SubscriptionPlan" }, "description": "Defines the available subscription plans." },
     "/compliance_rules/{ruleId}": { "schema": { "$ref": "#/entities/ComplianceRule" }, "description": "Global library of compliance rules and mappings." },
     "/risk_scores/{userId}": { "schema": { "$ref": "#/entities/RiskScore" }, "description": "Calculated risk scores for users." },
@@ -706,5 +719,3 @@
     "/threat_scenarios/{scenarioId}": { "schema": { "$ref": "#/entities/ThreatScenario" }, "description": "Library of interactive 'Serious Game' training scenarios." }
   }
 }
-
-    

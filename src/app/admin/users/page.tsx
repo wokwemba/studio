@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useUser, useCollection, useFirestore, useMemoFirebase, updateUserStatus, deleteUser as deleteUserFromDb, useDoc } from '@/firebase';
-import { collection, query, where, doc } from 'firebase/firestore';
+import { collection, query, where, doc, getDocs } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
   Card,
@@ -39,20 +39,13 @@ import { AddUserDialog } from '@/components/admin/add-user-dialog';
 import { EditUserRoleDialog } from '@/components/admin/edit-user-role-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { UserDetailsDialog } from '@/components/admin/user-details-dialog';
-import { ROLES } from '@/lib/roles';
-
-
-export type Role = {
-  id: string;
-  name: 'User' | 'Admin' | 'SuperAdmin';
-  permissions: string[];
-};
+import { useAuthContext } from '@/components/auth/AuthProvider';
+import { ALL_ROLES } from '@/lib/roles';
 
 export type UserProfile = {
   id: string;
   name: string;
   email: string;
-  roleId: string;
   department?: string;
   avatarId?: string;
   photoURL?: string;
@@ -60,7 +53,19 @@ export type UserProfile = {
   risk: 'Low' | 'Medium' | 'High';
   tenantId: string;
   assignedTenants?: string[];
+  // roleId is now deprecated in favor of user_roles collection
 };
+
+export type Role = {
+    id: string;
+    name: string;
+    permissions: string[];
+}
+
+export type UserRoleMapping = {
+    id: string; // This is the user's UID
+    roles: string[]; // Array of Role IDs
+}
 
 const statusVariant: Record<UserProfile['status'], 'success' | 'secondary' | 'destructive'> = {
   Active: 'success',
@@ -69,7 +74,7 @@ const statusVariant: Record<UserProfile['status'], 'success' | 'secondary' | 'de
 };
 
 function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, onReactivateUser, onDeleteUser, onViewDetails }: { 
-    user: UserProfile, 
+    user: UserProfile & { roles: Role[] }, 
     roles: Role[], 
     onEditRole: (user: UserProfile) => void, 
     onResendInvite: (user: UserProfile) => void,
@@ -78,7 +83,6 @@ function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, 
     onDeleteUser: (user: UserProfile) => void;
     onViewDetails: (user: UserProfile) => void;
 }) {
-  const roleName = user.roleId ? (roles.find(r => r.id === user.roleId)?.name || `ID: ${user.roleId}`) : 'No Role';
   const userAvatar = user.photoURL || PlaceHolderImages.find(p => p.id === user.avatarId)?.imageUrl || '';
   
   return (
@@ -99,7 +103,11 @@ function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, 
         <Badge variant={statusVariant[user.status]}>{user.status}</Badge>
       </TableCell>
       <TableCell>{user.department || 'N/A'}</TableCell>
-      <TableCell>{roleName}</TableCell>
+      <TableCell>
+        <div className="flex flex-wrap gap-1">
+            {user.roles.length > 0 ? user.roles.map(r => <Badge key={r.id} variant="secondary">{r.name}</Badge>) : <Badge variant="outline">No Role</Badge>}
+        </div>
+      </TableCell>
       <TableCell className="text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -112,7 +120,7 @@ function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, 
               <Eye className="mr-2 h-4 w-4" /> View Details
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onEditRole(user)}>
-              <UserCog className="mr-2 h-4 w-4" /> Edit Role
+              <UserCog className="mr-2 h-4 w-4" /> Edit Roles
             </DropdownMenuItem>
              {user.status === 'Invited' && (
                 <DropdownMenuItem onSelect={() => onResendInvite(user)}>
@@ -141,7 +149,7 @@ function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, 
 }
 
 export default function AdminUsersPage() {
-  const { user: currentUser, isUserLoading: isAuthLoading } = useUser();
+  const { user: currentUser, loading: isAuthLoading, roles: authRoles } = useAuthContext();
   const firestore = useFirestore();
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<UserProfile | null>(null);
@@ -150,24 +158,14 @@ export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   
-  const adminUserDocRef = useMemoFirebase(
-    () => (currentUser ? doc(firestore, "users", currentUser.uid) : null),
-    [currentUser, firestore]
-  );
-  const { data: adminUserData, isLoading: isAdminUserDataLoading } = useDoc<UserProfile>(adminUserDocRef);
+  const isSuperAdmin = authRoles?.some(r => r.name === 'SuperAdmin') || currentUser?.email === 'wokwemba@safaricom.co.ke';
+  const tenantId = (currentUser as any)?.tenantId;
 
+  // 1. Fetch all roles definitions
   const rolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'roles') : null, [firestore]);
   const { data: roles, isLoading: rolesLoading } = useCollection<Role>(rolesQuery);
 
-  const isSuperAdmin = useMemo(() => {
-    if (currentUser?.email === 'wokwemba@safaricom.co.ke') return true;
-    const adminRole = roles?.find(r => r.id === adminUserData?.roleId);
-    return adminRole?.name === 'SuperAdmin';
-  }, [currentUser, adminUserData, roles]);
-
-  const tenantId = adminUserData?.tenantId;
-
-  // Super admins see all users, tenant admins see only their own.
+  // 2. Fetch all users based on admin level
   const usersQuery = useMemoFirebase(
     () => {
         if (!firestore) return null;
@@ -183,8 +181,28 @@ export default function AdminUsersPage() {
   );
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery, { skip: !usersQuery });
 
-  
-  const isLoading = isAuthLoading || isAdminUserDataLoading || usersLoading || rolesLoading;
+  // 3. Fetch all user-role mappings
+  const userRolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'user_roles') : null, [firestore]);
+  const { data: userRoles, isLoading: userRolesLoading } = useCollection<UserRoleMapping>(userRolesQuery);
+
+  const isLoading = isAuthLoading || usersLoading || rolesLoading || userRolesLoading;
+
+  const combinedUsers = useMemo(() => {
+    if (isLoading || !users || !roles || !userRoles) return [];
+
+    const rolesMap = new Map(roles.map(r => [r.id, r]));
+    const userRolesMap = new Map(userRoles.map(ur => [ur.id, ur.roles]));
+
+    return users.map(user => {
+        const roleIds = userRolesMap.get(user.id) || [];
+        const userRolesData = roleIds.map(roleId => rolesMap.get(roleId)).filter(Boolean) as Role[];
+        return {
+            ...user,
+            roles: userRolesData,
+        };
+    });
+  }, [users, roles, userRoles, isLoading]);
+
 
   const handleStatusUpdate = async (user: UserProfile, status: 'Active' | 'Suspended') => {
     if (!firestore) return;
@@ -223,17 +241,18 @@ export default function AdminUsersPage() {
   };
   
   const filteredUsers = useMemo(() => {
-    if (!users) return [];
-    if (!searchTerm.trim()) return users;
+    if (!combinedUsers) return [];
+    if (!searchTerm.trim()) return combinedUsers;
     
     const lowercasedTerm = searchTerm.toLowerCase();
-    return users.filter(
+    return combinedUsers.filter(
       (user) =>
         user.name.toLowerCase().includes(lowercasedTerm) ||
         user.email.toLowerCase().includes(lowercasedTerm) ||
-        user.department?.toLowerCase().includes(lowercasedTerm)
+        user.department?.toLowerCase().includes(lowercasedTerm) ||
+        user.roles.some(r => r.name.toLowerCase().includes(lowercasedTerm))
     );
-  }, [users, searchTerm]);
+  }, [combinedUsers, searchTerm]);
 
 
   return (
@@ -248,7 +267,7 @@ export default function AdminUsersPage() {
                     </CardTitle>
                     <CardDescription>View, edit, and manage all users in your organization.</CardDescription>
                 </div>
-                 <Button onClick={() => setIsAddUserOpen(true)} disabled={!tenantId}>
+                 <Button onClick={() => setIsAddUserOpen(true)} disabled={!tenantId && !isSuperAdmin}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Add User
                 </Button>
@@ -256,7 +275,7 @@ export default function AdminUsersPage() {
             <div className="relative mt-4">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input 
-                    placeholder="Search by name, email, or department..." 
+                    placeholder="Search by name, email, department or role..." 
                     className="pl-8 w-full sm:w-80"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -273,7 +292,7 @@ export default function AdminUsersPage() {
                   <TableHead>User</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Department</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>Roles</TableHead>
                   <TableHead><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
               </TableHeader>
@@ -305,22 +324,17 @@ export default function AdminUsersPage() {
         />
       )}
       
-      {userToEdit && roles && (
-        <EditUserRoleDialog
+      <EditUserRoleDialog
           isOpen={!!userToEdit}
           onOpenChange={(isOpen) => !isOpen && setUserToEdit(null)}
-          user={{ id: userToEdit.id, name: userToEdit.name }}
-          currentRoleId={userToEdit.roleId}
-          roles={roles}
-        />
-      )}
-
-      {userToView && roles && (
+          user={userToEdit}
+      />
+      
+      {userToView && (
           <UserDetailsDialog
             isOpen={!!userToView}
             onOpenChange={(isOpen) => !isOpen && setUserToView(null)}
-            user={userToView}
-            roleName={roles.find(r => r.id === userToView.roleId)?.name || 'Unknown'}
+            user={userToView as UserProfile & { roles: Role[]}}
             isSuperAdmin={isSuperAdmin}
           />
       )}

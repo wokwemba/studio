@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,114 +7,125 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, updateDoc } from 'firebase/firestore';
-import { type Role } from '@/app/admin/users/page';
+import { useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { collection, doc, getDoc } from 'firebase/firestore';
+import type { UserProfile } from '@/app/admin/users/page';
 import { useToast } from '@/hooks/use-toast';
-import { Loader } from 'lucide-react';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Loader, Check, UserCog } from 'lucide-react';
 import { useAuthContext } from '../auth/AuthProvider';
 import { logAuditEvent } from '@/lib/audit';
+import { ALL_ROLES } from '@/lib/roles';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
 
-interface EditUserRoleDialogProps {
-  user: { id: string; name: string };
-  currentRoleId: string;
-  roles: Role[];
+interface EditUserRolesDialogProps {
+  user: UserProfile | null;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }
 
 export function EditUserRoleDialog({
   user,
-  currentRoleId,
-  roles,
   isOpen,
   onOpenChange,
-}: EditUserRoleDialogProps) {
-  const [selectedRoleId, setSelectedRoleId] = useState(currentRoleId);
+}: EditUserRolesDialogProps) {
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [initialRoles, setInitialRoles] = useState<string[]>([]);
+
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { user: actor, role: actorRole } = useAuthContext();
+  const { user: actor } = useAuthContext();
+
+  useEffect(() => {
+    if (user && firestore) {
+      const userRolesRef = doc(firestore, 'user_roles', user.id);
+      getDoc(userRolesRef).then(docSnap => {
+        if (docSnap.exists()) {
+          const roles = docSnap.data()?.roles || [];
+          setSelectedRoles(roles);
+          setInitialRoles(roles);
+        } else {
+          setSelectedRoles([]);
+          setInitialRoles([]);
+        }
+      });
+    }
+  }, [user, firestore, isOpen]);
+
 
   const handleSave = async () => {
-    if (!firestore || !actor) return;
+    if (!firestore || !actor || !user) return;
     setIsSaving(true);
     try {
-      const userDocRef = doc(firestore, 'users', user.id);
+      const userRolesDocRef = doc(firestore, 'user_roles', user.id);
       
-      updateDocumentNonBlocking(userDocRef, { roleId: selectedRoleId });
-
-      const oldRoleName = roles.find(r => r.id === currentRoleId)?.name;
-      const newRoleName = roles.find(r => r.id === selectedRoleId)?.name;
-
+      updateDocumentNonBlocking(userRolesDocRef, { roles: selectedRoles });
+      
       await logAuditEvent(firestore, {
           action: 'USER_ROLE_CHANGE',
-          actor: { uid: actor.uid, email: actor.email, role: actorRole },
+          actor: { uid: actor.uid, email: actor.email },
           target: { type: 'USER', id: user.id },
-          metadata: { oldRole: oldRoleName, newRole: newRoleName }
+          metadata: { 
+              oldRoles: initialRoles.map(rId => ALL_ROLES.find(r => r.id === rId)?.name || rId),
+              newRoles: selectedRoles.map(rId => ALL_ROLES.find(r => r.id === rId)?.name || rId)
+          }
       });
 
 
       toast({
-        title: 'Role Updated',
-        description: `${user.name}'s role has been changed.`,
+        title: 'Roles Updated',
+        description: `${user.name}'s roles have been changed.`,
       });
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating role:', error);
+      console.error('Error updating roles:', error);
       toast({
         variant: 'destructive',
-        title: 'Error updating role',
-        description: 'An error occurred while updating the user role.',
+        title: 'Error updating roles',
+        description: 'An error occurred while updating the user roles.',
       });
     } finally {
       setIsSaving(false);
     }
   };
 
+  const handleRoleToggle = (roleId: string) => {
+    setSelectedRoles(prev => 
+        prev.includes(roleId) 
+        ? prev.filter(r => r !== roleId)
+        : [...prev, roleId]
+    );
+  }
+
+  if (!user) return null;
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Role for {user.name}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><UserCog /> Edit Roles for {user.name}</DialogTitle>
           <DialogDescription>
-            Select a new role for this user. This will change their permissions across the platform.
+            Assign one or more roles to this user. This will change their permissions across the platform.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-          <Select
-            value={selectedRoleId}
-            onValueChange={setSelectedRoleId}
-            disabled={isSaving}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a role" />
-            </SelectTrigger>
-            <SelectContent>
-              {roles.map((role) => (
-                  <SelectItem key={role.id} value={role.id}>
-                    {role.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
+        <div className="py-4 space-y-3">
+          {ALL_ROLES.map((role) => (
+            <div key={role.id} className="flex items-center space-x-2">
+                <Checkbox
+                    id={role.id}
+                    checked={selectedRoles.includes(role.id)}
+                    onCheckedChange={() => handleRoleToggle(role.id)}
+                />
+                <Label htmlFor={role.id} className="font-normal cursor-pointer">{role.name}</Label>
+            </div>
+          ))}
         </div>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" disabled={isSaving}>Cancel</Button>
-          </DialogClose>
-          <Button onClick={handleSave} disabled={isSaving || selectedRoleId === currentRoleId}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>Cancel</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
             {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
             Save Changes
           </Button>

@@ -19,7 +19,7 @@ import { useFirestore, updateDocumentNonBlocking, useCollection, useMemoFirebase
 import { doc, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader, Edit, Check, UserCheck } from 'lucide-react';
-import type { UserProfile } from '@/app/admin/users/page';
+import type { UserProfile, Role } from '@/app/admin/users/page';
 import type { Tenant } from '@/app/admin/tenants/page';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -34,36 +34,29 @@ import { startImpersonation } from '@/lib/impersonation';
 interface UserDetailsDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  user: UserProfile;
-  roleName: string;
+  user: UserProfile & { roles: Role[] };
   isSuperAdmin: boolean;
 }
 
 const FormSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  displayName: z.string().min(2, { message: "Name must be at least 2 characters." }),
   department: z.string().optional(),
   risk: z.enum(['Low', 'Medium', 'High']),
-  assignedTenants: z.array(z.string()).optional(),
 });
 
-export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSuperAdmin }: UserDetailsDialogProps) {
+export function UserDetailsDialog({ isOpen, onOpenChange, user, isSuperAdmin }: UserDetailsDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { realUser: adminUser, role: adminRole } = useAuthContext();
-
-
-  const tenantsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'tenants') : null, [firestore]);
-  const { data: tenants, isLoading: tenantsLoading } = useCollection<Tenant>(tenantsQuery);
+  const { realUser: adminUser, roles: adminRoles } = useAuthContext();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: { 
-        name: user.name, 
+        displayName: user.name, 
         risk: user.risk,
         department: user.department || '',
-        assignedTenants: user.assignedTenants || [user.tenantId]
     },
   });
 
@@ -77,22 +70,15 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
     try {
         const userDocRef = doc(firestore, 'users', user.id);
         const updates: Partial<UserProfile> = {};
-        if (data.name !== user.name) updates.name = data.name;
+        if (data.displayName !== user.name) updates.displayName = data.displayName;
         if (data.risk !== user.risk) updates.risk = data.risk;
         if (data.department !== user.department) updates.department = data.department;
-        
-        // Check for changes in assigned tenants
-        const initialTenants = new Set(user.assignedTenants || [user.tenantId]);
-        const newTenants = new Set(data.assignedTenants || []);
-        if (initialTenants.size !== newTenants.size || ![...initialTenants].every(t => newTenants.has(t))) {
-            updates.assignedTenants = Array.from(newTenants);
-        }
 
         if (Object.keys(updates).length > 0) {
             updateDocumentNonBlocking(userDocRef, updates);
             toast({
                 title: 'User Updated',
-                description: `Successfully updated profile for ${data.name}.`,
+                description: `Successfully updated profile for ${data.displayName}.`,
             });
         }
         onOpenChange(false);
@@ -113,13 +99,13 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
     onOpenChange(false);
     setTimeout(() => {
         setIsEditing(false);
-        form.reset({ name: user.name, risk: user.risk, department: user.department || '', assignedTenants: user.assignedTenants || [user.tenantId] });
+        form.reset({ displayName: user.name, risk: user.risk, department: user.department || '' });
     }, 200);
   }
   
   const handleImpersonate = async () => {
     if (!firestore || !adminUser) return;
-    await startImpersonation(firestore, { uid: adminUser.uid, email: adminUser.email, role: adminRole }, user);
+    await startImpersonation(firestore, { uid: adminUser.uid, email: adminUser.email, roles: adminRoles?.map(r => r.name) }, user);
   }
 
   const userAvatar = user.photoURL || PlaceHolderImages.find(p => p.id === user.avatarId)?.imageUrl || '';
@@ -133,7 +119,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-                <DialogTitle className="text-2xl font-headline">{form.watch('name')}</DialogTitle>
+                <DialogTitle className="text-2xl font-headline">{form.watch('displayName')}</DialogTitle>
                 <DialogDescription>{user.email}</DialogDescription>
             </div>
         </DialogHeader>
@@ -143,7 +129,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
                     <FormField
                       control={form.control}
-                      name="name"
+                      name="displayName"
                       render={({ field }) => (
                           <FormItem>
                           <FormLabel>Display Name</FormLabel>
@@ -189,52 +175,6 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
                             </FormItem>
                         )}
                         />
-                     {isSuperAdmin && <FormField
-                        control={form.control}
-                        name="assignedTenants"
-                        render={() => (
-                            <FormItem>
-                                <FormLabel>Tenant Assignments</FormLabel>
-                                <ScrollArea className="h-40 w-full rounded-md border p-4">
-                                     {tenantsLoading && <Loader className="w-4 h-4 animate-spin" />}
-                                     {tenants?.map((tenant) => (
-                                        <FormField
-                                            key={tenant.id}
-                                            control={form.control}
-                                            name="assignedTenants"
-                                            render={({ field }) => {
-                                                return (
-                                                <FormItem
-                                                    key={tenant.id}
-                                                    className="flex flex-row items-start space-x-3 space-y-0"
-                                                >
-                                                    <FormControl>
-                                                    <Checkbox
-                                                        checked={field.value?.includes(tenant.id)}
-                                                        onCheckedChange={(checked) => {
-                                                        return checked
-                                                            ? field.onChange([...(field.value || []), tenant.id])
-                                                            : field.onChange(
-                                                                field.value?.filter(
-                                                                (value) => value !== tenant.id
-                                                                )
-                                                            )
-                                                        }}
-                                                    />
-                                                    </FormControl>
-                                                    <FormLabel className="font-normal">
-                                                    {tenant.name}
-                                                    </FormLabel>
-                                                </FormItem>
-                                                )
-                                            }}
-                                            />
-                                     ))}
-                                </ScrollArea>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                        />}
                     <DialogFooter className='pt-4'>
                         <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={isSaving}>Cancel</Button>
                         <Button type="submit" disabled={isSaving}>
@@ -251,9 +191,12 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
                         <Label className="text-right text-muted-foreground">Status</Label>
                         <div className="col-span-2"><Badge variant={user.status === 'Active' ? 'success' : user.status === 'Invited' ? 'secondary' : 'destructive'}>{user.status}</Badge></div>
                     </div>
-                    <div className="grid grid-cols-3 items-center gap-4">
-                        <Label className="text-right text-muted-foreground">Role</Label>
-                        <p className="col-span-2 font-medium">{roleName}</p>
+                     <div className="grid grid-cols-3 items-start gap-4">
+                        <Label className="text-right text-muted-foreground pt-1">Roles</Label>
+                        <div className="col-span-2 flex flex-wrap gap-1">
+                            {user.roles.map(role => <Badge key={role.id} variant="outline">{role.name}</Badge>)}
+                            {user.roles.length === 0 && <span className="text-sm">No roles assigned</span>}
+                        </div>
                     </div>
                      <div className="grid grid-cols-3 items-center gap-4">
                         <Label className="text-right text-muted-foreground">Department</Label>
@@ -265,15 +208,6 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
                              <Badge variant={user.risk === 'Low' ? 'success' : user.risk === 'Medium' ? 'outline' : 'destructive'}>{user.risk}</Badge>
                          </div>
                     </div>
-                    {isSuperAdmin && <div className="space-y-1">
-                        <Label className="text-muted-foreground">Tenant Assignments</Label>
-                        <div className="col-span-2 flex flex-wrap gap-1">
-                             {tenantsLoading ? <Loader className='w-4 h-4 animate-spin' /> : (user.assignedTenants || [user.tenantId])?.map(tId => {
-                                const tenantName = tenants?.find(t => t.id === tId)?.name || tId;
-                                return <Badge key={tId} variant="secondary">{tenantName}</Badge>
-                            })}
-                        </div>
-                    </div>}
                      <div className="space-y-1">
                         <Label className="text-muted-foreground">User ID</Label>
                         <p className="font-mono text-xs bg-muted p-1 rounded break-all">{user.id}</p>
@@ -289,7 +223,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, roleName, isSupe
                         </Button>
                         <Button variant="outline" onClick={() => setIsEditing(true)}>
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit User
+                            Edit Profile
                         </Button>
                         </>
                     )}
