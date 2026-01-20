@@ -17,19 +17,26 @@ service cloud.firestore {
       return [];
     }
     
+    // Safely gets the tenantId of the requesting user.
+    function getAdminTenantId() {
+      let adminPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      if (exists(adminPath)) {
+        return get(adminPath).data.get('tenantId', null);
+      }
+      return null;
+    }
+    
     // Safely compares the tenantId of a target user with the admin's tenantId.
     function isUserInTenant(userId) {
       let userPath = /databases/$(database)/documents/users/$(userId);
-      let adminPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      let adminTenantId = getAdminTenantId();
       
-      if (!exists(userPath) || !exists(adminPath)) {
+      if (!exists(userPath) || adminTenantId == null) {
         return false;
       }
 
       let userTenantId = get(userPath).data.get('tenantId', null);
-      let adminTenantId = get(adminPath).data.get('tenantId', null);
       
-      // Ensure tenantIds are not null and are equal before returning true
       return userTenantId != null && userTenantId == adminTenantId;
     }
 
@@ -59,16 +66,16 @@ service cloud.firestore {
     // USERS & ROLES
     match /users/{userId} {
       allow get: if isOwner(userId) || (isTenantAdmin() && isUserInTenant(userId)) || isSuperAdmin();
-      // Allow list for admins. Per-doc 'get' rules will enforce tenant boundaries.
-      allow list: if isTenantAdmin();
+      // Super Admins can list all users. Tenant Admins can list users if they provide their tenantId in the query.
+      allow list: if isSuperAdmin() || (isTenantAdmin() && request.query.where[0][0] == 'tenantId' && request.query.where[0][2] == getAdminTenantId());
       allow update: if isOwner(userId) || isSuperAdmin();
       allow create, delete: if isSuperAdmin();
     }
 
     match /user_roles/{userId} {
       allow get: if isOwner(userId) || (isTenantAdmin() && isUserInTenant(userId)) || isSuperAdmin();
-      // Allow list for admins. Per-doc 'get' rules will enforce tenant boundaries.
-      allow list: if isTenantAdmin();
+      // TenantAdmins can list roles for users within their tenant by querying via user ID.
+      allow list: if isSuperAdmin() || isTenantAdmin();
       allow write: if isSuperAdmin();
     }
     
@@ -119,7 +126,7 @@ service cloud.firestore {
     
     // USER-SPECIFIC DATA
     match /userProgress/{progressId} {
-      allow read: if isOwner(resource.data.userId) || isTenantAdmin();
+      allow read: if isOwner(resource.data.userId) || (isTenantAdmin() && isUserInTenant(resource.data.userId));
       allow create, update: if isOwner(request.resource.data.userId);
       allow delete: if isOwner(resource.data.userId);
     }
