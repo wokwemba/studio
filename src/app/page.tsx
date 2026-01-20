@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -184,7 +183,7 @@ export default function Home() {
             </div>
             
              <div className="w-full max-w-7xl mx-auto py-16 mt-10">
-                <h2 className="text-3xl font-bold font-headline mb-12">Explore Our Tools</h2>
+                <h2 className="text-3xl font-bold font-headline mb-12 text-center">Explore Our Tools</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {features.sort((a,b) => a.title.localeCompare(b.title)).map((feature) => (
                          <Link href={feature.href} key={feature.title}>
