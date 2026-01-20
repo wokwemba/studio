@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { useFirestore, updateDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader, Edit, Check, UserCheck } from 'lucide-react';
+import { Loader, Edit, UserCheck } from 'lucide-react';
 import type { UserProfile, Role } from '@/app/admin/users/page';
 import type { Tenant } from '@/app/admin/tenants/page';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -26,8 +27,6 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Badge } from '../ui/badge';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Checkbox } from '../ui/checkbox';
-import { ScrollArea } from '../ui/scroll-area';
 import { useAuthContext } from '../auth/AuthProvider';
 import { startImpersonation } from '@/lib/impersonation';
 
@@ -42,6 +41,7 @@ const FormSchema = z.object({
   displayName: z.string().min(2, { message: "Name must be at least 2 characters." }),
   department: z.string().optional(),
   risk: z.enum(['Low', 'Medium', 'High']),
+  tenantId: z.string().optional(),
 });
 
 export function UserDetailsDialog({ isOpen, onOpenChange, user, isSuperAdmin }: UserDetailsDialogProps) {
@@ -50,6 +50,9 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, isSuperAdmin }: 
   const { toast } = useToast();
   const firestore = useFirestore();
   const { realUser: adminUser, roles: adminRoles } = useAuthContext();
+  
+  const tenantsQuery = useMemoFirebase(() => firestore && isSuperAdmin ? collection(firestore, 'tenants') : null, [firestore, isSuperAdmin]);
+  const { data: tenantsData, isLoading: tenantsLoading } = useCollection<Tenant>(tenantsQuery);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -57,8 +60,21 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, isSuperAdmin }: 
         displayName: user.displayName, 
         risk: user.risk,
         department: user.department || '',
+        tenantId: user.tenantId,
     },
   });
+  
+  useEffect(() => {
+    if (user) {
+      form.reset({ 
+        displayName: user.displayName, 
+        risk: user.risk,
+        department: user.department || '',
+        tenantId: user.tenantId,
+      });
+    }
+  }, [user, form]);
+
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (!firestore) {
@@ -73,6 +89,9 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, isSuperAdmin }: 
         if (data.displayName !== user.displayName) updates.displayName = data.displayName;
         if (data.risk !== user.risk) updates.risk = data.risk;
         if (data.department !== user.department) updates.department = data.department;
+        if (isSuperAdmin && data.tenantId && data.tenantId !== user.tenantId) {
+            updates.tenantId = data.tenantId;
+        }
 
         if (Object.keys(updates).length > 0) {
             updateDocumentNonBlocking(userDocRef, updates);
@@ -175,6 +194,30 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, isSuperAdmin }: 
                             </FormItem>
                         )}
                         />
+                     {isSuperAdmin && (
+                        <FormField
+                            control={form.control}
+                            name="tenantId"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Tenant</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger disabled={tenantsLoading}>
+                                        <SelectValue placeholder="Select a tenant for this user" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {tenantsData?.map(tenant => (
+                                            <SelectItem key={tenant.id} value={tenant.id}>{tenant.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                     )}
                     <DialogFooter className='pt-4'>
                         <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={isSaving}>Cancel</Button>
                         <Button type="submit" disabled={isSaving}>
@@ -235,3 +278,5 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, isSuperAdmin }: 
     </Dialog>
   );
 }
+
+    
