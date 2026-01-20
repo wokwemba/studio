@@ -30,7 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       );
   }
   
-  if (isAuthPage || (!user && isPublicPage)) {
+  if (isAuthPage || isPublicPage) {
     return <>{children}</>;
   }
   
