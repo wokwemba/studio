@@ -26,20 +26,20 @@ export const ROLE_ANONYMOUS = 'ANONYMOUS';
 export const ALL_ROLES = [
   // Tier 0
   { id: ROLE_DOMAIN_ADMIN, name: 'Domain Administrator', tier: 0, description: 'Full super admin, can list/update all users.' },
-  { id: ROLE_SECURITY_ADMIN, name: 'Security Administrator', tier: 0, description: 'Security-focused super admin, can view everything.' },
+  { id: ROLE_SECURITY_ADMIN, name: 'Security Administrator', tier: 0, description: 'Security-focused super admin.' },
   { id: ROLE_AUDITOR, name: 'Auditor', tier: 0, description: 'Can view audit logs.' },
 
   // Tier 1
-  { id: ROLE_DEVOPS_ENGINEER, name: 'DevOps Engineer', tier: 1, description: 'Can manage deployment, environments.' },
-  { id: ROLE_APPLICATION_DEVELOPER, name: 'Application Developer', tier: 1, description: 'Can access code/dev resources.' },
+  { id: ROLE_DEVOPS_ENGINEER, name: 'DevOps Engineer', tier: 1, description: 'Access to deploy/manage services.' },
+  { id: ROLE_APPLICATION_DEVELOPER, name: 'Application Developer', tier: 1, description: 'Access to code, dev environment.' },
   { id: ROLE_SUPPORT_ADMIN, name: 'Support Administrator', tier: 1, description: 'Handles support tickets.' },
   
   // Tier 2
-  { id: ROLE_TENANT_ADMIN, name: 'Tenant Administrator', tier: 2, description: 'Can manage users in their tenant only.' },
+  { id: ROLE_TENANT_ADMIN, name: 'Tenant Administrator', tier: 2, description: 'Can manage users in their tenant.' },
   { id: ROLE_PARTNER_ADMIN, name: 'Partner Administrator', tier: 2, description: 'Manages partner clients.' },
 
   // Tier 3
   { id: ROLE_CLIENT_USER, name: 'Client User', tier: 3, description: 'Standard user.' },
-  { id: ROLE_READ_ONLY_USER, name: 'Read-Only User', tier: 3, description: 'Can only read resources.' },
-  { id: ROLE_ANONYMOUS, name: 'Anonymous', tier: 3, description: 'Minimal guest access.' },
+  { id: ROLE_READ_ONLY_USER, name: 'Read-Only User', tier: 3, description: 'Limited read-only access.' },
+  { id: ROLE_ANONYMOUS, name: 'Anonymous', tier: 3, description: 'Minimal system access.' },
 ];
