@@ -223,6 +223,18 @@
                 "riskScore": { "type": "string", "enum": ["low", "medium", "high", "critical"] }
             }
         },
+        "challengeStats": {
+          "type": "object",
+          "description": "Aggregated stats from gamified challenges.",
+          "properties": {
+            "totalCompleted": {
+              "type": "number"
+            },
+            "avgScore": {
+              "type": "number"
+            }
+          }
+        },
         "preferences": {
             "type": "object",
             "properties": {
