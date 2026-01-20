@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, where } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -18,13 +18,7 @@ import {
   LabelList,
 } from 'recharts';
 import { MetricCard } from '@/components/dashboard/metric-card';
-
-type TrainingResult = {
-  id: string;
-  moduleId: string;
-  score: number;
-  completedAt: string;
-};
+import type { UserProgress } from '@/docs/backend-schema';
 
 type TopicPerformance = {
   topic: string;
@@ -42,10 +36,14 @@ export default function PerformancePage() {
   const firestore = useFirestore();
 
   const trainingResultsQuery = useMemoFirebase(
-    () => (user ? query(collection(firestore, `users/${user.uid}/trainingResults`), orderBy('completedAt', 'desc')) : null),
+    () => (user && firestore ? query(
+        collection(firestore, `userProgress`),
+        where('userId', '==', user.uid),
+        orderBy('completedAt', 'desc')
+    ) : null),
     [user, firestore]
   );
-  const { data: trainingResults, isLoading } = useCollection<TrainingResult>(trainingResultsQuery);
+  const { data: trainingResults, isLoading } = useCollection<UserProgress>(trainingResultsQuery);
 
   const { topicPerformance, scoreDistribution, personalBest, averageScore } = useMemo(() => {
     if (!trainingResults) {
@@ -55,6 +53,7 @@ export default function PerformancePage() {
     // Calculate Topic Performance
     const performance: Record<string, { totalScore: number; count: number }> = {};
     trainingResults.forEach(result => {
+      if (result.score === undefined) return;
       if (!performance[result.moduleId]) {
         performance[result.moduleId] = { totalScore: 0, count: 0 };
       }
@@ -80,6 +79,7 @@ export default function PerformancePage() {
     ];
 
     trainingResults.forEach(result => {
+      if (result.score === undefined) return;
       if (result.score < 50) brackets[0].count++;
       else if (result.score < 70) brackets[1].count++;
       else if (result.score < 80) brackets[2].count++;
@@ -87,9 +87,10 @@ export default function PerformancePage() {
       else brackets[4].count++;
     });
 
-    const totalModules = trainingResults.length;
-    const bestScore = totalModules > 0 ? Math.max(...trainingResults.map(r => r.score)) : 0;
-    const avgScore = totalModules > 0 ? trainingResults.reduce((acc, r) => acc + r.score, 0) / totalModules : 0;
+    const scores = trainingResults.map(r => r.score).filter((s): s is number => s !== undefined);
+    const totalModules = scores.length;
+    const bestScore = totalModules > 0 ? Math.max(...scores) : 0;
+    const avgScore = totalModules > 0 ? scores.reduce((acc, s) => acc + s, 0) / totalModules : 0;
 
 
     return { topicPerformance: topicPerf, scoreDistribution: brackets, personalBest: bestScore, averageScore: avgScore };

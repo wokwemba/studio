@@ -1,29 +1,26 @@
-
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, where } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Loader, History } from 'lucide-react';
-
-type TrainingResult = {
-  id: string;
-  moduleId: string;
-  score: number;
-  completedAt: string; // ISO String
-};
+import type { UserProgress } from '@/docs/backend-schema';
 
 export default function TrainingHistoryPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
   const trainingResultsQuery = useMemoFirebase(
-    () => (user ? query(collection(firestore, `users/${user.uid}/trainingResults`), orderBy('completedAt', 'desc')) : null),
+    () => (user && firestore ? query(
+        collection(firestore, `userProgress`),
+        where('userId', '==', user.uid),
+        orderBy('completedAt', 'desc')
+    ) : null),
     [user, firestore]
   );
-  const { data: trainingResults, isLoading } = useCollection<TrainingResult>(trainingResultsQuery);
+  const { data: trainingResults, isLoading } = useCollection<UserProgress>(trainingResultsQuery);
 
   return (
     <Card>
@@ -56,12 +53,12 @@ export default function TrainingHistoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {trainingResults.map((result) => (
+              {trainingResults.map((result) => (result.completedAt && result.id) && (
                 <TableRow key={result.id}>
                   <TableCell className="font-medium">{result.moduleId}</TableCell>
                   <TableCell className="text-center">
-                    <Badge variant={result.score < 80 ? 'destructive' : 'success'}>
-                      {result.score.toFixed(0)}%
+                    <Badge variant={(result.score || 0) < 80 ? 'destructive' : 'success'}>
+                      {(result.score || 0).toFixed(0)}%
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

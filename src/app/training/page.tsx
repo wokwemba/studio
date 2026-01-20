@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
-import { collection, query, orderBy, doc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, where } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader, AlertTriangle, FileText, Lightbulb, Bell, Clock, Check } from 'lucide-react';
@@ -11,13 +11,7 @@ import { cn } from '@/lib/utils';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuthContext } from '@/components/auth/AuthProvider';
-
-type TrainingResult = {
-  id: string;
-  moduleId: string; // This is the 'topic'
-  score: number;
-  completedAt: string; // ISO String
-};
+import type { UserProgress } from '@/docs/backend-schema';
 
 function UserTrainingDashboard() {
   const { user, loading: isAuthLoading } = useAuthContext();
@@ -26,12 +20,13 @@ function UserTrainingDashboard() {
   const trainingResultsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return query(
-      collection(firestore, `users/${user.uid}/trainingResults`),
+      collection(firestore, `userProgress`),
+      where('userId', '==', user.uid),
       orderBy('completedAt', 'desc')
     );
   }, [user, firestore]);
   
-  const { data: trainingResults, isLoading: isLoadingResults } = useCollection<TrainingResult>(
+  const { data: trainingResults, isLoading: isLoadingResults } = useCollection<UserProgress>(
     trainingResultsQuery,
     { skip: !trainingResultsQuery }
   );
@@ -110,7 +105,7 @@ function UserTrainingDashboard() {
                     </CardHeader>
                      <CardContent>
                         <ul className="space-y-2 text-sm">
-                            {trainingResults?.slice(0, 3).map(cert => (
+                            {trainingResults?.slice(0, 3).map(cert => cert.id && (
                                 <li key={cert.id} className="flex justify-between items-center hover:bg-muted p-2 rounded-md">
                                     <span>{cert.moduleId}</span>
                                     <Button variant="link" size="sm" asChild>

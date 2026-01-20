@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useRef, useState } from 'react';
@@ -13,13 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CertificateTemplate } from '@/components/training/certificate';
 import { useToast } from '@/hooks/use-toast';
-
-type TrainingResult = {
-  id: string;
-  moduleId: string; // This is the topic/name of the course
-  score: number;
-  completedAt: string; // ISO string
-};
+import type { UserProgress } from '@/docs/backend-schema';
 
 export default function CertificatesPage() {
   const { user, isUserLoading } = useUser();
@@ -29,16 +22,17 @@ export default function CertificatesPage() {
   const { toast } = useToast();
 
   const trainingResultsQuery = useMemoFirebase(
-    () => (user ? query(
-        collection(firestore, `users/${user.uid}/trainingResults`),
-        where('score', '>=', 80) // Only fetch results where the user passed
+    () => (user && firestore ? query(
+        collection(firestore, `userProgress`),
+        where('userId', '==', user.uid),
+        where('score', '>=', 80)
       ) : null),
     [user, firestore]
   );
-  const { data: earnedCertificates, isLoading: isLoadingCertificates } = useCollection<TrainingResult>(trainingResultsQuery);
+  const { data: earnedCertificates, isLoading: isLoadingCertificates } = useCollection<UserProgress>(trainingResultsQuery);
 
-  const handleGenerateCertificate = async (certificate: TrainingResult) => {
-    if (!certificateRef.current || !user) return;
+  const handleGenerateCertificate = async (certificate: UserProgress) => {
+    if (!certificateRef.current || !user || !certificate.completedAt || !certificate.id) return;
     setGeneratingCertId(certificate.id);
     try {
       const canvas = await html2canvas(certificateRef.current, { scale: 2 });
@@ -114,7 +108,7 @@ export default function CertificatesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {earnedCertificates.map((cert) => (
+              {earnedCertificates.map((cert) => (cert.completedAt && cert.id) && (
                 <TableRow key={cert.id}>
                   <TableCell className="font-medium">{cert.moduleId}</TableCell>
                   <TableCell>{format(new Date(cert.completedAt), 'yyyy-MM-dd')}</TableCell>
