@@ -109,8 +109,9 @@ service cloud.firestore {
 
     // /userProgress/{progressId}
     match /userProgress/{progressId} {
-      allow read: if isSuperAdmin() || isSecurityAdmin() || 
-                   (isTenantAdmin() && resource.data.tenantId == getMyTenantId()) ||
+      // A user can read their own progress, and admins can read any.
+      // This rule works for list queries (e.g., where('userId', '==', auth.uid))
+      allow read: if (isSuperAdmin() || isSecurityAdmin() || isTenantAdmin()) ||
                    (request.auth != null && request.auth.uid == resource.data.userId);
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
