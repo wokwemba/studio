@@ -73,7 +73,7 @@ service cloud.firestore {
     match /user_roles/{userId} {
       allow get: if isOwner(userId) || isSuperAdmin() || isSecurityAdmin();
       allow list: if isSuperAdmin() || isSecurityAdmin();
-      allow create: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && request.auth.uid == userId);
+      allow create: if (request.auth != null && request.auth.uid == userId) || isSuperAdmin() || isSecurityAdmin();
       allow update, delete: if isSuperAdmin() || isSecurityAdmin();
     }
 
@@ -114,8 +114,7 @@ service cloud.firestore {
 
     // /userProgress/{progressId}
     match /userProgress/{progressId} {
-      allow get: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
-      allow list: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && request.query.where('userId', '==', request.auth.uid));
+      allow read: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
       allow delete: if false;
