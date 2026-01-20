@@ -66,8 +66,10 @@ service cloud.firestore {
 
     match /user_roles/{userId} {
       allow get: if isOwner(userId) || isSuperAdmin();
-      // Only Super Admins can list all roles or modify them.
-      allow list, write: if isSuperAdmin();
+      // A user can create their own role document upon signup.
+      allow create: if isOwner(userId) || isSuperAdmin();
+      // Only Super Admins can list all roles or modify them later.
+      allow list, update, delete: if isSuperAdmin();
     }
     
     match /roles/{roleId} {
