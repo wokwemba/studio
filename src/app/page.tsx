@@ -187,14 +187,14 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {features.sort((a,b) => a.title.localeCompare(b.title)).map((feature) => (
                          <Link href={feature.href} key={feature.title}>
-                            <Card className="text-left h-full hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer">
-                                <CardHeader>
+                            <Card className="text-center h-full hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer flex flex-col">
+                                <CardHeader className="items-center">
                                     <div className="p-3 bg-primary/10 rounded-md w-fit mb-4">
                                         <feature.icon className="w-8 h-8 text-primary" />
                                     </div>
                                     <CardTitle className="font-headline">{feature.title}</CardTitle>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="flex-1">
                                     <p className="text-muted-foreground">{feature.description}</p>
                                 </CardContent>
                             </Card>
