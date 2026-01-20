@@ -5,14 +5,12 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAuth as useFirebaseAuth, useFirestore } from '@/firebase';
-import type { Role } from '@/app/admin/users/page';
-
-type RoleName = 'SuperAdmin' | 'Admin' | 'User';
+import { ALL_ROLES } from '@/lib/roles';
+import type { Role as RoleType } from '@/app/admin/users/page';
 
 type AuthContextType = {
   user: User | null;
-  role: RoleName | null;
-  permissions: string[] | null;
+  roles: RoleType[] | null; // Changed from single role to array
   loading: boolean;
   isImpersonating: boolean;
   realUser: User | null; // The admin's actual user object during impersonation
@@ -20,8 +18,7 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  role: null,
-  permissions: null,
+  roles: null,
   loading: true,
   isImpersonating: false,
   realUser: null,
@@ -30,8 +27,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [realUser, setRealUser] = useState<User | null>(null);
-  const [role, setRole] = useState<RoleName | null>(null);
-  const [permissions, setPermissions] = useState<string[] | null>(null);
+  const [roles, setRoles] = useState<RoleType[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const auth = useFirebaseAuth();
@@ -50,8 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
         setUser(null);
-        setRole(null);
-        setPermissions(null);
+        setRoles(null);
         setRealUser(null);
         setIsImpersonating(false);
         setLoading(false);
@@ -71,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const impersonationData = impersonationSnap.data();
           targetUserId = impersonationData.targetUserId;
           setIsImpersonating(true);
+          // Create a mock user object for the impersonated user
           const impersonatedUserObject = { ...firebaseUser, uid: targetUserId, email: impersonationData.targetUserEmail };
           setUser(impersonatedUserObject as User);
           effectiveUser = impersonatedUserObject as User;
@@ -78,47 +74,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(firebaseUser);
           setIsImpersonating(false);
       }
-
-      // Special override for hardcoded super admin
-      if (effectiveUser.email === 'wokwemba@safaricom.co.ke') {
-        setRole('SuperAdmin');
-        // In a real app, you might fetch all permissions for a SuperAdmin
-        setPermissions(['admin:dashboard:read', 'admin:users:read', 'admin:users:create', 'admin:users:update', 'admin:users:delete', 'admin:users:impersonate']);
-        setLoading(false);
-        return;
-      }
-
-
-      // Fetch role and permissions for the effective user (either real or impersonated)
+      
       try {
-        const userDocRef = doc(firestore, 'users', targetUserId);
-        const userDocSnap = await getDoc(userDocRef);
+        const userRolesRef = doc(firestore, 'user_roles', targetUserId);
+        const userRolesSnap = await getDoc(userRolesRef);
         
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
-          if (userData.roleId) {
-            const roleDocRef = doc(firestore, 'roles', userData.roleId);
-            const roleDocSnap = await getDoc(roleDocRef);
-            if (roleDocSnap.exists()) {
-              const roleData = roleDocSnap.data() as Role;
-              setRole(roleData.name as RoleName || 'User');
-              setPermissions(roleData.permissions || []);
-            } else {
-              setRole('User');
-              setPermissions([]);
-            }
-          } else {
-            setRole('User');
-            setPermissions([]);
-          }
+        if (userRolesSnap.exists()) {
+          const userRolesData = userRolesSnap.data();
+          const roleIds = userRolesData.roles || [];
+          const userRolesList = roleIds.map((id: string) => ALL_ROLES.find(r => r.id === id)).filter(Boolean) as RoleType[];
+          setRoles(userRolesList.length > 0 ? userRolesList : null);
         } else {
-           setRole('User');
-           setPermissions([]);
+           setRoles(null);
         }
       } catch (error) {
-        console.error("Error fetching user role:", error);
-        setRole(null);
-        setPermissions(null);
+        console.error("Error fetching user roles:", error);
+        setRoles(null);
       }
 
 
@@ -128,13 +99,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, [auth, firestore]);
 
+  // Derive a single "primary" role for display/legacy components
+  const primaryRole = roles?.[0]?.name || 'User';
+
   return (
-    <AuthContext.Provider value={{ user, realUser, role, permissions, loading, isImpersonating }}>
+    <AuthContext.Provider value={{ user, realUser, roles, loading, isImpersonating }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuthContext() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuthContext must be used within an AuthProvider');
+  }
+  // For backward compatibility, we can derive a single 'role'
+  const primaryRole = context.roles?.[0]?.name || 'User';
+
+  return { ...context, role: primaryRole as any };
 }
+
+  

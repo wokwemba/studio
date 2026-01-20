@@ -462,26 +462,26 @@
         "required": ["tenantId", "name", "type", "generatedBy", "generatedAt"]
     },
     "Role": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Role",
       "type": "object",
+      "description": "Defines a user role and its permissions, representing a security group.",
       "properties": {
-        "name": { "type": "string", "enum": ["SuperAdmin", "Admin", "Tenant Admin", "Partner Admin", "Developer", "Client", "User", "Anonymous"] },
+        "name": { "type": "string" },
+        "tier": { "type": "number", "description": "Privilege tier (0=Highest)." },
         "description": { "type": "string" },
-        "permissions": { "type": "array", "items": { "type": "string" }, "description": "A list of permission keys granted to this role." }
+        "permissions": { "type": "array", "items": { "type": "string" } }
       },
-      "required": ["name"],
-      "description": "Defines a user role and its permissions."
+      "required": ["name", "tier"]
     },
      "UserRole": {
       "title": "User Role",
       "type": "object",
-      "description": "Maps a user to their assigned roles.",
+      "description": "Maps a user to their assigned roles (security group membership).",
       "properties": {
         "roles": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "An array of role IDs assigned to the user."
+          "description": "An array of role IDs (e.g., ['DOMAIN_ADMIN', 'DEVELOPER'])."
         }
       },
       "required": ["roles"]
@@ -708,7 +708,7 @@
     "/phishingSimulations/{simId}": { "schema": { "$ref": "#/entities/PhishingSimulation" }, "description": "Phishing simulations for tenants." },
     "/phishing_templates/{templateId}": { "schema": { "$ref": "#/entities/PhishingTemplate" }, "description": "Global library of phishing templates." },
     "/reports/{reportId}": { "schema": { "$ref": "#/entities/Report" }, "description": "Generated reports for tenants." },
-    "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles." },
+    "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles (security groups)." },
     "/user_roles/{userId}": { "schema": { "$ref": "#/entities/UserRole" }, "description": "Maps users to their assigned roles." },
     "/subscription_plans/{planId}": { "schema": { "$ref": "#/entities/SubscriptionPlan" }, "description": "Defines the available subscription plans." },
     "/compliance_rules/{ruleId}": { "schema": { "$ref": "#/entities/ComplianceRule" }, "description": "Global library of compliance rules and mappings." },
@@ -719,3 +719,5 @@
     "/threat_scenarios/{scenarioId}": { "schema": { "$ref": "#/entities/ThreatScenario" }, "description": "Library of interactive 'Serious Game' training scenarios." }
   }
 }
+
+  

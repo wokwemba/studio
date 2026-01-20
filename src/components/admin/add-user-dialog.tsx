@@ -26,6 +26,8 @@ import { useFirestore, inviteUserByEmail } from '@/firebase';
 import { ALL_ROLES } from '@/lib/roles';
 import { useToast } from '@/hooks/use-toast';
 import { Loader } from 'lucide-react';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
 
 interface AddUserDialogProps {
   isOpen: boolean;
@@ -35,7 +37,7 @@ interface AddUserDialogProps {
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
-  roleId: z.string({ required_error: "Please select a role." }),
+  roleIds: z.array(z.string()).min(1, { message: "Please select at least one role." }),
 });
 
 export function AddUserDialog({ isOpen, onOpenChange, tenantId }: AddUserDialogProps) {
@@ -45,13 +47,17 @@ export function AddUserDialog({ isOpen, onOpenChange, tenantId }: AddUserDialogP
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
+    defaultValues: {
+        email: '',
+        roleIds: ['CLIENT_USER'],
+    }
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (!firestore) return;
     setIsSaving(true);
     
-    const result = await inviteUserByEmail(firestore, data.email, [data.roleId], tenantId);
+    const result = await inviteUserByEmail(firestore, data.email, data.roleIds, tenantId);
 
     if (result.success) {
       toast({
@@ -70,14 +76,21 @@ export function AddUserDialog({ isOpen, onOpenChange, tenantId }: AddUserDialogP
     
     setIsSaving(false);
   };
+  
+  const handleClose = (open: boolean) => {
+      if(!open && !isSaving) {
+          form.reset();
+      }
+      onOpenChange(open);
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add New User</DialogTitle>
           <DialogDescription>
-            Invite a new user to your organization. They will be created with an 'Invited' status and a default role.
+            Invite a new user to your organization. They will be created with an 'Invited' status.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -97,33 +110,39 @@ export function AddUserDialog({ isOpen, onOpenChange, tenantId }: AddUserDialogP
             />
             <FormField
               control={form.control}
-              name="roleId"
+              name="roleIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Initial Role</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an initial role for the user" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                        {ALL_ROLES.map((role) => (
-                        <SelectItem key={role.id} value={role.id}>
-                            {role.name}
-                        </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Roles</FormLabel>
+                   <div className="space-y-2 rounded-md border p-4 max-h-60 overflow-y-auto">
+                    {ALL_ROLES.map((role) => (
+                      <div key={role.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`role-${role.id}`}
+                          checked={field.value?.includes(role.id)}
+                          onCheckedChange={(checked) => {
+                            return checked
+                              ? field.onChange([...field.value, role.id])
+                              : field.onChange(
+                                  field.value?.filter(
+                                    (value) => value !== role.id
+                                  )
+                                )
+                          }}
+                        />
+                         <Label htmlFor={`role-${role.id}`} className="font-normal cursor-pointer">{role.name}</Label>
+                      </div>
+                    ))}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter className='pt-4'>
-                <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>Cancel</Button>
+                <Button variant="outline" onClick={() => handleClose(false)} disabled={isSaving}>Cancel</Button>
                 <Button type="submit" disabled={isSaving}>
                     {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                    {isSaving ? 'Sending...' : 'Add User'}
+                    {isSaving ? 'Sending...' : 'Invite User'}
                 </Button>
             </DialogFooter>
           </form>

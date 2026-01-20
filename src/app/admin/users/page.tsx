@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -52,14 +53,13 @@ export type UserProfile = {
   status: 'Active' | 'Invited' | 'Suspended';
   risk: 'Low' | 'Medium' | 'High';
   tenantId: string;
-  assignedTenants?: string[];
-  // roleId is now deprecated in favor of user_roles collection
 };
 
 export type Role = {
     id: string;
     name: string;
-    permissions: string[];
+    tier: number;
+    description: string;
 }
 
 export type UserRoleMapping = {
@@ -73,15 +73,14 @@ const statusVariant: Record<UserProfile['status'], 'success' | 'secondary' | 'de
   Suspended: 'destructive',
 };
 
-function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, onReactivateUser, onDeleteUser, onViewDetails }: { 
+function UserTableRow({ user, onEditRole, onResendInvite, onSuspendUser, onReactivateUser, onDeleteUser, onViewDetails }: { 
     user: UserProfile & { roles: Role[] }, 
-    roles: Role[], 
-    onEditRole: (user: UserProfile) => void, 
+    onEditRole: (user: UserProfile & { roles: Role[] }) => void, 
     onResendInvite: (user: UserProfile) => void,
     onSuspendUser: (user: UserProfile) => void;
     onReactivateUser: (user: UserProfile) => void;
     onDeleteUser: (user: UserProfile) => void;
-    onViewDetails: (user: UserProfile) => void;
+    onViewDetails: (user: UserProfile & { roles: Role[] }) => void;
 }) {
   const userAvatar = user.photoURL || PlaceHolderImages.find(p => p.id === user.avatarId)?.imageUrl || '';
   
@@ -105,7 +104,7 @@ function UserTableRow({ user, roles, onEditRole, onResendInvite, onSuspendUser, 
       <TableCell>{user.department || 'N/A'}</TableCell>
       <TableCell>
         <div className="flex flex-wrap gap-1">
-            {user.roles.length > 0 ? user.roles.map(r => <Badge key={r.id} variant="secondary">{r.name}</Badge>) : <Badge variant="outline">No Role</Badge>}
+            {user.roles.length > 0 ? user.roles.map(r => <Badge key={r.id} variant="secondary" className="font-normal">{r.name}</Badge>) : <Badge variant="outline">No Role</Badge>}
         </div>
       </TableCell>
       <TableCell className="text-right">
@@ -152,20 +151,16 @@ export default function AdminUsersPage() {
   const { user: currentUser, loading: isAuthLoading, roles: authRoles } = useAuthContext();
   const firestore = useFirestore();
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  const [userToEdit, setUserToEdit] = useState<UserProfile | null>(null);
+  const [userToEdit, setUserToEdit] = useState<(UserProfile & { roles: Role[] }) | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
-  const [userToView, setUserToView] = useState<UserProfile | null>(null);
+  const [userToView, setUserToView] = useState<(UserProfile & { roles: Role[] }) | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   
-  const isSuperAdmin = authRoles?.some(r => r.name === 'SuperAdmin') || currentUser?.email === 'wokwemba@safaricom.co.ke';
+  const isSuperAdmin = authRoles?.some(r => r.name === 'Domain Administrator' || r.name === 'Security Administrator');
   const tenantId = (currentUser as any)?.tenantId;
 
-  // 1. Fetch all roles definitions
-  const rolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'roles') : null, [firestore]);
-  const { data: roles, isLoading: rolesLoading } = useCollection<Role>(rolesQuery);
-
-  // 2. Fetch all users based on admin level
+  // 1. Fetch all users based on admin level
   const usersQuery = useMemoFirebase(
     () => {
         if (!firestore) return null;
@@ -181,27 +176,26 @@ export default function AdminUsersPage() {
   );
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery, { skip: !usersQuery });
 
-  // 3. Fetch all user-role mappings
+  // 2. Fetch all user-role mappings
   const userRolesQuery = useMemoFirebase(() => firestore ? collection(firestore, 'user_roles') : null, [firestore]);
-  const { data: userRoles, isLoading: userRolesLoading } = useCollection<UserRoleMapping>(userRolesQuery);
+  const { data: userRolesMappings, isLoading: userRolesLoading } = useCollection<UserRoleMapping>(userRolesQuery);
 
-  const isLoading = isAuthLoading || usersLoading || rolesLoading || userRolesLoading;
+  const isLoading = isAuthLoading || usersLoading || userRolesLoading;
 
   const combinedUsers = useMemo(() => {
-    if (isLoading || !users || !roles || !userRoles) return [];
+    if (isLoading || !users || !userRolesMappings) return [];
 
-    const rolesMap = new Map(roles.map(r => [r.id, r]));
-    const userRolesMap = new Map(userRoles.map(ur => [ur.id, ur.roles]));
+    const userRolesMap = new Map(userRolesMappings.map(ur => [ur.id, ur.roles]));
 
     return users.map(user => {
         const roleIds = userRolesMap.get(user.id) || [];
-        const userRolesData = roleIds.map(roleId => rolesMap.get(roleId)).filter(Boolean) as Role[];
+        const userRolesData = roleIds.map(roleId => ALL_ROLES.find(r => r.id === roleId)).filter(Boolean) as Role[];
         return {
             ...user,
             roles: userRolesData,
         };
     });
-  }, [users, roles, userRoles, isLoading]);
+  }, [users, userRolesMappings, isLoading]);
 
 
   const handleStatusUpdate = async (user: UserProfile, status: 'Active' | 'Suspended') => {
@@ -297,11 +291,10 @@ export default function AdminUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {roles && filteredUsers.map(user => (
+                {filteredUsers.map(user => (
                   <UserTableRow 
                     key={user.id} 
                     user={user} 
-                    roles={roles}
                     onViewDetails={setUserToView}
                     onEditRole={setUserToEdit}
                     onResendInvite={(u) => alert(`Resend invite for ${u.name}`)}
@@ -334,7 +327,7 @@ export default function AdminUsersPage() {
           <UserDetailsDialog
             isOpen={!!userToView}
             onOpenChange={(isOpen) => !isOpen && setUserToView(null)}
-            user={userToView as UserProfile & { roles: Role[]}}
+            user={userToView}
             isSuperAdmin={isSuperAdmin}
           />
       )}
@@ -361,3 +354,5 @@ export default function AdminUsersPage() {
     </>
   );
 }
+
+  

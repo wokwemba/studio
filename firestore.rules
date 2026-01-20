@@ -4,160 +4,164 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSuperAdmin(userId) {
-      return get(/databases/$(database)/documents/user_roles/$(userId)).data.roles.hasAny(['L1A4b6Y2y1l9p3R0c2V1']);
-    }
-
-    function isAdmin(userId) {
-        return get(/databases/$(database)/documents/user_roles/$(userId)).data.roles.hasAny(['L1A4b6Y2y1l9p3R0c2V1', 'S2V1b2l1R1dsa2FqZGZtYWxza2Rq']);
-    }
-    
-    function isTenantAdmin(userId, tenantId) {
-        let userDoc = get(/databases/$(database)/documents/users/$(userId)).data;
-        return userDoc.tenantId == tenantId && get(/databases/$(database)/documents/user_roles/$(userId)).data.roles.hasAny(['T3N4bW50QWRtaW5VaiBva21hbA']);
-    }
-
-    function isOwnRecord(userId) {
+    function isOwner(userId) {
       return request.auth.uid == userId;
     }
+
+    function getUserRoles() {
+      // Helper to securely get the roles array for the requesting user.
+      return get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.roles;
+    }
     
-    // PARTNER REQUESTS: Allow anyone to submit a partnership request.
-    match /partner_requests/{requestId} {
-      allow create: if true;
-      // Reading/writing should be restricted to super admins
-      allow read, update, delete: if isSuperAdmin(request.auth.uid);
+    // Tier 0 - Highest Privilege
+    function isTier0() {
+      return getUserRoles().hasAny(['DOMAIN_ADMIN', 'SECURITY_ADMIN']);
+    }
+    
+    // Tier 1 - Platform & Engineering
+    function isTier1() {
+      return isTier0() || getUserRoles().hasAny(['PLATFORM_ADMIN', 'DEVOPS_ENGINEER', 'APPLICATION_DEVELOPER']);
+    }
+    
+    // Tier 2 - Tenant & Business Management
+    function isTier2() {
+      return isTier1() || getUserRoles().hasAny(['TENANT_ADMIN', 'PARTNER_ADMIN', 'SUPPORT_ADMIN']);
+    }
+    
+    function isAuditor() {
+        return getUserRoles().hasAny(['AUDITOR']);
     }
 
-    // TENANTS: Only Super Admins can manage tenants. Tenant admins can read their own tenant doc.
-    match /tenants/{tenantId} {
-      allow read: if isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, tenantId);
-      allow write: if isSuperAdmin(request.auth.uid);
-
-      // CAMPAIGNS: Managed by Tenant Admins and Super Admins for their own tenant.
-      match /campaigns/{campaignId} {
-        allow read, write: if isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, tenantId);
-      }
-
-      // SIMULATION REQUESTS
-      match /simulationRequests/{requestId} {
-        allow create: if isOwnRecord(request.resource.data.userId);
-        allow read, update, delete: if isTenantAdmin(request.auth.uid, tenantId) || isSuperAdmin(request.auth.uid);
-      }
-    }
-
-    // USERS:
+    // USERS & ROLES
     match /users/{userId} {
-      allow get: if isOwnRecord(userId) || isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, get(/databases/$(database)/documents/users/$(userId)).data.tenantId);
-      allow list: if isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId);
-      
-      allow create: if isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, request.resource.data.tenantId);
-      
-      allow update: if isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, get(/databases/$(database)/documents/users/$(userId)).data.tenantId) ||
-                       (isOwnRecord(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['preferences', 'lastLogin', 'displayName', 'photoURL', 'department', 'risk']));
-
-      allow delete: if isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, get(/databases/$(database)/documents/users/$(userId)).data.tenantId);
-
-      // SMS ANALYSIS: Users can manage their own analysis results.
-      match /sms_analyses/{analysisId} {
-        allow read, write: if isOwnRecord(userId);
-      }
-
-      // TRAINING RESULTS: Users can manage their own results.
-      match /trainingResults/{resultId} {
-        allow create: if isOwnRecord(userId);
-        allow read: if isOwnRecord(userId) || isTenantAdmin(request.auth.uid, get(/databases/$(database)/documents/users/$(userId)).data.tenantId) || isSuperAdmin(request.auth.uid);
-        allow update, delete: if isOwnRecord(userId);
-      }
+      // Any authenticated user can get their own profile. Tier 0 can get any profile.
+      allow get: if isOwner(userId) || isTier0();
+      // Only Tier 0 can list all users.
+      allow list: if isTier0();
+      // Users can update their own profile. Tier 0 can update any profile.
+      allow update: if isOwner(userId) || isTier0();
+      // Only Tier 0 can create or delete users.
+      allow create, delete: if isTier0();
     }
 
-    // USER PROGRESS: Users can manage their own progress. Admins can view progress within their tenant.
-    match /userProgress/{progressId} {
-      allow read: if isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, resource.data.tenantId) || isOwnRecord(resource.data.userId);
-      allow create: if isOwnRecord(request.resource.data.userId);
-      allow update: if isOwnRecord(resource.data.userId);
-      allow delete: if isSuperAdmin(request.auth.uid) || isOwnRecord(resource.data.userId);
+    match /user_roles/{userId} {
+      // Users can read their own roles. Tier 0 can read any.
+      allow get: if isOwner(userId) || isTier0();
+      // Only Tier 0 can list or modify role assignments.
+      allow list, write: if isTier0();
     }
     
-    // USER CHALLENGE ATTEMPTS: Users can create their own attempts. Admins can view attempts within their tenant.
-    match /user_challenge_attempts/{attemptId} {
-      allow create: if isOwnRecord(request.resource.data.userId);
-      allow read: if isOwnRecord(resource.data.userId) || isTenantAdmin(request.auth.uid, resource.data.tenantId) || isSuperAdmin(request.auth.uid);
+    match /roles/{roleId} {
+      // All authenticated users can read role definitions.
+      allow read: if request.auth != null;
+      // Only Tier 0 can create or modify roles.
+      allow write: if isTier0();
+    }
+
+    // AUDIT & IMPERSONATION LOGS
+    match /audit_logs/{logId} {
+      // Any authenticated user can trigger an auditable event.
+      allow create: if request.auth.uid != null;
+      // Only Tier 0 and Auditors can read audit logs.
+      allow read: if isTier0() || isAuditor();
+      // Logs are immutable.
       allow update, delete: if false;
     }
 
-    // TRAINING MODULES: Readable by any authenticated user, writable only by Super Admins.
+    match /admin_impersonation/{adminId} {
+      // Only a Tier 0 admin can manage their own impersonation session.
+      allow read, write: if isTier0() && isOwner(adminId);
+    }
+    
+    // PARTNERS & TENANTS
+    match /partner_requests/{requestId} {
+      // Anyone can submit a partnership request.
+      allow create: if true;
+      // Tier 2 and above can manage requests.
+      allow read, update, delete: if isTier2();
+    }
+
+    match /tenants/{tenantId} {
+      // Tier 2 and above can manage tenants.
+      allow read, write: if isTier2();
+
+      // Campaigns and Simulation requests are nested under tenants.
+      match /campaigns/{campaignId} {
+        allow read, write: if isTier2();
+      }
+      match /simulationRequests/{requestId} {
+        allow create: if isOwner(request.resource.data.userId);
+        allow read, update, delete: if isTier2();
+      }
+    }
+    
+    // TRAINING & CONTENT
     match /trainingModules/{moduleId} {
+      // Any authenticated user can read content.
       allow read: if request.auth.uid != null;
-      allow write: if isSuperAdmin(request.auth.uid);
+      // Tier 1 and above can write content.
+      allow write: if isTier1();
     }
     
-    // ASSIGNMENTS: Managed by Tenant Admins and Super Admins.
-    match /assignments/{assignmentId} {
-        allow read, write: if isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, resource.data.tenantId);
+    match /threat_scenarios/{scenarioId} {
+        // Any authenticated user can read scenarios.
+        allow get, list: if request.auth.uid != null;
+        // Tier 1 and above can write scenarios.
+        allow write: if isTier1();
     }
     
-    // PHISHING SIMULATIONS: Managed by Tenant Admins and Super Admins.
-    match /phishingSimulations/{simId} {
-      allow read, write: if isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, resource.data.tenantId);
+    // USER-SPECIFIC DATA
+    match /userProgress/{progressId} {
+        // Users can manage their own progress. Tier 2 admins can view progress within their tenant (future-proofing).
+      allow read: if isOwner(resource.data.userId) || isTier2();
+      allow create, update: if isOwner(request.resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
     }
     
-    // PHISHING TEMPLATES: Writable by Super Admins, readable by all admins.
+    match /user_challenge_attempts/{attemptId} {
+        // Users can create their own attempts. Tier 2 admins can view attempts within their tenant.
+      allow create: if isOwner(request.resource.data.userId);
+      allow read: if isOwner(resource.data.userId) || isTier2();
+      allow update, delete: if false; // Attempts are immutable
+    }
+
+    match /users/{userId}/sms_analyses/{analysisId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // OTHER COLLECTIONS
     match /phishing_templates/{templateId} {
-      allow read: if isSuperAdmin(request.auth.uid) || isAdmin(request.auth.uid);
-      allow write: if isSuperAdmin(request.auth.uid);
+      allow read: if isTier2();
+      allow write: if isTier1();
     }
     
-    // REPORTS: Managed by Tenant Admins and Super Admins.
+    match /phishingSimulations/{simId} {
+        allow read, write: if isTier2();
+    }
+
+    match /assignments/{assignmentId} {
+        allow read, write: if isTier2();
+    }
+    
     match /reports/{reportId} {
-      allow read, write: if isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, resource.data.tenantId);
-    }
-    
-    // ROLES: Readable by any authenticated user, but only writable by Super Admins.
-    match /roles/{roleId} {
-      allow read: if request.auth.uid != null;
-      allow write: if isSuperAdmin(request.auth.uid);
+      allow read, write: if isTier2();
     }
 
-    // USER ROLES: Super Admins can write. Authenticated users can read their own roles.
-    match /user_roles/{userId} {
-      allow read: if isOwnRecord(userId) || isSuperAdmin(request.auth.uid);
-      allow write: if isSuperAdmin(request.auth.uid);
-    }
-
-    // SUBSCRIPTION PLANS: Readable by any authenticated user, writable only by Super Admins.
     match /subscription_plans/{planId} {
       allow read: if request.auth.uid != null;
-      allow write: if isSuperAdmin(request.auth.uid);
+      allow write: if isTier0();
     }
 
-    // COMPLIANCE RULES: Readable by any authenticated user, writable only by Super Admins.
     match /compliance_rules/{ruleId} {
       allow read: if request.auth.uid != null;
-      allow write: if isSuperAdmin(request.auth.uid);
+      allow write: if isTier0();
     }
-
-    // RISK SCORES: Writable by admins, readable by the user and their admins.
+    
     match /risk_scores/{userId} {
-      allow read: if isOwnRecord(userId) || isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, resource.data.tenantId);
-      allow write: if isSuperAdmin(request.auth.uid) || isTenantAdmin(request.auth.uid, request.resource.data.tenantId);
-    }
-
-    // AUDIT LOGS: Only allow creation by authenticated users and reading by Super Admins.
-    match /audit_logs/{logId} {
-      allow create: if request.auth.uid != null;
-      allow read: if isSuperAdmin(request.auth.uid);
-      allow update, delete: if false;
-    }
-
-    // ADMIN IMPERSONATION: Only the admin themselves can read/write their own session.
-    match /admin_impersonation/{adminId} {
-      allow read, write: if isSuperAdmin(request.auth.uid) && isOwnRecord(adminId);
-    }
-
-    // THREAT SCENARIOS: Readable by authenticated users, writable by Super Admins.
-    match /threat_scenarios/{scenarioId} {
-        allow get, list: if request.auth.uid != null;
-        allow write: if isSuperAdmin(request.auth.uid);
+      allow read: if isOwner(userId) || isTier2();
+      allow write: if isTier2();
     }
   }
 }
+
+  

@@ -6,9 +6,7 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   signInAnonymously as signInAnonymouslyFromFirebase,
-  UserCredential,
   User,
-  updatePassword,
   getAuth,
   setPersistence,
   browserLocalPersistence,
@@ -16,110 +14,96 @@ import {
 import { setDoc, doc, getDoc, getDocs, getFirestore, Firestore, updateDoc, collection, query, where, addDoc, deleteDoc } from 'firebase/firestore';
 import { FirestorePermissionError } from './errors';
 import { errorEmitter } from './error-emitter';
-import { ROLES } from '@/lib/roles';
+import { ROLE_DOMAIN_ADMIN, ROLE_CLIENT_USER, ROLE_ANONYMOUS, ALL_ROLES } from '@/lib/roles';
 import type { Role } from '@/app/admin/users/page';
 import { logAuditEvent } from '@/lib/audit';
 
 const DEFAULT_TENANT_ID = 'default-tenant-ccyberguard';
 
-const getRoleNameFromId = async (firestore: Firestore, roleId: string): Promise<string> => {
-    try {
-        const roleDocRef = doc(firestore, 'roles', roleId);
-        const roleDocSnap = await getDoc(roleDocRef);
-        if (roleDocSnap.exists()) {
-            return (roleDocSnap.data() as Role).name || 'User';
-        }
-        return 'User';
-    } catch (error) {
-        console.error("Error fetching role name:", error);
-        return 'User'; // Default to 'User' on error
-    }
+/**
+ * Given a list of role IDs, finds the highest-tier role (tier 0 is highest).
+ * @param roleIds - Array of role IDs.
+ * @returns The Role object for the highest-tier role.
+ */
+const getPrimaryRole = (roleIds: string[]): Role | undefined => {
+  if (!roleIds || roleIds.length === 0) return undefined;
+
+  return roleIds
+    .map(id => ALL_ROLES.find(r => r.id === id))
+    .filter((r): r is Role => !!r)
+    .sort((a, b) => a.tier - b.tier)[0];
 };
 
-const createUserProfile = async (user: User): Promise<string> => {
+/**
+ * Creates user profile and role documents if they don't exist.
+ * This is the single source of truth for user creation logic post-authentication.
+ */
+const createUserProfileAndRoles = async (user: User): Promise<string> => {
     const db = getFirestore(user.auth.app);
     const userDocRef = doc(db, 'users', user.uid);
+    const userRolesRef = doc(db, 'user_roles', user.uid);
 
     const isAdminEmail = user.email === 'wokwemba@safaricom.co.ke';
-    const isSuperAdminEmail = user.email === 'super@admin.com';
+
+    const userDocSnap = await getDoc(userDocRef);
+    const userRolesSnap = await getDoc(userRolesRef);
+
+    // If roles already exist, we assume the profile does too.
+    // We just ensure the admin role is present if needed.
+    if (userRolesSnap.exists()) {
+        const currentRoleIds = userRolesSnap.data()?.roles || [];
+        let roleIdsToUpdate = [...currentRoleIds];
+        
+        if (isAdminEmail && !roleIdsToUpdate.includes(ROLE_DOMAIN_ADMIN)) {
+            roleIdsToUpdate.push(ROLE_DOMAIN_ADMIN);
+            await setDoc(userRolesRef, { roles: roleIdsToUpdate }, { merge: true });
+        }
+        
+        // Also update photoURL if it has changed from the provider
+        if (userDocSnap.exists() && user.photoURL && userDocSnap.data()?.photoURL !== user.photoURL) {
+            await updateDoc(userDocRef, { photoURL: user.photoURL });
+        }
+
+        const primaryRole = getPrimaryRole(roleIdsToUpdate);
+        return primaryRole?.name || 'User';
+    }
+
+    // New user: create both profile and roles docs.
+    let targetRoleIds = [ROLE_CLIENT_USER];
+    if (isAdminEmail) {
+        targetRoleIds.push(ROLE_DOMAIN_ADMIN);
+    } else if (user.isAnonymous) {
+        targetRoleIds = [ROLE_ANONYMOUS];
+    }
     
-    const docSnap = await getDoc(userDocRef);
+    const newUserProfile: any = {
+        email: user.email,
+        displayName: user.displayName || user.email?.split('@')[0] || `Anonymous User`,
+        tenantId: DEFAULT_TENANT_ID,
+        status: 'Active',
+        risk: 'Low',
+        photoURL: user.photoURL || null,
+        avatarId: user.photoURL ? null : `user-avatar-${Math.floor(Math.random() * 5) + 1}`,
+        createdAt: new Date().toISOString(),
+    };
+    if (user.isAnonymous) {
+        newUserProfile.displayName = `Anonymous User ${user.uid.substring(0, 5)}`;
+    }
 
-    if (docSnap.exists()) {
-        const existingData = docSnap.data();
-        let currentRoleId = existingData.roleId || ROLES.USER;
-        let roleIdToUpdate = currentRoleId;
-        
-        if (isAdminEmail && currentRoleId !== ROLES.ADMIN && currentRoleId !== ROLES.SUPER_ADMIN) {
-            roleIdToUpdate = ROLES.ADMIN;
-        } else if (isSuperAdminEmail && currentRoleId !== ROLES.SUPER_ADMIN) {
-            roleIdToUpdate = ROLES.SUPER_ADMIN;
-        }
-
-        const updates: Record<string, any> = {};
-        if (roleIdToUpdate !== currentRoleId) {
-            updates.roleId = roleIdToUpdate;
-        }
-
-        if (user.photoURL && existingData.photoURL !== user.photoURL) {
-            updates.photoURL = user.photoURL;
-        }
-
-        if (Object.keys(updates).length > 0) {
-           await updateDoc(userDocRef, updates).catch(error => {
-                const permissionError = new FirestorePermissionError({
-                    path: userDocRef.path,
-                    operation: 'update',
-                    requestResourceData: updates,
-                });
-                errorEmitter.emit('permission-error', permissionError);
-           });
-           // Return the name of the role we just updated to
-           return await getRoleNameFromId(db, roleIdToUpdate);
-        }
-        
-        // If no updates, return name of current role
-        return await getRoleNameFromId(db, currentRoleId);
-
-    } else {
-        // User profile does not exist, create it.
-        let targetRoleId = ROLES.USER;
-        if (isAdminEmail) {
-            targetRoleId = ROLES.ADMIN;
-        } else if (isSuperAdminEmail) {
-            targetRoleId = ROLES.SUPER_ADMIN;
-        }
-
-        const newUserProfile: any = {
-            email: user.email,
-            name: user.displayName || user.email?.split('@')[0] || 'New User',
-            tenantId: DEFAULT_TENANT_ID,
-            roleId: targetRoleId,
-            status: 'Active',
-            risk: 'Low',
-            photoURL: user.photoURL || null,
-            avatarId: user.photoURL ? null : `user-avatar-${Math.floor(Math.random() * 5) + 1}`,
-        };
-
-        if (user.isAnonymous) {
-            newUserProfile.name = `Anonymous User ${user.uid.substring(0, 5)}`;
-            newUserProfile.email = null;
-            newUserProfile.isAnonymous = true;
-        }
-
-        try {
-            await setDoc(userDocRef, newUserProfile);
-            return await getRoleNameFromId(db, targetRoleId);
-        } catch (error) {
-            console.error("Failed to create user profile:", error);
-            const permissionError = new FirestorePermissionError({
-                path: userDocRef.path,
-                operation: 'create',
-                requestResourceData: newUserProfile,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            throw error;
-        }
+    try {
+        await setDoc(userDocRef, newUserProfile);
+        await setDoc(userRolesRef, { roles: targetRoleIds });
+        const primaryRole = getPrimaryRole(targetRoleIds);
+        return primaryRole?.name || 'User';
+    } catch (error) {
+        console.error("Failed to create user profile/roles:", error);
+        const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'create',
+            requestResourceData: newUserProfile,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw error;
     }
 };
 
@@ -147,7 +131,7 @@ export async function signInAnonymously(auth: Auth): Promise<{ success: boolean;
   const firestore = getFirestore(auth.app);
   try {
     const userCredential = await signInAnonymouslyFromFirebase(auth);
-    const roleName = await createUserProfile(userCredential.user);
+    const roleName = await createUserProfileAndRoles(userCredential.user);
     await logAuditEvent(firestore, {
         action: 'USER_LOGIN',
         actor: { uid: userCredential.user.uid, email: userCredential.user.email, role: 'Anonymous' },
@@ -167,7 +151,7 @@ export async function signInWithEmail(
   const firestore = getFirestore(auth.app);
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const roleName = await createUserProfile(userCredential.user);
+    const roleName = await createUserProfileAndRoles(userCredential.user);
      await logAuditEvent(firestore, {
         action: 'USER_LOGIN',
         actor: { uid: userCredential.user.uid, email, role: roleName },
@@ -193,50 +177,50 @@ export async function resetInvitedUserPassword(
   newPassword: string
 ): Promise<{ success: boolean; role?: string; error?: string }> {
     const db = getFirestore(auth.app);
-    // Find the invited user document to get its ID, as we don't know the UID yet
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where("email", "==", email), where("status", "==", "Invited"));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-        return { success: false, error: "No invited user found with this email." };
+        return { success: false, error: "No invited user found with this email, or account is already active." };
     }
     
-    // In this simplified flow, we assume the user doesn't exist in Auth yet.
-    // We create them, update their profile, and then they are logged in.
+    const invitedUserDoc = querySnapshot.docs[0];
+    const invitedUserData = invitedUserDoc.data();
+
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, newPassword);
         const user = userCredential.user;
         
-        // The user now exists in Auth. We need to find the Firestore doc and update it.
-        const userDoc = querySnapshot.docs[0]; // The doc we found earlier
-        
-        try {
-            const tempDocRef = doc(db, 'users', userDoc.id);
-            await deleteDoc(tempDocRef); // Remove the old doc
-        } catch (e) {
-            console.warn("Could not clean up temporary invited user doc:", e);
-        }
+        // Now that we have a real UID, create the final docs
+        const userDocRef = doc(db, 'users', user.uid);
+        const userRolesRef = doc(db, 'user_roles', user.uid);
 
-        const newProfileRef = doc(db, 'users', user.uid);
-        const profileData = userDoc.data();
-        await setDoc(newProfileRef, {
-            ...profileData, // Copy data from the invited doc
+        // Copy data from invited doc to new permanent doc
+        await setDoc(userDocRef, {
+            ...invitedUserData,
             status: 'Active',
-            email: user.email, // ensure email is correct
-            name: profileData.name || user.displayName,
+            email: user.email,
+            createdAt: new Date().toISOString(),
+        });
+        
+        // Create the roles doc for the new UID
+        await setDoc(userRolesRef, {
+            roles: invitedUserData.roleIds || [ROLE_CLIENT_USER]
         });
 
-
-        const roleName = await getRoleNameFromId(db, profileData.roleId);
+        // Clean up the temporary invited user doc
+        await deleteDoc(invitedUserDoc.ref);
+        
+        const primaryRole = getPrimaryRole(invitedUserData.roleIds || [ROLE_CLIENT_USER]);
         
         await logAuditEvent(db, {
             action: 'USER_SIGNUP',
-            actor: { uid: user.uid, email: user.email, role: roleName },
+            actor: { uid: user.uid, email: user.email, role: primaryRole?.name },
             metadata: { method: 'invited' },
         });
 
-        return { success: true, role: roleName };
+        return { success: true, role: primaryRole?.name };
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
              return { success: false, error: "This account seems to be active already. Please try signing in normally." };
@@ -253,7 +237,7 @@ export async function signUpWithEmail(
   const firestore = getFirestore(auth.app);
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const roleName = await createUserProfile(userCredential.user);
+    const roleName = await createUserProfileAndRoles(userCredential.user);
     await logAuditEvent(firestore, {
         action: 'USER_SIGNUP',
         actor: { uid: userCredential.user.uid, email, role: roleName },
@@ -274,7 +258,7 @@ export async function signInWithGoogle(
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     const userCredential = await signInWithPopup(auth, provider);
-    const roleName = await createUserProfile(userCredential.user);
+    const roleName = await createUserProfileAndRoles(userCredential.user);
      await logAuditEvent(firestore, {
         action: 'USER_LOGIN',
         actor: { uid: userCredential.user.uid, email: userCredential.user.email, role: roleName },
@@ -289,7 +273,7 @@ export async function signInWithGoogle(
 export async function inviteUserByEmail(
     firestore: Firestore,
     email: string,
-    roleId: string,
+    roleIds: string[],
     tenantId: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
@@ -303,12 +287,14 @@ export async function inviteUserByEmail(
 
         const newUserProfile = {
             email: email,
-            name: email.split('@')[0],
+            displayName: email.split('@')[0],
             tenantId: tenantId,
-            roleId: roleId,
             status: 'Invited',
             risk: 'Low',
             avatarId: `user-avatar-${Math.floor(Math.random() * 5) + 1}`,
+            createdAt: new Date().toISOString(),
+            // Temporarily store roles here until user accepts invite
+            roleIds: roleIds 
         };
         
         const newDocRef = await addDoc(collection(firestore, "users"), newUserProfile);
@@ -316,14 +302,14 @@ export async function inviteUserByEmail(
         const auth = getAuth();
         const currentUser = auth.currentUser;
         if(currentUser) {
+            const primaryAdminRole = getPrimaryRole(ALL_ROLES.map(r => r.id));
             await logAuditEvent(firestore, {
                 action: 'USER_INVITED',
-                actor: { uid: currentUser.uid, email: currentUser.email },
+                actor: { uid: currentUser.uid, email: currentUser.email, role: primaryAdminRole?.name },
                 target: { type: 'USER', id: newDocRef.id },
-                metadata: { invitedEmail: email, roleId: roleId }
+                metadata: { invitedEmail: email, roleIds: roleIds }
             });
         }
-
 
         return { success: true };
     } catch (error: any) {
@@ -331,7 +317,7 @@ export async function inviteUserByEmail(
         const permissionError = new FirestorePermissionError({
             path: `users/[new_user_id]`,
             operation: 'create',
-            requestResourceData: { email, roleId, tenantId },
+            requestResourceData: { email, roleIds, tenantId },
         });
         errorEmitter.emit('permission-error', permissionError);
         return { success: false, error: error.message || "An unexpected error occurred while inviting the user." };
@@ -360,6 +346,11 @@ export async function deleteUser(
   try {
     const userDocRef = doc(firestore, 'users', userId);
     await deleteDoc(userDocRef);
+    
+    // Also delete their roles document
+    const userRolesRef = doc(firestore, 'user_roles', userId);
+    await deleteDoc(userRolesRef);
+
     // Note: This does NOT delete the user from Firebase Authentication.
     // That requires a backend function (e.g., Cloud Function) for security reasons.
     return { success: true };
@@ -368,5 +359,3 @@ export async function deleteUser(
     return { success: false, error: "Failed to delete user data." };
   }
 }
-
-export { getRoleNameFromId };
