@@ -23,8 +23,8 @@ const GoogleIcon = () => (
 
 
 function LoginForm() {
-  const [email, setEmail] = useState('wokwemba@safaricom.co.ke');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
