@@ -1,5 +1,6 @@
+
 'use client';
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +54,49 @@ function DarkWebMonitorPage() {
     const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set(['Email Analysis', 'Domain WHOIS', 'Data Breach Exposure', 'Phone Number Lookup']));
     const { toast } = useToast();
     
+    const containerRef = useRef<HTMLDivElement>(null);
+    const centerNodeRef = useRef<HTMLDivElement>(null);
+    const nodeRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const [lineCoords, setLineCoords] = useState<{ x1: number, y1: number, x2: number, y2: number }[]>([]);
+
+    useEffect(() => {
+        nodeRefs.current = [];
+    }, [results]);
+
+    useEffect(() => {
+        const calculateLines = () => {
+            if (!results || !containerRef.current || !centerNodeRef.current || nodeRefs.current.length === 0) {
+                setLineCoords([]);
+                return;
+            };
+
+            const containerRect = containerRef.current.getBoundingClientRect();
+            const centerRect = centerNodeRef.current.getBoundingClientRect();
+            const centerX = (centerRect.left - containerRect.left) + (centerRect.width / 2);
+            const centerY = (centerRect.top - containerRect.top) + (centerRect.height / 2);
+
+            const coords = nodeRefs.current.map(nodeEl => {
+                if (!nodeEl) return null;
+                const nodeRect = nodeEl.getBoundingClientRect();
+                const nodeX = (nodeRect.left - containerRect.left) + (nodeRect.width / 2);
+                const nodeY = (nodeRect.top - containerRect.top) + (nodeRect.height / 2);
+                return { x1: centerX, y1: centerY, x2: nodeX, y2: nodeY };
+            }).filter((c): c is { x1: number, y1: number, x2: number, y2: number } => c !== null);
+            
+            setLineCoords(coords);
+        };
+
+        calculateLines();
+        window.addEventListener('resize', calculateLines);
+        const timer = setTimeout(calculateLines, 500);
+
+        return () => {
+            window.removeEventListener('resize', calculateLines);
+            clearTimeout(timer);
+        };
+    }, [results]);
+
+
     const handleCategoryChange = (category: string, checked: boolean | 'indeterminate') => {
         const newSelected = new Set(selectedCategories);
         if (checked) newSelected.add(category);
@@ -130,24 +174,38 @@ function DarkWebMonitorPage() {
                         <CardTitle>Analysis Results for &quot;{target}&quot;</CardTitle>
                         <CardDescription>A mind map of simulated intelligence findings.</CardDescription>
                     </CardHeader>
-                    <CardContent className="relative min-h-[600px] flex items-center justify-center">
-                        <MindMapNode title={target} isCentral><p className="text-xs text-center text-muted-foreground capitalize">Target: {results.targetType}</p></MindMapNode>
-                        <div className="absolute inset-0 w-full h-full">
-                            {resultEntries.map(([key, value], index) => {
-                                const angle = (index / resultEntries.length) * 2 * Math.PI;
-                                const x = 50 + 40 * Math.cos(angle);
-                                const y = 50 + 35 * Math.sin(angle);
-                                const Icon = (iconMap as any)[key] || GitBranch;
-                                return (
-                                    <div key={key} className="absolute" style={{left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)'}}>
-                                        <MindMapNode title={key.replace(/([A-Z])/g, ' $1')} icon={Icon}>
-                                            <p className="text-xs font-semibold italic text-muted-foreground mb-2">&quot;{value.summary}&quot;</p>
-                                            <ul className="text-xs list-disc list-inside space-y-1">{value.data.map((item: string, i: number) => <li key={i}>{item}</li>)}</ul>
-                                        </MindMapNode>
-                                    </div>
-                                );
-                            })}
+                    <CardContent ref={containerRef} className="relative min-h-[700px] flex items-center justify-center">
+                        <svg className="absolute inset-0 w-full h-full z-0" aria-hidden="true">
+                            {lineCoords.map((coord, index) => (
+                                <line key={index} {...coord} stroke="hsl(var(--border))" strokeWidth="1" />
+                            ))}
+                        </svg>
+                        
+                        <div ref={centerNodeRef} className="relative z-10">
+                            <MindMapNode title={target} isCentral>
+                                <p className="text-xs text-center text-muted-foreground capitalize">Target: {results.targetType}</p>
+                            </MindMapNode>
                         </div>
+                        
+                        {resultEntries.map(([key, value], index) => {
+                            const angle = (index / resultEntries.length) * 2 * Math.PI;
+                            const x = 50 + 40 * Math.cos(angle);
+                            const y = 50 + 35 * Math.sin(angle);
+                            const Icon = (iconMap as any)[key] || GitBranch;
+                            return (
+                                <div 
+                                    key={key} 
+                                    ref={el => { if(el) nodeRefs.current[index] = el; }}
+                                    className="absolute z-10" 
+                                    style={{left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)'}}
+                                >
+                                    <MindMapNode title={key.replace(/([A-Z])/g, ' $1')} icon={Icon}>
+                                        <p className="text-xs font-semibold italic text-muted-foreground mb-2">&quot;{value.summary}&quot;</p>
+                                        <ul className="text-xs list-disc list-inside space-y-1">{value.data.map((item: string, i: number) => <li key={i}>{item}</li>)}</ul>
+                                    </MindMapNode>
+                                </div>
+                            );
+                        })}
                     </CardContent>
                  </Card>
             )}

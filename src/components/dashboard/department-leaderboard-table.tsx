@@ -2,11 +2,11 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader } from "lucide-react";
-import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Loader } from 'lucide-react';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 
 type UserProfile = {
     id: string;
@@ -24,7 +24,14 @@ type UserProfile = {
 
 const riskScoreMap: Record<UserProfile['risk'], number> = { 'High': 20, 'Medium': 50, 'Low': 100 };
 
-export function DepartmentLeaderboardTable({ category }: { category: string }) {
+const headersMap: Record<string, string> = {
+    'risk-score': 'Average Risk Score',
+    'training-completion': 'Avg Completion Rate',
+    'phishing-reported': 'Total Phishing Reports',
+    'compliance-score': 'Avg Compliance Score',
+};
+
+export function DepartmentLeaderboardChart({ category }: { category: string }) {
   const firestore = useFirestore();
   const { user: currentUser } = useUser();
   const tenantId = (currentUser as any)?.tenantId;
@@ -54,52 +61,33 @@ export function DepartmentLeaderboardTable({ category }: { category: string }) {
       if (data.userCount > 0) {
         switch (category) {
             case 'risk-score':
-            score = data.users.reduce((acc, u) => acc + (riskScoreMap[u.risk] || 0), 0) / data.userCount;
-            break;
+                score = data.users.reduce((acc, u) => acc + (riskScoreMap[u.risk] || 0), 0) / data.userCount;
+                break;
             case 'training-completion':
-            const totalRate = data.users.reduce((acc, u) => {
+                const totalRate = data.users.reduce((acc, u) => {
                     const completed = u.trainingStats?.completedModules || 0;
-                    const total = u.trainingStats?.totalModules || 1; // Avoid division by zero
-                    return acc + (completed / total) * 100;
+                    const total = u.trainingStats?.totalModules || 1;
+                    return acc + (total > 0 ? (completed / total) * 100 : 0);
                 }, 0);
                 score = totalRate / data.userCount;
-            break;
+                break;
             case 'phishing-reported':
                 score = data.users.reduce((acc, u) => acc + (u.phishingStats?.reported || 0), 0);
-            break;
+                break;
             case 'compliance-score':
                 score = data.users.reduce((acc, u) => acc + (u.trainingStats?.complianceScore || 0), 0) / data.userCount;
-            break;
+                break;
             default:
                 score = 0;
         }
       }
-      return { name, userCount: data.userCount, score };
+      return { name, score };
     });
 
-    return calculated.sort((a, b) => b.score - a.score);
+    return calculated.sort((a, b) => a.score - b.score);
 
   }, [users, category]);
   
-  const headersMap: Record<string, string[]> = {
-      'risk-score': ['Rank', 'Department', 'Users', 'Average Score'],
-      'training-completion': ['Rank', 'Department', 'Users', 'Avg Completion Rate'],
-      'phishing-reported': ['Rank', 'Department', 'Users', 'Total Reports'],
-      'compliance-score': ['Rank', 'Department', 'Users', 'Avg Compliance Score'],
-  };
-  const headers = headersMap[category] || ['Rank', 'Department', 'Users', 'Value'];
-  
-  const renderValueCell = (dept: any) => {
-      switch (category) {
-          case 'risk-score':
-          case 'training-completion':
-          case 'compliance-score':
-              return <span className="font-mono">{dept.score.toFixed(0)}%</span>;
-          default:
-              return <span className="font-mono">{dept.score}</span>;
-      }
-  }
-
   if (isLoading) {
     return <div className="flex justify-center items-center h-64"><Loader className="w-8 h-8 animate-spin" /></div>;
   }
@@ -108,34 +96,29 @@ export function DepartmentLeaderboardTable({ category }: { category: string }) {
      return <div className="text-center text-muted-foreground py-16">No data available for this leaderboard.</div>
   }
 
+  const categoryTitle = headersMap[category] || 'Department Performance';
+  const isPercentage = category.includes('score') || category.includes('completion');
+
   return (
     <Card>
     <CardHeader>
-        <CardTitle>{headers[3] || headers[2]}</CardTitle>
+        <CardTitle>{categoryTitle}</CardTitle>
+        <CardDescription>Comparing departments based on the selected metric.</CardDescription>
     </CardHeader>
     <CardContent>
-        <Table>
-        <TableHeader>
-            <TableRow>
-            {headers.map((header, i) => (
-                <TableHead key={header} className={i === 0 ? 'w-[80px]' : (i === headers.length - 1 ? 'text-right' : '')}>{header}</TableHead>
-            ))}
-            </TableRow>
-        </TableHeader>
-        <TableBody>
-            {leaderboardData.map((dept, index) => (
-            <TableRow key={dept.name}>
-                <TableCell className="font-medium text-lg font-headline">{index + 1}</TableCell>
-                <TableCell className="font-medium">{dept.name}</TableCell>
-                <TableCell>{dept.userCount}</TableCell>
-                <TableCell className="text-right">{renderValueCell(dept)}</TableCell>
-            </TableRow>
-            ))}
-        </TableBody>
-        </Table>
+         <ResponsiveContainer width="100%" height={leaderboardData.length * 50}>
+            <BarChart data={leaderboardData} layout="vertical" margin={{ left: 10, right: 30, top: 10, bottom: 10 }}>
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={120} interval={0} />
+                <Tooltip
+                    cursor={{ fill: 'hsl(var(--muted))' }}
+                    contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                    formatter={(value: number) => [`${value.toFixed(isPercentage ? 0 : 0)}${isPercentage ? '%' : ''}`, categoryTitle]}
+                />
+                <Bar dataKey="score" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={25} />
+            </BarChart>
+        </ResponsiveContainer>
     </CardContent>
     </Card>
   );
 }
-
-    

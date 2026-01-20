@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Trophy, Users } from 'lucide-react';
-import { LeaderboardTable } from '@/components/dashboard/leaderboard-table';
-import { DepartmentLeaderboardTable } from '@/components/dashboard/department-leaderboard-table';
+import { IndividualLeaderboard } from '@/components/dashboard/leaderboard-table';
+import { DepartmentLeaderboardChart } from '@/components/dashboard/department-leaderboard-table';
 
 const individualCategories = [
     { value: 'risk-score', label: 'Overall Risk Score' },
@@ -65,9 +65,9 @@ export default function LeaderboardPage() {
 
             <div className="mt-6">
             {leaderboardType === 'individual' ? (
-                <LeaderboardTable category={category} />
+                <IndividualLeaderboard category={category} />
             ) : (
-                <DepartmentLeaderboardTable category={category} />
+                <DepartmentLeaderboardChart category={category} />
             )}
             </div>
         </div>
