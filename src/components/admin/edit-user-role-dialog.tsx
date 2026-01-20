@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import {
@@ -10,8 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
-import type { UserProfile } from '@/app/admin/users/page';
+import { doc } from 'firebase/firestore';
+import type { UserProfile, Role } from '@/app/admin/users/page';
 import { useToast } from '@/hooks/use-toast';
 import { Loader, UserCog } from 'lucide-react';
 import { useAuthContext } from '../auth/AuthProvider';
@@ -59,42 +60,30 @@ export function EditUserRoleDialog({
   }, [user, isOpen]);
 
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!firestore || !actor || !user) return;
     setIsSaving(true);
-    try {
-      const userRolesDocRef = doc(firestore, 'user_roles', user.id);
-      
-      // Use setDoc with merge to create the document if it doesn't exist.
-      // This is a blocking operation to ensure UI consistency.
-      await setDoc(userRolesDocRef, { roles: selectedRoles }, { merge: true });
-      
-      await logAuditEvent(firestore, {
-          action: 'USER_ROLE_CHANGE',
-          actor: { uid: actor.uid, email: actor.email },
-          target: { type: 'USER', id: user.id },
-          metadata: { 
-              oldRoles: initialRoles.map(rId => ALL_ROLES.find(r => r.id === rId)?.name || rId),
-              newRoles: selectedRoles.map(rId => ALL_ROLES.find(r => r.id === rId)?.name || rId)
-          }
-      });
 
+    const userRolesDocRef = doc(firestore, 'user_roles', user.id);
+    
+    // Use the non-blocking fire-and-forget pattern
+    setDocumentNonBlocking(userRolesDocRef, { roles: selectedRoles }, { merge: true });
+    
+    logAuditEvent(firestore, {
+        action: 'USER_ROLE_CHANGE',
+        actor: { uid: actor.uid, email: actor.email },
+        target: { type: 'USER', id: user.id },
+        metadata: { 
+            oldRoles: initialRoles.map(rId => ALL_ROLES.find(r => r.id === rId)?.name || rId),
+            newRoles: selectedRoles.map(rId => ALL_ROLES.find(r => r.id === rId)?.name || rId)
+        }
+    });
 
-      toast({
-        title: 'Roles Updated',
-        description: `${user.displayName}'s roles have been changed.`,
-      });
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error updating roles:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error updating roles',
-        description: 'An error occurred while updating the user roles.',
-      });
-    } finally {
-      setIsSaving(false);
-    }
+    toast({
+      title: 'Roles Updated',
+      description: `${user.displayName}'s roles have been changed.`,
+    });
+    onOpenChange(false);
   };
 
   const handleRoleToggle = (roleId: string) => {
