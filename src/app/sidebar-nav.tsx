@@ -39,6 +39,7 @@ import {
   ClipboardCheck,
   Key,
   ShieldQuestion,
+  GitBranch,
 } from "lucide-react";
 
 import {
@@ -89,7 +90,7 @@ const securityOpsLinks = [
 ];
 
 const threatIntelLinks = [
-    { href: "/dark-web-monitor", label: "Dark Web Monitor", icon: ShieldOff },
+    { href: "/dark-web-monitor", label: "OSINT & Dark Web Intel", icon: GitBranch },
     { href: "/threat-intelligence/actors", label: "Threat Actor Profiles", icon: Users },
 ];
 

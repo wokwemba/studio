@@ -20,5 +20,15 @@ export const RiskDetectionMapOutputSchema = z.object({
   breachData: FindingSchema.optional().describe('Information on appearances in known (simulated) data breaches.'),
   socialMedia: FindingSchema.optional().describe('Links to and summaries of associated social media profiles.'),
   reputation: FindingSchema.optional().describe('Overall reputation summary based on search engine results and other factors.'),
+  leakedCredentials: FindingSchema.optional().describe('Simulated leaked credentials (username/password pairs).'),
+  malwareSamples: FindingSchema.optional().describe('Simulated malware samples associated with the target.'),
+  gitCommits: FindingSchema.optional().describe('Simulated public git commits by the target.'),
+  pastebinLeaks: FindingSchema.optional().describe('Simulated mentions in public pastes.'),
+  personalIdExposure: FindingSchema.optional().describe('Simulated exposure of personal ID numbers.'),
+  creditCardExposure: FindingSchema.optional().describe('Simulated exposure of credit card information.'),
+  exposedApiKeys: FindingSchema.optional().describe('Simulated exposed API keys.'),
+  databaseDumps: FindingSchema.optional().describe('Simulated presence in database dumps.'),
+  connectedIotDevices: FindingSchema.optional().describe('Simulated connected IoT devices.'),
+  domainTyposquatting: FindingSchema.optional().describe('Simulated typosquatted or similar domains.'),
 });
 export type RiskDetectionMapOutput = z.infer<typeof RiskDetectionMapOutputSchema>;

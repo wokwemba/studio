@@ -1,36 +1,73 @@
 'use client';
 import { useState, type FormEvent } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Loader, ShieldOff, Search, KeyRound, Building, MessageCircleWarning } from 'lucide-react';
+import { Loader, Search, GitBranch, FileText, Globe, Users, Phone, Shield, Share2, KeyRound, FileWarning, GitCommit, ClipboardPaste, Fingerprint, CreditCard, CloudCog, Database, Router, Globe2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { simulateDarkWebScan, type DarkWebSimulationOutput } from '@/ai/flows/dark-web-simulation-flow';
+import { runRiskDetectionAnalysis, type RiskDetectionMapOutput } from '@/ai/flows/osint-mind-map-flow';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { MindMapNode } from '@/components/phishing-engine/mind-map-node';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
+const osintCategories = [
+    'Username Search', 'Email Analysis', 'Domain WHOIS', 'Subdomain Enumeration',
+    'IP Address Analysis', 'Associated Social Media', 'Data Breach Exposure',
+    'Reputation Analysis', 'Associated Documents', 'Reverse Image Search',
+    'Phone Number Lookup', 'Geolocation Analysis', 'Dark Web Mentions',
+    'Company Information', 'Employee Lookup', 'Code Repository Search',
+    'Vulnerability Scan', 'DNS Records', 'Website Technology', 'Historical Archives',
+    'Leaked Credentials', 'Malware Samples', 'Git Commits', 'Pastebin / Public Leaks',
+    'Personal ID Exposure', 'Credit Card Exposure', 'Exposed API Keys', 'Database Dumps',
+    'Connected IoT Devices', 'Domain Typosquatting'
+];
+
+const iconMap = {
+    emailAnalysis: FileText,
+    domainAnalysis: Globe,
+    usernameAnalysis: Users,
+    phoneAnalysis: Phone,
+    breachData: Shield,
+    socialMedia: Share2,
+    reputation: GitBranch,
+    leakedCredentials: KeyRound,
+    malwareSamples: FileWarning,
+    gitCommits: GitCommit,
+    pastebinLeaks: ClipboardPaste,
+    personalIdExposure: Fingerprint,
+    creditCardExposure: CreditCard,
+    exposedApiKeys: CloudCog,
+    databaseDumps: Database,
+    connectedIotDevices: Router,
+    domainTyposquatting: Globe2,
+};
+
 
 function DarkWebMonitorPage() {
-    const [companyName, setCompanyName] = useState('');
-    const [keywords, setKeywords] = useState('');
+    const [target, setTarget] = useState('example.com');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [results, setResults] = useState<DarkWebSimulationOutput | null>(null);
+    const [results, setResults] = useState<RiskDetectionMapOutput | null>(null);
+    const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set(['Email Analysis', 'Domain WHOIS', 'Data Breach Exposure', 'Phone Number Lookup']));
     const { toast } = useToast();
+    
+    const handleCategoryChange = (category: string, checked: boolean | 'indeterminate') => {
+        const newSelected = new Set(selectedCategories);
+        if (checked) newSelected.add(category);
+        else newSelected.delete(category);
+        setSelectedCategories(newSelected);
+    };
 
     const handleAnalyze = async (e: FormEvent) => {
         e.preventDefault();
-        if (!companyName.trim()) {
-            toast({ variant: 'destructive', title: 'Company Name Required', description: 'Please enter a company name to scan.' });
+        if (!target.trim()) {
+            toast({ variant: 'destructive', title: 'Target Required', description: 'Please enter a target to analyze.' });
+            return;
+        }
+        if (selectedCategories.size === 0) {
+            toast({ variant: 'destructive', title: 'Categories Required', description: 'Please select at least one category to investigate.' });
             return;
         }
 
@@ -39,142 +76,80 @@ function DarkWebMonitorPage() {
         setResults(null);
 
         try {
-            const keywordList = keywords.split(',').map(k => k.trim()).filter(Boolean);
-            const scanResults = await simulateDarkWebScan({ companyName, keywords: keywordList });
-            setResults(scanResults);
-            toast({ title: 'Scan Complete', description: 'Simulated Dark Web scan finished.' });
+            const analysisResults = await runRiskDetectionAnalysis({ target, categories: Array.from(selectedCategories) });
+            setResults(analysisResults);
+            toast({ title: 'OSINT Scan Complete', description: 'Simulated analysis finished.' });
         } catch (err: any) {
-            console.error("Dark Web Scan failed:", err);
+            console.error("OSINT Scan failed:", err);
             setError(err.message || 'The AI service may be temporarily unavailable.');
         } finally {
             setIsLoading(false);
         }
     };
 
+    const resultEntries = results ? Object.entries(results).filter(([key, value]) => key !== 'targetType' && value) : [];
+
     return (
         <div className="space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2">
-                        <ShieldOff />
-                        <span>Dark Web Monitor (Simulation)</span>
+                        <GitBranch />
+                        <span>OSINT & Dark Web Intelligence</span>
                     </CardTitle>
                     <CardDescription>
-                        Simulate a scan of the dark web for mentions of your company and related keywords. This is an educational tool and does not use real-time data.
+                        Simulate an OSINT investigation. Enter a target and select categories to generate a report on its public exposure.
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleAnalyze}>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div className="space-y-2">
-                                <Label htmlFor="companyName">Company Name</Label>
-                                <Input 
-                                    id="companyName"
-                                    value={companyName}
-                                    onChange={e => setCompanyName(e.target.value)}
-                                    placeholder="e.g., Acme Corporation"
-                                    disabled={isLoading}
-                                />
+                    <CardContent>
+                        <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="osint-target">Target</Label>
+                                <div className="flex gap-2">
+                                    <Input id="osint-target" value={target} onChange={e => setTarget(e.target.value)} placeholder="e.g., example.com, user@test.com, or +254712345678" disabled={isLoading} />
+                                    <Button type="submit" disabled={isLoading} className="w-32">{isLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}<span className="ml-2 hidden sm:inline">Analyze</span></Button>
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="keywords">Keywords (comma-separated)</Label>
-                                <Input 
-                                    id="keywords"
-                                    value={keywords}
-                                    onChange={e => setKeywords(e.target.value)}
-                                    placeholder="e.g., acme.com, project-titan, ceo@acme.com"
-                                    disabled={isLoading}
-                                />
-                            </div>
+                            <Accordion type="single" collapsible><AccordionItem value="item-1"><AccordionTrigger>Investigation Categories ({selectedCategories.size} selected)</AccordionTrigger>
+                                <AccordionContent>
+                                    <div className="flex gap-2 mb-4 px-2"><Button type="button" size="sm" variant="outline" onClick={() => setSelectedCategories(new Set(osintCategories))}>Select All</Button><Button type="button" size="sm" variant="outline" onClick={() => setSelectedCategories(new Set())}>Deselect All</Button></div>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2 max-h-60 overflow-y-auto">{osintCategories.map(category => (<div key={category} className="flex items-center space-x-2"><Checkbox id={category} checked={selectedCategories.has(category)} onCheckedChange={(checked) => handleCategoryChange(category, checked)} /><Label htmlFor={category} className="text-sm font-normal cursor-pointer">{category}</Label></div>))}</div>
+                                </AccordionContent>
+                            </AccordionItem></Accordion>
                         </div>
                     </CardContent>
-                    <CardFooter>
-                         <Button type="submit" disabled={isLoading || !companyName}>
-                            {isLoading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
-                            {isLoading ? 'Scanning...' : 'Run Simulated Scan'}
-                        </Button>
-                    </CardFooter>
                 </form>
             </Card>
 
-            {isLoading && (
-                 <Card>
-                    <CardContent className="p-8 flex flex-col items-center justify-center gap-4">
-                        <Loader className="w-10 h-10 animate-spin text-primary" />
-                        <p className="text-muted-foreground">AI is simulating a scan of dark web sources...</p>
-                    </CardContent>
-                </Card>
-            )}
-
-            {error && (
-                <Card className="bg-destructive/10 border-destructive">
-                    <CardHeader>
-                        <CardTitle>Analysis Failed</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p>{error}</p>
-                    </CardContent>
-                </Card>
-            )}
-
+            {isLoading && (<Card><CardContent className="p-8 flex flex-col items-center justify-center gap-4 min-h-[500px]"><Loader className="w-10 h-10 animate-spin text-primary" /><p className="text-muted-foreground">AI is running the analysis...</p></CardContent></Card>)}
+            {error && (<Card className="bg-destructive/10 border-destructive"><CardHeader><CardTitle>Analysis Failed</CardTitle></CardHeader><CardContent><p>{error}</p></CardContent></Card>)}
             {results && (
-                <Card>
+                 <Card>
                     <CardHeader>
-                        <CardTitle>Simulated Scan Results for &quot;{companyName}&quot;</CardTitle>
-                        <CardDescription>{results.summary}</CardDescription>
+                        <CardTitle>Analysis Results for &quot;{target}&quot;</CardTitle>
+                        <CardDescription>A mind map of simulated intelligence findings.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-8">
-                        {/* Credential Leaks */}
-                        <section>
-                            <h3 className="font-headline text-lg flex items-center gap-2 mb-2"><KeyRound />Simulated Credential Leaks</h3>
-                             {results.credentialLeaks.length > 0 ? (
-                                <Table>
-                                    <TableHeader><TableRow><TableHead>Email</TableHead><TableHead>Password</TableHead><TableHead>Source Breach</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
-                                    <TableBody>
-                                        {results.credentialLeaks.map((leak, i) => (
-                                            <TableRow key={i} className="bg-muted/30">
-                                                <TableCell>{leak.email}</TableCell>
-                                                <TableCell className="font-mono">{leak.passwordMask}</TableCell>
-                                                <TableCell>{leak.sourceBreach}</TableCell>
-                                                <TableCell>{leak.date}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            ) : <p className="text-sm text-muted-foreground">No simulated credential leaks found.</p>}
-                        </section>
-                        {/* Brand Impersonation */}
-                        <section>
-                            <h3 className="font-headline text-lg flex items-center gap-2 mb-2"><Building />Simulated Brand Impersonations</h3>
-                            {results.brandImpersonations.length > 0 ? (
-                                <div className="space-y-3">
-                                {results.brandImpersonations.map((item, i) => (
-                                    <div key={i} className="p-3 border rounded-md">
-                                        <p className="font-semibold">{item.platform}: <a href={item.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{item.url}</a></p>
-                                        <p className="text-sm text-muted-foreground">{item.description}</p>
+                    <CardContent className="relative min-h-[600px] flex items-center justify-center">
+                        <MindMapNode title={target} isCentral><p className="text-xs text-center text-muted-foreground capitalize">Target: {results.targetType}</p></MindMapNode>
+                        <div className="absolute inset-0 w-full h-full">
+                            {resultEntries.map(([key, value], index) => {
+                                const angle = (index / resultEntries.length) * 2 * Math.PI;
+                                const x = 50 + 40 * Math.cos(angle);
+                                const y = 50 + 35 * Math.sin(angle);
+                                const Icon = (iconMap as any)[key] || GitBranch;
+                                return (
+                                    <div key={key} className="absolute" style={{left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)'}}>
+                                        <MindMapNode title={key.replace(/([A-Z])/g, ' $1')} icon={Icon}>
+                                            <p className="text-xs font-semibold italic text-muted-foreground mb-2">&quot;{value.summary}&quot;</p>
+                                            <ul className="text-xs list-disc list-inside space-y-1">{value.data.map((item: string, i: number) => <li key={i}>{item}</li>)}</ul>
+                                        </MindMapNode>
                                     </div>
-                                ))}
-                                </div>
-                            ) : <p className="text-sm text-muted-foreground">No simulated brand impersonation instances found.</p>}
-                        </section>
-                        {/* Threat Chatter */}
-                         <section>
-                            <h3 className="font-headline text-lg flex items-center gap-2 mb-2"><MessageCircleWarning />Simulated Threat Chatter</h3>
-                             {results.threatChatter.length > 0 ? (
-                                <div className="space-y-3">
-                                {results.threatChatter.map((item, i) => (
-                                    <blockquote key={i} className="p-4 border-l-4 bg-muted/50">
-                                        <p className="italic">&quot;{item.snippet}&quot;</p>
-                                        <footer className="text-xs text-right mt-2 text-muted-foreground">
-                                            - {item.author} on {item.forum}, {item.date}
-                                        </footer>
-                                    </blockquote>
-                                ))}
-                                </div>
-                            ) : <p className="text-sm text-muted-foreground">No simulated threat chatter found.</p>}
-                        </section>
+                                );
+                            })}
+                        </div>
                     </CardContent>
-                </Card>
+                 </Card>
             )}
         </div>
     );

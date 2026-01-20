@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader, Wand2, BarChart, AlertTriangle, Sigma, Banknote, GitBranch, Search, Share2, Users, FileText, Globe, Shield, MessageSquare, Mail, Phone } from 'lucide-react';
+import { Loader, Wand2, BarChart, AlertTriangle, Sigma, Banknote, GitBranch, Search, Share2, Users, FileText, Globe, Shield, MessageSquare, Mail, Phone, KeyRound, FileWarning, GitCommit, ClipboardPaste, Fingerprint, CreditCard, CloudCog, Database, Router, Globe2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
@@ -37,15 +37,28 @@ const iconMap = {
     breachData: Shield,
     socialMedia: Share2,
     reputation: GitBranch,
+    leakedCredentials: KeyRound,
+    malwareSamples: FileWarning,
+    gitCommits: GitCommit,
+    pastebinLeaks: ClipboardPaste,
+    personalIdExposure: Fingerprint,
+    creditCardExposure: CreditCard,
+    exposedApiKeys: CloudCog,
+    databaseDumps: Database,
+    connectedIotDevices: Router,
+    domainTyposquatting: Globe2,
 };
 
 const osintCategories = [
-    'Username Search', 'Email Analysis', 'Domain WHOIS', 'Subdomain Enumeration', 
-    'IP Address Analysis', 'Associated Social Media', 'Data Breach Exposure', 
-    'Reputation Analysis', 'Associated Documents', 'Reverse Image Search', 
-    'Phone Number Lookup', 'Geolocation Analysis', 'Dark Web Mentions', 
-    'Company Information', 'Employee Lookup', 'Code Repository Search', 
-    'Vulnerability Scan', 'DNS Records', 'Website Technology', 'Historical Archives'
+    'Username Search', 'Email Analysis', 'Domain WHOIS', 'Subdomain Enumeration',
+    'IP Address Analysis', 'Associated Social Media', 'Data Breach Exposure',
+    'Reputation Analysis', 'Associated Documents', 'Reverse Image Search',
+    'Phone Number Lookup', 'Geolocation Analysis', 'Dark Web Mentions',
+    'Company Information', 'Employee Lookup', 'Code Repository Search',
+    'Vulnerability Scan', 'DNS Records', 'Website Technology', 'Historical Archives',
+    'Leaked Credentials', 'Malware Samples', 'Git Commits', 'Pastebin / Public Leaks',
+    'Personal ID Exposure', 'Credit Card Exposure', 'Exposed API Keys', 'Database Dumps',
+    'Connected IoT Devices', 'Domain Typosquatting'
 ];
 
 export default function PhishingEngineDashboard() {
