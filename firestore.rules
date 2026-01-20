@@ -4,10 +4,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Safely get user roles; return empty array if document doesn't exist
+    // Safely get user roles; handles non-existent docs and missing fields.
     function getUserRoles() {
-      let doc = get(/databases/$(database)/documents/user_roles/$(request.auth.uid));
-      return doc.exists() ? doc.data.roles : [];
+      let path = /databases/$(database)/documents/user_roles/$(request.auth.uid);
+      if (exists(path)) {
+        let data = get(path).data;
+        // Check for existence and type of 'roles' field.
+        if ('roles' in data && data.roles is list) {
+          return data.roles;
+        }
+      }
+      return [];
     }
 
     function isOwner(userId) {
@@ -33,14 +40,20 @@ service cloud.firestore {
       return isTier1Admin() || getUserRoles().hasAny(['TENANT_ADMIN', 'PARTNER_ADMIN', 'SUPPORT_ADMIN']);
     }
     
+    // Safely compares the tenantId of a target user with the admin's tenantId.
     function isUserInTenant(userId) {
-      let userDoc = get(/databases/$(database)/documents/users/$(userId));
-      let adminDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      // Make sure both documents exist and have tenantId before comparing
-      if (!exists(/databases/$(database)/documents/users/$(request.auth.uid)) || !('tenantId' in userDoc.data) || !('tenantId' in adminDoc.data)) {
+      let userPath = /databases/$(database)/documents/users/$(userId);
+      let adminPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      
+      if (!exists(userPath) || !exists(adminPath)) {
         return false;
       }
-      return userDoc.data.tenantId == adminDoc.data.tenantId;
+
+      let userTenantId = get(userPath).data.get('tenantId', null);
+      let adminTenantId = get(adminPath).data.get('tenantId', null);
+      
+      // Ensure tenantIds are not null and are equal before returning true
+      return userTenantId != null && userTenantId == adminTenantId;
     }
 
     // USERS & ROLES
