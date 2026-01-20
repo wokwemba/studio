@@ -27,8 +27,7 @@ export const ALL_ROLES = [
   // Tier 0
   { id: ROLE_DOMAIN_ADMIN, name: 'Domain Administrator', tier: 0, description: 'Full super admin, can list/update all users.' },
   { id: ROLE_SECURITY_ADMIN, name: 'Security Administrator', tier: 0, description: 'Security-focused super admin.' },
-  { id: ROLE_AUDITOR, name: 'Auditor', tier: 0, description: 'Can view audit logs.' },
-
+  
   // Tier 1
   { id: ROLE_DEVOPS_ENGINEER, name: 'DevOps Engineer', tier: 1, description: 'Access to deploy/manage services.' },
   { id: ROLE_APPLICATION_DEVELOPER, name: 'Application Developer', tier: 1, description: 'Access to code, dev environment.' },
@@ -42,4 +41,7 @@ export const ALL_ROLES = [
   { id: ROLE_CLIENT_USER, name: 'Client User', tier: 3, description: 'Standard user.' },
   { id: ROLE_READ_ONLY_USER, name: 'Read-Only User', tier: 3, description: 'Limited read-only access.' },
   { id: ROLE_ANONYMOUS, name: 'Anonymous', tier: 3, description: 'Minimal system access.' },
+
+  // Read-Only Roles
+  { id: ROLE_AUDITOR, name: 'Auditor', tier: 4, description: 'Read-only access to audit logs.' },
 ];
