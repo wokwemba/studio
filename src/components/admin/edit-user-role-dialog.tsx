@@ -45,14 +45,13 @@ export function EditUserRoleDialog({
     if (user) {
       const roleIds = user.roles.map(r => r.id);
       
-      // If the user has no roles, default them to CLIENT_USER in the dialog
       if (roleIds.length === 0) {
         setSelectedRoles([ROLE_CLIENT_USER]);
       } else {
         setSelectedRoles(roleIds);
       }
       
-      setInitialRoles(roleIds); // For audit logging purposes
+      setInitialRoles(roleIds);
     } else {
       setSelectedRoles([]);
       setInitialRoles([]);
@@ -62,28 +61,30 @@ export function EditUserRoleDialog({
 
   const handleSave = () => {
     if (!firestore || !actor || !user) return;
-    setIsSaving(true);
-
-    const userRolesDocRef = doc(firestore, 'user_roles', user.id);
     
-    // Use the non-blocking fire-and-forget pattern
-    setDocumentNonBlocking(userRolesDocRef, { roles: selectedRoles }, { merge: true });
-    
-    logAuditEvent(firestore, {
-        action: 'USER_ROLE_CHANGE',
-        actor: { uid: actor.uid, email: actor.email },
-        target: { type: 'USER', id: user.id },
-        metadata: { 
-            oldRoles: initialRoles.map(rId => ALL_ROLES.find(r => r.id === rId)?.name || rId),
-            newRoles: selectedRoles.map(rId => ALL_ROLES.find(r => r.id === rId)?.name || rId)
-        }
-    });
-
+    // Immediately close the dialog and give feedback
+    onOpenChange(false);
     toast({
       title: 'Roles Updated',
-      description: `${user.displayName}'s roles have been changed.`,
+      description: `${user.displayName}'s roles are being updated.`,
     });
-    onOpenChange(false);
+
+    // Defer the database operations to run in the background
+    setTimeout(() => {
+        const userRolesDocRef = doc(firestore, 'user_roles', user.id);
+        
+        setDocumentNonBlocking(userRolesDocRef, { roles: selectedRoles }, { merge: true });
+        
+        logAuditEvent(firestore, {
+            action: 'USER_ROLE_CHANGE',
+            actor: { uid: actor.uid, email: actor.email },
+            target: { type: 'USER', id: user.id },
+            metadata: { 
+                oldRoles: initialRoles.map(rId => ALL_ROLES.find(r => r.id === rId)?.name || rId),
+                newRoles: selectedRoles.map(rId => ALL_ROLES.find(r => r.id === rId)?.name || rId)
+            }
+        });
+    }, 50); // 50ms delay to ensure UI updates first
   };
 
   const handleRoleToggle = (roleId: string) => {
@@ -141,9 +142,8 @@ export function EditUserRoleDialog({
             </div>
         </ScrollArea>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>Cancel</Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleSave}>
             Save Changes
           </Button>
         </DialogFooter>
