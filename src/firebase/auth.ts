@@ -254,7 +254,6 @@ export async function signInWithGoogle(
 ): Promise<{ success: boolean; role?: string; error?: string }> {
   const firestore = getFirestore(auth.app);
   try {
-    await setPersistence(auth, browserLocalPersistence);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     const userCredential = await signInWithPopup(auth, provider);
