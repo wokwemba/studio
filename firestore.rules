@@ -49,7 +49,8 @@ service cloud.firestore {
 
     match /user_roles/{userId} {
       allow get: if isOwner(userId) || isSuperAdmin();
-      allow list, write: if isSuperAdmin();
+      allow list: if isSuperAdmin();
+      allow write: if isSuperAdmin();
     }
     
     match /roles/{roleId} {
