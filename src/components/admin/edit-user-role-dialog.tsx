@@ -9,7 +9,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { UserProfile, Role } from '@/app/admin/users/page';
 import { useToast } from '@/hooks/use-toast';
@@ -61,14 +61,10 @@ export function EditUserRoleDialog({
   const handleSave = () => {
     if (!firestore || !actor || !user) return;
     
-    // Immediately close the dialog and give feedback, per user suggestion.
+    // Close dialog immediately
     onOpenChange(false);
-    toast({
-      title: 'Roles Updated',
-      description: `${user.displayName}'s roles are being updated.`,
-    });
-
-    // Defer the database operations to run in the background (fire-and-forget).
+    
+    // Defer DB writes and page refresh to ensure UI updates first
     setTimeout(() => {
         const userRolesDocRef = doc(firestore, 'user_roles', user.id);
         
@@ -83,6 +79,16 @@ export function EditUserRoleDialog({
                 newRoles: selectedRoles.map(rId => ALL_ROLES.find(r => r.id === rId)?.name || rId)
             }
         });
+
+        // Show toast just before scheduling the reload
+        toast({
+          title: 'Roles Updated',
+          description: `${user.displayName}'s roles are being updated. Refreshing...`,
+        });
+        
+        // Reload the page after a brief moment to see the changes reflected.
+        setTimeout(() => window.location.reload(), 500);
+
     }, 0); 
   };
 
@@ -112,7 +118,7 @@ export function EditUserRoleDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><UserCog /> Edit Roles for {user.displayName}</DialogTitle>
           <DialogDescription>
-            Assign or unassign roles to this user. Changes take effect immediately.
+            Assign or unassign roles to this user. The page will refresh to apply changes.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh] pr-4">
