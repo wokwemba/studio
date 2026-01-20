@@ -54,7 +54,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, isSuperAdmin }: 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: { 
-        displayName: user.name, 
+        displayName: user.displayName, 
         risk: user.risk,
         department: user.department || '',
     },
@@ -70,7 +70,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, isSuperAdmin }: 
     try {
         const userDocRef = doc(firestore, 'users', user.id);
         const updates: Partial<UserProfile> = {};
-        if (data.displayName !== user.name) updates.displayName = data.displayName;
+        if (data.displayName !== user.displayName) updates.displayName = data.displayName;
         if (data.risk !== user.risk) updates.risk = data.risk;
         if (data.department !== user.department) updates.department = data.department;
 
@@ -99,7 +99,7 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, isSuperAdmin }: 
     onOpenChange(false);
     setTimeout(() => {
         setIsEditing(false);
-        form.reset({ displayName: user.name, risk: user.risk, department: user.department || '' });
+        form.reset({ displayName: user.displayName, risk: user.risk, department: user.department || '' });
     }, 200);
   }
   
@@ -115,8 +115,8 @@ export function UserDetailsDialog({ isOpen, onOpenChange, user, isSuperAdmin }: 
       <DialogContent className="sm:max-w-lg">
         <DialogHeader className="flex-row items-center gap-4">
             <Avatar className="h-16 w-16">
-                <AvatarImage src={userAvatar} alt={user.name} />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={userAvatar} alt={user.displayName} />
+                <AvatarFallback>{user.displayName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
                 <DialogTitle className="text-2xl font-headline">{form.watch('displayName')}</DialogTitle>

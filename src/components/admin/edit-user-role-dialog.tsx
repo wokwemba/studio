@@ -77,7 +77,7 @@ export function EditUserRoleDialog({
 
       toast({
         title: 'Roles Updated',
-        description: `${user.name}'s roles have been changed.`,
+        description: `${user.displayName}'s roles have been changed.`,
       });
       onOpenChange(false);
     } catch (error) {
@@ -106,7 +106,7 @@ export function EditUserRoleDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><UserCog /> Edit Roles for {user.name}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><UserCog /> Edit Roles for {user.displayName}</DialogTitle>
           <DialogDescription>
             Assign one or more roles to this user. This will change their permissions across the platform.
           </DialogDescription>
