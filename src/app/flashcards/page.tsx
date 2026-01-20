@@ -20,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader, Copy } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const FlashcardComponent = ({ card, index }: { card: Flashcard, index: number }) => {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -50,7 +50,7 @@ const FlashcardComponent = ({ card, index }: { card: Flashcard, index: number })
   );
 };
 
-export default function FlashcardsPage() {
+function FlashcardsPage() {
   const [topic, setTopic] = useState('Phishing');
   const [flashcards, setFlashcards] =
     useState<GenerateFlashcardsOutput['flashcards']>([]);
@@ -134,4 +134,12 @@ export default function FlashcardsPage() {
       )}
     </div>
   );
+}
+
+export default function ProtectedFlashcardsPage() {
+    return (
+        <ProtectedRoute>
+            <FlashcardsPage />
+        </ProtectedRoute>
+    )
 }

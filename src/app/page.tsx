@@ -1,34 +1,15 @@
+
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAuth, signInAnonymously } from '@/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff, Key, Users, ShieldAlert, Blocks, ShieldQuestion } from 'lucide-react';
+import { ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff, Key, Users, ShieldAlert, Blocks, ShieldQuestion } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
     const router = useRouter();
-    const auth = useAuth();
-    const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
-
-    const handleAnonymousLogin = async () => {
-        if (!auth) {
-             toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
-            return;
-        };
-        setIsLoading(true);
-        const result = await signInAnonymously(auth);
-        if (result.success) {
-            router.push('/flashcards');
-        } else {
-            toast({ variant: 'destructive', title: 'Could not log in', description: result.error });
-            setIsLoading(false);
-        }
-    };
 
     const features = [
         {
@@ -176,10 +157,6 @@ export default function Home() {
                  <Button asChild variant="secondary" size="lg">
                     <Link href="/partner-registration">Register as Partner</Link>
                 </Button>
-                 <Button variant="secondary" size="lg" onClick={handleAnonymousLogin} disabled={isLoading}>
-                     {isLoading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Explore Flashcards
-                </Button>
             </div>
             
              <div className="w-full max-w-7xl mx-auto py-16 mt-10">
@@ -187,7 +164,7 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {features.sort((a,b) => a.title.localeCompare(b.title)).map((feature) => (
                          <Link href={feature.href} key={feature.title}>
-                            <Card className="text-center h-full hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer flex flex-col">
+                            <Card className="text-center h-full hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer flex flex-col items-center">
                                 <CardHeader className="items-center">
                                     <div className="p-3 bg-primary/10 rounded-md w-fit mb-4">
                                         <feature.icon className="w-8 h-8 text-primary" />
