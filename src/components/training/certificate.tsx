@@ -1,6 +1,6 @@
 
 import { forwardRef } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Award } from 'lucide-react';
 
 interface CertificateTemplateProps {
   userName: string;
@@ -14,36 +14,56 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
     return (
       <div
         ref={ref}
-        className="w-[1000px] h-[700px] bg-background text-foreground p-10 flex flex-col border-4 border-primary"
-        style={{ fontFamily: 'sans-serif' }}
+        className="w-[1000px] h-[700px] bg-background text-foreground p-8"
+        // Use a generic serif font for a classic, professional look
+        style={{ fontFamily: 'serif' }}
       >
-        <div className="flex-1 flex flex-col justify-center items-center text-center border-2 border-secondary p-8">
-          <div className="flex items-center gap-3 mb-4">
-            <ShieldCheck className="w-16 h-16 text-primary" />
-            <h1 className="text-4xl font-bold tracking-wider" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>CCyberGuard</h1>
-          </div>
-
-          <p className="text-xl text-muted-foreground mt-4 mb-8">Certificate of Completion</p>
-
-          <p className="text-lg mb-2">This certifies that</p>
-          <p className="text-4xl font-bold text-primary mb-4" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>{userName}</p>
-
-          <p className="text-lg mb-2">has successfully completed the training course</p>
-          <p className="text-2xl font-semibold mb-10">{courseName}</p>
-
-          <div className="w-full flex justify-around items-end mt-auto text-sm">
-            <div className="text-center">
-              <p className="font-bold border-b border-foreground pb-1">{completionDate}</p>
-              <p className="text-xs text-muted-foreground pt-1">Date of Completion</p>
+        {/* Ornate border simulation */}
+        <div className="w-full h-full border-2 border-muted-foreground p-2">
+          <div className="w-full h-full border border-muted-foreground/50 p-6 flex flex-col text-center">
+            
+            {/* Header */}
+            <div className="flex justify-center items-center gap-2 mb-6">
+                <ShieldCheck className="w-10 h-10 text-primary" />
+                <h1 className="text-3xl font-bold tracking-wider" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>
+                CyberGuard
+                </h1>
             </div>
-            <div className="text-center">
-                <p className="text-2xl font-bold" style={{ fontFamily: '"Source Code Pro", monospace' }}>CCyberGuard</p>
-                <p className="text-xs text-muted-foreground pt-1">Issuing Authority</p>
+
+            <div className="flex-grow flex flex-col justify-center items-center">
+              <p className="text-xl text-muted-foreground">This certificate is hereby awarded to</p>
+              
+              <p className="text-6xl font-bold my-4 text-primary">{userName}</p>
+              
+              <p className="text-xl text-muted-foreground">for the successful completion of the course</p>
+              
+              <h2 className="text-3xl font-semibold mt-4" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>
+                {courseName}
+              </h2>
             </div>
-            <div className="text-center">
-              <p className="font-bold border-b border-foreground pb-1">{expiryDate}</p>
-              <p className="text-xs text-muted-foreground pt-1">Valid Until</p>
+
+            {/* Footer */}
+            <div className="flex justify-between items-end mt-16 w-full">
+              {/* Left Date */}
+              <div className="text-center w-1/3">
+                <p className="font-mono text-lg border-b-2 border-foreground pb-1">{completionDate}</p>
+                <p className="text-xs text-muted-foreground pt-1 tracking-widest">ISSUED ON</p>
+              </div>
+
+              {/* Seal */}
+              <div className="relative w-32 h-32 flex items-center justify-center">
+                <div className="absolute inset-0 border-4 border-primary rounded-full"></div>
+                <div className="absolute inset-2 border-2 border-primary/50 rounded-full"></div>
+                <Award className="w-16 h-16 text-primary" />
+              </div>
+
+              {/* Right Date */}
+              <div className="text-center w-1/3">
+                <p className="font-mono text-lg border-b-2 border-foreground pb-1">{expiryDate}</p>
+                <p className="text-xs text-muted-foreground pt-1 tracking-widest">VALID UNTIL</p>
+              </div>
             </div>
+
           </div>
         </div>
       </div>
