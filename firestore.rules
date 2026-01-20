@@ -130,7 +130,7 @@ service cloud.firestore {
 
     // THREAT SCENARIOS: Readable by authenticated users, writable by Super Admins.
     match /threat_scenarios/{scenarioId} {
-        allow read: if request.auth.uid != null;
+        allow get, list: if request.auth.uid != null;
         allow write: if isSuperAdmin();
     }
   }
