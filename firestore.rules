@@ -1,8 +1,159 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    // ========== HELPER FUNCTIONS ==========
+
+    // Safely return a user's roles or an empty list if they have none.
+    function getUserRoles() {
+      let path = /databases/$(database)/documents/user_roles/$(request.auth.uid);
+      if (exists(path) && ('roles' in get(path).data)) {
+          return get(path).data.roles;
+      }
+      return [];
+    }
+
+    // A hardcoded check for the primary super admin email.
+    function isHardcodedSuperAdmin() {
+      return request.auth != null && request.auth.token.email == "wokwemba@safaricom.co.ke";
+    }
+
+    // Check if the user is a Super Admin via role or hardcoded email.
+    function isSuperAdmin() {
+      return request.auth != null && (isHardcodedSuperAdmin() || getUserRoles().hasAny(['DOMAIN_ADMIN']));
+    }
+
+    // Check if the user is a Security Admin via role or hardcoded email.
+    function isSecurityAdmin() {
+      return request.auth != null && (isHardcodedSuperAdmin() || getUserRoles().hasAny(['SECURITY_ADMIN']));
+    }
+
+    // A user is a Tenant Admin if they are a Super Admin or have the specific role.
+    function isTenantAdmin() {
+      return request.auth != null && (isSuperAdmin() || getUserRoles().hasAny(['TENANT_ADMIN']));
+    }
+    
+    function isAuditor() {
+      return request.auth != null && getUserRoles().hasAny(['AUDITOR']);
+    }
+
+    // Check if the requesting user is the owner of a document.
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Safely gets the tenant ID of the currently authenticated user.
+    function getMyTenantId() {
+      let myPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(myPath) && ('tenantId' in get(myPath).data) ? get(myPath).data.tenantId : null;
+    }
+
+    // Safely checks if a given user is in the same tenant as the requester.
+    function isUserInTenant(userId) {
+      let userPath = /databases/$(database)/documents/users/$(userId);
+      if (!exists(userPath)) { return false; }
+      let userTenant = get(userPath).data.tenantId;
+      let myTenant = getMyTenantId();
+      return myTenant != null && userTenant == myTenant;
+    }
+
+    // ========== COLLECTION RULES ==========
+
+    // /users/{userId}
+    match /users/{userId} {
+      allow get: if isOwner(userId) || (isTenantAdmin() && isUserInTenant(userId)) || isSuperAdmin() || isSecurityAdmin();
+      allow list: if isSuperAdmin() || isSecurityAdmin() || (isTenantAdmin() && getMyTenantId() != null && request.query.where('tenantId', '==', getMyTenantId()));
+      allow create: if (request.auth != null && request.auth.uid == userId) || isSuperAdmin() || isSecurityAdmin();
+      allow update: if isOwner(userId) || isSuperAdmin() || isSecurityAdmin();
+      allow delete: if isSuperAdmin() || isSecurityAdmin();
+    }
+
+    // /user_roles/{userId}
+    match /user_roles/{userId} {
+      allow get: if isOwner(userId) || isSuperAdmin() || isSecurityAdmin();
+      allow list: if isSuperAdmin() || isSecurityAdmin();
+      allow create: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && request.auth.uid == userId);
+      allow update, delete: if isSuperAdmin() || isSecurityAdmin();
+    }
+
+    // /roles/{roleId}
+    match /roles/{roleId} {
+      allow read: if request.auth != null;
+      allow write: if isSuperAdmin() || isSecurityAdmin();
+    }
+
+    // /audit_logs/{logId}
+    match /audit_logs/{logId} {
+      allow create: if request.auth != null;
+      allow read: if isSuperAdmin() || isSecurityAdmin() || isAuditor();
+      allow update, delete: if false;
+    }
+    
+    // /partner_requests/{requestId}
+    match /partner_requests/{requestId} {
+      allow read, write: if isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
+    }
+
+    // /tenants/{tenantId}
+    match /tenants/{tenantId} {
+      allow get: if isSuperAdmin() || isSecurityAdmin() || (isTenantAdmin() && getMyTenantId() == tenantId);
+      allow list, create, update, delete: if isSuperAdmin() || isSecurityAdmin();
+    }
+
+    // /tenants/{tenantId}/campaigns/{campaignId}
+    match /tenants/{tenantId}/campaigns/{campaignId} {
+      allow read, write: if isSuperAdmin() || isSecurityAdmin() || (isTenantAdmin() && getMyTenantId() == tenantId);
+    }
+    
+    // /trainingModules/{moduleId}
+    match /trainingModules/{moduleId} {
+      allow read: if request.auth != null;
+      allow write: if isSuperAdmin() || isSecurityAdmin();
+    }
+
+    // /userProgress/{progressId}
+    match /userProgress/{progressId} {
+      allow get: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow list: if isSuperAdmin() || isSecurityAdmin();
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+    
+    // /user_challenge_attempts/{attemptId}
+    match /user_challenge_attempts/{attemptId} {
+      allow get: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow list: if isSuperAdmin() || isSecurityAdmin();
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+    
+    // Other admin-managed collections
+    match /assignments/{assignmentId} { allow read, write: if isTenantAdmin() || isSuperAdmin() || isSecurityAdmin(); }
+    match /phishingSimulations/{simId} { allow read, write: if isTenantAdmin() || isSuperAdmin() || isSecurityAdmin(); }
+    match /reports/{reportId} { allow read, write: if isTenantAdmin() || isSuperAdmin() || isSecurityAdmin(); }
+    
+    // Global read, admin write collections
+    match /phishing_templates/{templateId} { allow read: if request.auth != null; allow write: if isSuperAdmin() || isSecurityAdmin(); }
+    match /subscription_plans/{planId} { allow read: if request.auth != null; allow write: if isSuperAdmin() || isSecurityAdmin(); }
+    match /compliance_rules/{ruleId} { allow read: if request.auth != null; allow write: if isSuperAdmin() || isSecurityAdmin(); }
+    match /threat_scenarios/{scenarioId} { allow read: if request.auth != null; allow write: if isSuperAdmin() || isSecurityAdmin(); }
+    
+    // /risk_scores/{userId}
+    match /risk_scores/{userId} {
+      allow get: if isOwner(userId) || isTenantAdmin() || isSuperAdmin() || isSecurityAdmin();
+      allow list, create, update, delete: if isSuperAdmin() || isSecurityAdmin();
+    }
+    
+    // /users/{userId}/sms_analyses/{analysisId}
+    match /users/{userId}/sms_analyses/{analysisId} {
+        allow read, create, list: if isOwner(userId);
+        allow update, delete: if false;
+    }
+    
+    // /admin_impersonation/{adminId}
+    match /admin_impersonation/{adminId} {
+        allow read, write: if isSuperAdmin() || isSecurityAdmin();
     }
   }
 }
