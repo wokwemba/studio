@@ -34,7 +34,7 @@ The user will provide a history of the conversation and their latest query. Your
 
 Conversation History:
 {{#each history}}
-- {{#if (eq role 'user')}}User: {{/if}}{{#if (eq role 'model')}}Tutor: {{/if}}{{content}}
+- {{role}}: {{content}}
 {{/each}}
 
 User's Query: {{{query}}}
