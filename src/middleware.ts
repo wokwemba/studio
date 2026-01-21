@@ -7,7 +7,9 @@ const PUBLIC_ROUTES = [
   '/login',
   '/signup',
   '/partner-registration',
-  '/privacy',
+  '/privacy-policy',
+  '/terms',
+  '/cookie-policy',
 ];
 
 export function middleware(req: NextRequest) {

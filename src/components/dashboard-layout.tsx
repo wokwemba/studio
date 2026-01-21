@@ -9,9 +9,10 @@ import { ShieldCheck, Loader } from "lucide-react";
 import Link from "next/link";
 import { useAuthContext } from "./auth/AuthProvider";
 import { ImpersonationBanner } from "./admin/impersonation-banner";
+import { Separator } from "./ui/separator";
 
 const unauthenticatedRoutes = ["/login", "/signup", "/partner-registration"];
-const publicRoutes = ["/", "/privacy"];
+const publicRoutes = ["/", "/privacy-policy", "/terms", "/cookie-policy"];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: isUserLoading } = useAuthContext();
@@ -53,7 +54,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Header />
             <main className="p-4 sm:p-6 lg:p-8 flex-1">{children}</main>
             <footer className="p-4 border-t text-center text-xs text-muted-foreground">
-                <p>&copy; {new Date().getFullYear()} CyberGuard Studio | <Link href="/privacy" className="hover:text-primary">Privacy Policy</Link></p>
+              <div className="flex justify-center items-center gap-4">
+                <span>&copy; {new Date().getFullYear()} CyberGuard Studio</span>
+                <Separator orientation="vertical" className="h-4" />
+                <Link href="/privacy-policy" className="hover:text-primary">Privacy Policy</Link>
+                <Separator orientation="vertical" className="h-4" />
+                <Link href="/terms" className="hover:text-primary">Terms of Service</Link>
+                <Separator orientation="vertical" className="h-4" />
+                <Link href="/cookie-policy" className="hover:text-primary">Cookie Policy</Link>
+              </div>
             </footer>
         </div>
         </div>

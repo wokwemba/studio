@@ -33,7 +33,7 @@ export function CookieBanner() {
         <div className="flex gap-2 flex-shrink-0">
           <Button onClick={handleAccept}>Accept</Button>
           <Button asChild variant="link">
-            <Link href="/privacy">Learn More</Link>
+            <Link href="/cookie-policy">Learn More</Link>
           </Button>
         </div>
       </div>
