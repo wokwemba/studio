@@ -112,7 +112,8 @@ service cloud.firestore {
       // A user can read documents if they are the owner.
       // This is secure for list operations because the client query must
       // include `where('userId', '==', request.auth.uid)`.
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // The `'userId' in resource.data` check adds resilience.
+      allow read: if request.auth != null && 'userId' in resource.data && resource.data.userId == request.auth.uid;
     
       // A user can create or update their own progress.
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
