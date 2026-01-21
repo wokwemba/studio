@@ -110,9 +110,7 @@ service cloud.firestore {
     // /userProgress/{progressId}
     match /userProgress/{progressId} {
       // Allow a user to read their own progress documents.
-      // This rule is defensive: it checks for the existence of the `userId` field
-      // before comparing it, which prevents queries from failing if some documents
-      // in the collection are missing this field.
+      // This rule is now simple and contains no `get()` calls, which fixes the `list` query error.
       allow read: if request.auth != null && 'userId' in resource.data && resource.data.userId == request.auth.uid;
     
       // WRITE: A user can create or update their own progress.
