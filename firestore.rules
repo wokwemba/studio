@@ -109,14 +109,12 @@ service cloud.firestore {
 
     // /userProgress/{progressId}
     match /userProgress/{progressId} {
-      // Allow a user to read their own progress documents.
-      // This is the simplest possible secure rule. It relies on the client
-      // query being correct (`where('userId', '==', request.auth.uid)`).
-      // By removing all other `OR` conditions and `get()` calls, we ensure
-      // Firestore's query analyzer can validate this rule for `list` operations.
+      // A user can read documents if they are the owner.
+      // This is secure for list operations because the client query must
+      // include `where('userId', '==', request.auth.uid)`.
       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
     
-      // WRITE: A user can create or update their own progress.
+      // A user can create or update their own progress.
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
       allow delete: if false;
