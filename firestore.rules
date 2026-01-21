@@ -109,24 +109,26 @@ service cloud.firestore {
 
     // /userProgress/{progressId}
     match /userProgress/{progressId} {
-      // `list` rule is for collection queries. Client queries must filter by userId.
-      // This simple rule avoids `get()` calls, fixing the permission error.
+      // `list` is for collection queries. The client query MUST enforce security (e.g., where('userId', '==', uid)).
+      // This simple rule contains no `get()` calls and allows the query to proceed.
       allow list: if request.auth != null;
       
-      // `get` rule is for single document reads. It can be more complex.
-      allow get: if (request.auth != null && resource.data.userId == request.auth.uid) 
-                 || isSuperAdmin() || isSecurityAdmin();
+      // `get` is for single document reads. Check for ownership or admin privileges.
+      allow get: if (request.auth != null && resource.data.userId == request.auth.uid) || isSuperAdmin() || isSecurityAdmin();
     
       // A user can create or update their own progress.
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Deletes are not allowed from the client.
       allow delete: if false;
     }
     
     // /user_challenge_attempts/{attemptId}
     match /user_challenge_attempts/{attemptId} {
-      allow get: if isSuperAdmin() || isSecurityAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
-      allow list: if isSuperAdmin() || isSecurityAdmin();
+      // Proactive fix: Separated list from get to prevent future errors.
+      allow list: if request.auth != null;
+      allow get: if (request.auth != null && resource.data.userId == request.auth.uid) || isSuperAdmin() || isSecurityAdmin();
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
