@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { AuthProvider } from '@/components/auth/AuthProvider';
+import { CookieBanner } from '@/components/cookie-banner';
 
 export const metadata: Metadata = {
   title: 'CCyberGuard',
@@ -35,6 +36,7 @@ export default function RootLayout({
             <Toaster />
           </AuthProvider>
         </FirebaseClientProvider>
+        <CookieBanner />
       </body>
     </html>
   );

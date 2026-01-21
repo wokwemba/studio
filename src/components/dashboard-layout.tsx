@@ -11,7 +11,7 @@ import { useAuthContext } from "./auth/AuthProvider";
 import { ImpersonationBanner } from "./admin/impersonation-banner";
 
 const unauthenticatedRoutes = ["/login", "/signup", "/partner-registration"];
-const publicRoutes = ["/"];
+const publicRoutes = ["/", "/privacy"];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: isUserLoading } = useAuthContext();
@@ -52,6 +52,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <ImpersonationBanner />
             <Header />
             <main className="p-4 sm:p-6 lg:p-8 flex-1">{children}</main>
+            <footer className="p-4 border-t text-center text-xs text-muted-foreground">
+                <p>&copy; {new Date().getFullYear()} CyberGuard Studio | <Link href="/privacy" className="hover:text-primary">Privacy Policy</Link></p>
+            </footer>
         </div>
         </div>
     );
