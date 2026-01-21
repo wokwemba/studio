@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, type FormEvent } from 'react';
@@ -20,7 +19,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader, Copy } from 'lucide-react';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const FlashcardComponent = ({ card, index }: { card: Flashcard, index: number }) => {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -50,7 +48,7 @@ const FlashcardComponent = ({ card, index }: { card: Flashcard, index: number })
   );
 };
 
-function FlashcardsPage() {
+export default function FlashcardsPage() {
   const [topic, setTopic] = useState('Phishing');
   const [flashcards, setFlashcards] =
     useState<GenerateFlashcardsOutput['flashcards']>([]);
@@ -134,12 +132,4 @@ function FlashcardsPage() {
       )}
     </div>
   );
-}
-
-export default function ProtectedFlashcardsPage() {
-    return (
-        <ProtectedRoute>
-            <FlashcardsPage />
-        </ProtectedRoute>
-    )
 }
