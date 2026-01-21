@@ -109,10 +109,13 @@ service cloud.firestore {
 
     // /userProgress/{progressId}
     match /userProgress/{progressId} {
-      // Allow any authenticated user to read from this collection.
-      // The client-side queries are responsible for filtering by userId to ensure
-      // users only see their own data in the UI.
-      allow read: if request.auth != null;
+      // `list` rule is for collection queries. Client queries must filter by userId.
+      // This simple rule avoids `get()` calls, fixing the permission error.
+      allow list: if request.auth != null;
+      
+      // `get` rule is for single document reads. It can be more complex.
+      allow get: if (request.auth != null && resource.data.userId == request.auth.uid) 
+                 || isSuperAdmin() || isSecurityAdmin();
     
       // A user can create or update their own progress.
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
