@@ -1,6 +1,7 @@
 
 import { forwardRef } from 'react';
-import { ShieldCheck, Award } from 'lucide-react';
+import { Award } from 'lucide-react';
+import { CyberGuardLogo } from '../icons/cyber-guard-logo';
 
 interface CertificateTemplateProps {
   userName: string;
@@ -24,7 +25,7 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateTemplat
             
             {/* Header */}
             <div className="flex justify-center items-center gap-2 mb-6">
-                <ShieldCheck className="w-10 h-10 text-primary" />
+                <CyberGuardLogo className="w-10 h-10 text-primary" />
                 <h1 className="text-3xl font-bold tracking-wider" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>
                 CyberGuard
                 </h1>

@@ -10,7 +10,6 @@ import {
   ScanLine,
   FileText,
   User,
-  ShieldCheck,
   History,
   Wand2,
   BrainCircuit,
@@ -38,6 +37,7 @@ import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { useTranslation } from '@/hooks/useTranslation';
 import { Loader } from 'lucide-react';
+import { CyberGuardLogo } from '@/components/icons/cyber-guard-logo';
 
 export function SidebarNav() {
   const pathname = usePathname();
@@ -252,7 +252,7 @@ export function SidebarNav() {
                 tooltip="Admin Panel"
             >
                 <Link href="/admin">
-                    <ShieldCheck className="h-5 w-5" />
+                    <CyberGuardLogo className="h-5 w-5" />
                     {state === 'expanded' && <span>{t('sidebar.admin_panel')}</span>}
                 </Link>
             </SidebarMenuButton>

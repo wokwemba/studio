@@ -8,9 +8,10 @@ import { type FormField } from '@/app/simulations/data';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import { Loader, Send, ShieldCheck, Building } from 'lucide-react';
+import { Loader, Send, Building } from 'lucide-react';
 import Link from 'next/link';
 import { industries } from '@/app/training/industries';
+import { CyberGuardLogo } from '@/components/icons/cyber-guard-logo';
 
 const formFields: FormField[] = [
     { name: 'companyName', label: 'Company/Organization Name', type: 'text', placeholder: 'e.g., Acme Corporation' },
@@ -83,7 +84,7 @@ export default function PartnerRegistrationPage() {
             </div>
 
             <div className="relative z-10 flex items-center gap-2 mb-6">
-                <ShieldCheck className="w-10 h-10 text-primary" />
+                <CyberGuardLogo className="w-10 h-10 text-primary" />
                 <h1 className="text-3xl font-headline font-semibold text-white">CyberGuard</h1>
             </div>
 

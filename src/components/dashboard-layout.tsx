@@ -5,11 +5,12 @@ import { usePathname } from "next/navigation";
 import { Sidebar, SidebarContent, SidebarHeader } from "@/components/ui/sidebar";
 import { SidebarNav } from "@/app/sidebar-nav";
 import Header from "@/components/header";
-import { ShieldCheck, Loader } from "lucide-react";
+import { Loader } from "lucide-react";
 import Link from "next/link";
 import { useAuthContext } from "./auth/AuthProvider";
 import { ImpersonationBanner } from "./admin/impersonation-banner";
 import { Separator } from "./ui/separator";
+import { CyberGuardLogo } from "./icons/cyber-guard-logo";
 
 const unauthenticatedRoutes = ["/login", "/signup", "/partner-registration"];
 const publicRoutes = ["/", "/privacy-policy", "/terms", "/cookie-policy"];
@@ -41,7 +42,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar>
             <SidebarHeader>
             <Link href="/" className="flex items-center gap-2">
-                <ShieldCheck className="w-8 h-8 text-primary" />
+                <CyberGuardLogo className="w-8 h-8 text-primary" />
                 <h1 className="text-xl font-headline font-semibold text-sidebar-foreground">CyberGuard</h1>
             </Link>
             </SidebarHeader>

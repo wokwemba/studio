@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth, signUpWithEmail } from '@/firebase';
-import { ShieldCheck, Loader } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { CyberGuardLogo } from '@/components/icons/cyber-guard-logo';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -62,7 +63,7 @@ export default function SignupPage() {
         </div>
 
        <div className="relative z-10 flex items-center gap-2 mb-6">
-            <ShieldCheck className="w-10 h-10 text-primary" />
+            <CyberGuardLogo className="w-10 h-10 text-primary" />
             <h1 className="text-3xl font-headline font-semibold text-white">CyberGuard</h1>
        </div>
         <Card className="w-full max-w-md z-10 bg-card/80 backdrop-blur-lg">

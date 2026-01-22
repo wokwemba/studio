@@ -4,8 +4,9 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff, Key, Users, ShieldAlert, Blocks, ShieldQuestion } from 'lucide-react';
+import { Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff, Key, Users, ShieldAlert, Blocks, ShieldQuestion } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { CyberGuardLogo } from '@/components/icons/cyber-guard-logo';
 
 export default function Home() {
     const { t } = useTranslation();
@@ -141,7 +142,7 @@ export default function Home() {
 
     return (
         <div className="flex flex-col items-center justify-center text-center px-4 bg-background py-20">
-            <ShieldCheck className="w-24 h-24 text-primary mb-4 mx-auto" />
+            <CyberGuardLogo className="w-24 h-24 text-primary mb-4 mx-auto" />
             <h1 className="text-5xl font-bold font-headline mb-4">{t('home.title')}</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
                 {t('home.description')}

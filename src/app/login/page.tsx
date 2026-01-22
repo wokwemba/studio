@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth, signInWithEmail, signInWithGoogle, resetInvitedUserPassword } from '@/firebase';
-import { ShieldCheck, Loader } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { CyberGuardLogo } from '@/components/icons/cyber-guard-logo';
 
 const GoogleIcon = () => (
   <svg className="mr-2 h-4 w-4" viewBox="0 0 48 48">
@@ -227,7 +228,7 @@ export default function LoginPage() {
         </div>
 
        <div className="relative z-10 flex items-center gap-2 mb-6">
-            <ShieldCheck className="w-10 h-10 text-primary" />
+            <CyberGuardLogo className="w-10 h-10 text-primary" />
             <h1 className="text-3xl font-headline font-semibold text-white">CyberGuard</h1>
        </div>
        {isClient ? <LoginForm /> : (
