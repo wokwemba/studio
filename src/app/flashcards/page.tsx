@@ -19,6 +19,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader, Copy } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Import Select
+import { useLocale } from '@/context/LocaleContext'; // Import useLocale to get current language
+import { useTranslation } from '@/hooks/useTranslation';
 
 const FlashcardComponent = ({ card, index }: { card: Flashcard, index: number }) => {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -50,6 +53,9 @@ const FlashcardComponent = ({ card, index }: { card: Flashcard, index: number })
 
 export default function FlashcardsPage() {
   const [topic, setTopic] = useState('Phishing');
+  const { locale } = useLocale();
+  const { t } = useTranslation();
+  const [language, setLanguage] = useState(locale);
   const [flashcards, setFlashcards] =
     useState<GenerateFlashcardsOutput['flashcards']>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +70,7 @@ export default function FlashcardsPage() {
     setError(null);
 
     try {
-      const result = await generateFlashcards({ topic });
+      const result = await generateFlashcards({ topic, language });
       setFlashcards(result.flashcards);
     } catch (err: any) {
       console.error(err);
@@ -90,7 +96,7 @@ export default function FlashcardsPage() {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleGenerate}>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="topic">Topic</Label>
               <Input
@@ -100,6 +106,19 @@ export default function FlashcardsPage() {
                 onChange={(e) => setTopic(e.target.value)}
                 disabled={isLoading}
               />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="language">Language</Label>
+                <Select value={language} onValueChange={setLanguage} disabled={isLoading}>
+                    <SelectTrigger id="language">
+                        <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="en">{t('english')}</SelectItem>
+                        <SelectItem value="es">{t('spanish')}</SelectItem>
+                        <SelectItem value="fr">{t('french')}</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
           </CardContent>
           <CardFooter>

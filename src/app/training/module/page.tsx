@@ -17,6 +17,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { CertificateTemplate } from '@/components/training/certificate';
 import { format, addYears } from 'date-fns';
+import { useLocale } from '@/context/LocaleContext';
 
 // Dynamically import the form component with SSR disabled
 const GeneratorForm = dynamic(() => import('./generator-form').then(mod => mod.GeneratorForm), {
@@ -42,6 +43,7 @@ export default function GenerateTrainingModulePage() {
   const firestore = useFirestore();
   const certificateRef = useRef<HTMLDivElement>(null);
   const [isGeneratingCert, setIsGeneratingCert] = useState(false);
+  const { locale } = useLocale();
 
   const handleModuleGenerated = (generatedModule: GenerateTrainingModuleOutput, selectedTopic: string) => {
     setModule(generatedModule);
@@ -91,15 +93,15 @@ export default function GenerateTrainingModulePage() {
     if (quizScore === null || !user || !firestore || !module) return;
     setIsSaving(true);
     try {
-      const resultsCollection = collection(firestore, `users/${user.uid}/trainingResults`);
+      const resultsCollection = collection(firestore, `userProgress`);
       
       addDocumentNonBlocking(resultsCollection, {
         moduleId: topic, // using topic as a pseudo-id
         userId: user.uid,
         score: quizScore,
-        timeTaken: 0, // Placeholder
+        tenantId: (user as any).tenantId || 'default-tenant-ccyberguard',
+        status: 'completed',
         completedAt: new Date().toISOString(),
-        riskImpact: 100 - quizScore, // Example calculation
       });
 
       toast({
@@ -167,6 +169,7 @@ export default function GenerateTrainingModulePage() {
         onModuleGenerated={handleModuleGenerated}
         onGenerationError={handleGenerationError}
         isLoading={isLoading}
+        locale={locale}
       />
       
       <div style={{ position: 'fixed', left: '-9999px', top: '0' }}>

@@ -1,4 +1,4 @@
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,12 +19,16 @@ import { doc } from 'firebase/firestore';
 import { useAuthContext } from "./auth/AuthProvider";
 import { logout } from "@/lib/logout";
 import { stopImpersonation } from "@/lib/impersonation";
+import { useLocale } from '@/context/LocaleContext';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function Header() {
   const { user, role, isImpersonating, realUser } = useAuthContext();
   const auth = useAuth();
   const router = useRouter();
   const firestore = useFirestore();
+  const { setLocale } = useLocale();
+  const { t } = useTranslation();
 
   const userDocRef = useMemoFirebase(
     () => (user ? doc(firestore, 'users', user.uid) : null),
@@ -65,6 +69,24 @@ export default function Header() {
             />
           </div>
         </form>
+        
+        {/* Language Switcher */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full">
+                <Globe className="h-5 w-5" />
+                <span className="sr-only">Change language</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>{t('language')}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => setLocale('en')}>{t('english')}</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setLocale('es')}>{t('spanish')}</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setLocale('fr')}>{t('french')}</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Button variant="ghost" size="icon" className="rounded-full">
           <Bell className="h-5 w-5" />
           <span className="sr-only">Toggle notifications</span>

@@ -4,44 +4,27 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  BookUser,
-  ShieldCheck,
+  BookOpenCheck,
   Trophy,
-  LayoutDashboard,
-  Target,
+  FlaskConical,
+  ScanLine,
   FileText,
   User,
-  Globe,
+  ShieldCheck,
   History,
-  Settings,
-  Copy,
-  Users,
-  GitPullRequest,
-  Mail,
-  Zap,
-  ShieldAlert,
-  BarChart3,
-  FileBadge,
-  BadgeCheck,
-  BookCopy,
-  Blocks,
-  Bell,
-  Monitor,
-  Building,
-  Loader,
   Wand2,
-  ShieldOff,
-  BookOpenCheck,
-  FlaskConical,
   BrainCircuit,
-  ScanLine,
+  Copy,
+  BookUser,
   ClipboardList,
   ClipboardCheck,
   Key,
+  ShieldAlert,
+  Blocks,
   ShieldQuestion,
   GitBranch,
+  Users,
 } from "lucide-react";
-
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -53,52 +36,55 @@ import {
 } from "@/components/ui/sidebar";
 import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
-
-const mainLinks = [
-  { href: "/training", label: "My Training", icon: BookOpenCheck },
-  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/simulations", label: "Request Simulation", icon: FlaskConical },
-  { href: "/phishing-engine/dashboard", label: "Phishing Detector", icon: ScanLine },
-  { href: "/certificates", label: "My Certificates", icon: FileText },
-  { href: "/profile", label: "My Profile", icon: User },
-];
-
-const servicesLinks = [
-    { href: "/custom-training", label: "Custom Training", icon: BookUser },
-    { href: "/vapt", label: "VAPT Console", icon: ScanLine },
-    { href: "/incident-response", label: "Incident Response", icon: ClipboardList },
-    { href: "/system-audit", label: "System Audit", icon: ClipboardCheck },
-];
-
-const trainingLinks = [
-    { href: "/training/module", label: "Training Generator", icon: Wand2 },
-    { href: "/tutor", label: "AI Tutor", icon: BrainCircuit },
-    { href: "/flashcards", label: "Flashcards", icon: Copy },
-    { href: "/training/history", label: "Training History", icon: History },
-    { href: "/training/achievements", label: "Achievements", icon: Trophy },
-];
-
-const gamesLinks = [
-    { href: "/escape-room", label: "Escape Room", icon: Key },
-    { href: "/vulnerability-challenge", label: "Vuln Challenge", icon: ShieldAlert },
-    { href: "/api-security-lab", label: "API Security Lab", icon: Blocks },
-    { href: "/threat-scenarios", label: "Threat Scenarios", icon: ShieldQuestion },
-];
-
-const securityOpsLinks = [
-    { href: "/incident-response-playbook", label: "IR Playbook Generator", icon: ClipboardList },
-];
-
-const threatIntelLinks = [
-    { href: "/dark-web-monitor", label: "OSINT & Dark Web Intel", icon: GitBranch },
-    { href: "/threat-intelligence/actors", label: "Threat Actor Profiles", icon: Users },
-];
+import { useTranslation } from '@/hooks/useTranslation';
+import { Loader } from 'lucide-react';
 
 export function SidebarNav() {
   const pathname = usePathname();
   const { state } = useSidebar();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { t } = useTranslation();
+
+  const mainLinks = [
+    { href: "/training", label: t('sidebar.my_training'), icon: BookOpenCheck },
+    { href: "/leaderboard", label: t('sidebar.leaderboard'), icon: Trophy },
+    { href: "/simulations", label: t('sidebar.request_simulation'), icon: FlaskConical },
+    { href: "/phishing-engine/dashboard", label: t('sidebar.phishing_detector'), icon: ScanLine },
+    { href: "/certificates", label: t('sidebar.my_certificates'), icon: FileText },
+    { href: "/profile", label: t('sidebar.my_profile'), icon: User },
+  ];
+
+  const servicesLinks = [
+      { href: "/custom-training", label: t('sidebar.custom_training'), icon: BookUser },
+      { href: "/vapt", label: t('sidebar.vapt_console'), icon: ScanLine },
+      { href: "/incident-response", label: t('sidebar.incident_response'), icon: ClipboardList },
+      { href: "/system-audit", label: t('sidebar.system_audit'), icon: ClipboardCheck },
+  ];
+
+  const trainingLinks = [
+      { href: "/training/module", label: t('sidebar.training_generator'), icon: Wand2 },
+      { href: "/tutor", label: t('sidebar.ai_tutor'), icon: BrainCircuit },
+      { href: "/flashcards", label: t('sidebar.flashcards'), icon: Copy },
+      { href: "/training/history", label: t('sidebar.training_history'), icon: History },
+      { href: "/training/achievements", label: t('sidebar.achievements'), icon: Trophy },
+  ];
+
+  const gamesLinks = [
+      { href: "/escape-room", label: t('sidebar.escape_room'), icon: Key },
+      { href: "/vulnerability-challenge", label: t('sidebar.vuln_challenge'), icon: ShieldAlert },
+      { href: "/api-security-lab", label: t('sidebar.api_security_lab'), icon: Blocks },
+      { href: "/threat-scenarios", label: t('sidebar.threat_scenarios'), icon: ShieldQuestion },
+  ];
+
+  const securityOpsLinks = [
+      { href: "/incident-response-playbook", label: t('sidebar.ir_playbook_generator'), icon: ClipboardList },
+  ];
+
+  const threatIntelLinks = [
+      { href: "/dark-web-monitor", label: t('sidebar.osint_dark_web'), icon: GitBranch },
+      { href: "/threat-intelligence/actors", label: t('sidebar.threat_actor_profiles'), icon: Users },
+  ];
 
   const userDocRef = useMemoFirebase(
     () => (user ? doc(firestore, "users", user.uid) : null),
@@ -148,7 +134,7 @@ export function SidebarNav() {
       ))}
        <SidebarSeparator />
         <SidebarGroup>
-            <SidebarGroupLabel>Other Services</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('sidebar.other_services')}</SidebarGroupLabel>
             {servicesLinks.map((link) => (
                  <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton
@@ -168,7 +154,7 @@ export function SidebarNav() {
         </SidebarGroup>
        <SidebarSeparator />
         <SidebarGroup>
-            <SidebarGroupLabel>AI & Learning Tools</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('sidebar.ai_learning_tools')}</SidebarGroupLabel>
             {trainingLinks.map((link) => (
                  <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton
@@ -188,7 +174,7 @@ export function SidebarNav() {
         </SidebarGroup>
         <SidebarSeparator />
         <SidebarGroup>
-            <SidebarGroupLabel>Games &amp; Challenges</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('sidebar.games_challenges')}</SidebarGroupLabel>
             {gamesLinks.map((link) => (
                     <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton
@@ -208,7 +194,7 @@ export function SidebarNav() {
         </SidebarGroup>
         <SidebarSeparator />
         <SidebarGroup>
-            <SidebarGroupLabel>Security Operations</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('sidebar.security_operations')}</SidebarGroupLabel>
             {securityOpsLinks.map((link) => (
                  <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton
@@ -228,7 +214,7 @@ export function SidebarNav() {
         </SidebarGroup>
         <SidebarSeparator />
         <SidebarGroup>
-            <SidebarGroupLabel>Threat Intelligence</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('sidebar.threat_intelligence')}</SidebarGroupLabel>
             {threatIntelLinks.map((link) => (
                     <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton
@@ -267,7 +253,7 @@ export function SidebarNav() {
             >
                 <Link href="/admin">
                     <ShieldCheck className="h-5 w-5" />
-                    {state === 'expanded' && <span>Admin Panel</span>}
+                    {state === 'expanded' && <span>{t('sidebar.admin_panel')}</span>}
                 </Link>
             </SidebarMenuButton>
         </SidebarMenuItem>

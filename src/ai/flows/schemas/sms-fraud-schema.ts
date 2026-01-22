@@ -3,6 +3,7 @@ import { z } from 'genkit';
 export const SmsFraudInputSchema = z.object({
   senderId: z.string().describe('The sender ID of the SMS message, e.g., MPESA or +254712345678.'),
   message: z.string().describe('The text content of the SMS message.'),
+  region: z.string().optional().describe('The region for which to tailor the fraud detection logic, e.g., "KE" for Kenya, "US" for United States.'),
 });
 export type SmsFraudInput = z.infer<typeof SmsFraudInputSchema>;
 

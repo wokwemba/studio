@@ -14,6 +14,7 @@ import { z } from 'genkit';
 
 const GenerateFlashcardsInputSchema = z.object({
   topic: z.string().describe('The topic for which to generate flashcards.'),
+  language: z.string().optional().describe('The language for the generated flashcards, e.g., "Spanish".'),
 });
 
 export type GenerateFlashcardsInput = z.infer<
@@ -49,7 +50,7 @@ const generateFlashcardsPrompt = ai.definePrompt({
   name: 'generateFlashcardsPrompt',
   input: { schema: GenerateFlashcardsInputSchema },
   output: { schema: GenerateFlashcardsOutputSchema },
-  prompt: `You are an expert in cybersecurity education. Your task is to generate a set of 5 to 10 flashcards for the given topic. Each flashcard must have a clear question and a concise answer.
+  prompt: `You are an expert in cybersecurity education. Your task is to generate a set of 5 to 10 flashcards for the given topic. The flashcards should be in the following language: {{{language}}}.
 
 Topic: {{{topic}}}
 

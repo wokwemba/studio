@@ -22,6 +22,7 @@ import { addDocumentNonBlocking, useCollection, useFirestore, useMemoFirebase, u
 import { collection, query, where } from 'firebase/firestore';
 import { ScheduleCampaignDialog } from '@/components/admin/schedule-campaign-dialog';
 import { format } from 'date-fns';
+import { useLocale } from '@/context/LocaleContext';
 
 type Campaign = GenerateTrainingCampaignsOutput & {
     id: string;
@@ -50,6 +51,7 @@ export default function AdminCampaignsPage() {
 
   const { user } = useUser();
   const firestore = useFirestore();
+  const { locale } = useLocale();
 
   // Memoize tenantId to avoid re-renders. This assumes tenantId on user does not change during the session.
   const tenantId = useMemo(() => (user as any)?.tenantId, [user]);
@@ -70,7 +72,7 @@ export default function AdminCampaignsPage() {
     setError(null);
 
     try {
-      const result = await generateTrainingCampaigns({ topic });
+      const result = await generateTrainingCampaigns({ topic, region: locale });
       setGeneratedCampaign(result);
     } catch (err: any) {
       console.error(err);

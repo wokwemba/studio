@@ -17,6 +17,7 @@ import { generateThreatScenario, type GenerateThreatScenarioOutput } from '@/ai/
 import type { ThreatScenarioStep, ThreatScenarioStepChoice } from '@/ai/flows/schemas/threat-scenario-schema';
 import { useFirestore, useUser } from '@/firebase';
 import { saveChallengeAttempt } from '@/lib/scoring';
+import { useLocale } from '@/context/LocaleContext';
 
 
 const scenarioCategories = [
@@ -42,6 +43,7 @@ export default function ThreatScenariosPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  const { locale } = useLocale();
   const [setupConfig, setSetupConfig] = useState({
     difficulty: 'medium' as 'easy' | 'medium' | 'hard' | 'expert',
     category: 'Ransomware Attack',
@@ -65,7 +67,7 @@ export default function ThreatScenariosPage() {
     setIsGenerating(true);
     setError(null);
     try {
-        const result = await generateThreatScenario(setupConfig);
+        const result = await generateThreatScenario({...setupConfig, region: locale});
         setScenario(result);
         setGameState(prev => ({ ...prev, currentStepIndex: -1 })); // Move to intro screen
     } catch (err: any) {
@@ -346,5 +348,3 @@ export default function ThreatScenariosPage() {
     </div>
   );
 }
-
-    

@@ -21,19 +21,22 @@ interface GeneratorFormProps {
     onModuleGenerated: (module: GenerateTrainingModuleOutput, topic: string) => void;
     onGenerationError: (error: string) => void;
     isLoading: boolean;
+    locale: string;
 }
 
 export function GeneratorForm({ 
     onGenerationStart, 
     onModuleGenerated, 
     onGenerationError,
-    isLoading
+    isLoading,
+    locale,
 }: GeneratorFormProps) {
   const [formData, setFormData] = useState<GenerateTrainingModuleInput>({
     topic: 'Recognizing Phishing Emails',
     difficulty: 'easy',
     industry: 'Technology',
     targetRole: 'All Employees',
+    region: locale,
   });
 
   const handleGenerate = async (e: FormEvent) => {
@@ -43,7 +46,7 @@ export function GeneratorForm({
     onGenerationStart();
 
     try {
-      const result = await generateTrainingModule(formData);
+      const result = await generateTrainingModule({...formData, region: locale});
       onModuleGenerated(result, formData.topic);
     } catch (err: any) {
       console.error(err);

@@ -1,15 +1,14 @@
 
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff, Key, Users, ShieldAlert, Blocks, ShieldQuestion } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function Home() {
-    const router = useRouter();
+    const { t } = useTranslation();
 
     const features = [
         {
@@ -143,24 +142,24 @@ export default function Home() {
     return (
         <div className="flex flex-col items-center justify-center text-center px-4 bg-background py-20">
             <ShieldCheck className="w-24 h-24 text-primary mb-4 mx-auto" />
-            <h1 className="text-5xl font-bold font-headline mb-4">Cybersecurity Training and Consultancy</h1>
+            <h1 className="text-5xl font-bold font-headline mb-4">{t('home.title')}</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-                Sharpen your skills with AI-powered training modules, realistic simulations, and personalized learning paths.
+                {t('home.description')}
             </p>
             <div className="flex flex-wrap justify-center gap-4">
                 <Button asChild size="lg">
-                    <Link href="/login">Login</Link>
+                    <Link href="/login">{t('home.login')}</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
-                    <Link href="/signup">Sign Up</Link>
+                    <Link href="/signup">{t('home.signup')}</Link>
                 </Button>
                  <Button asChild variant="secondary" size="lg">
-                    <Link href="/partner-registration">Register as Partner</Link>
+                    <Link href="/partner-registration">{t('home.partner_registration')}</Link>
                 </Button>
             </div>
             
              <div className="w-full max-w-7xl mx-auto py-16 mt-10">
-                <h2 className="text-3xl font-bold font-headline mb-12 text-center">Explore Our Tools</h2>
+                <h2 className="text-3xl font-bold font-headline mb-12 text-center">{t('home.explore_tools')}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {features.sort((a,b) => a.title.localeCompare(b.title)).map((feature) => (
                          <Link href={feature.href} key={feature.title}>

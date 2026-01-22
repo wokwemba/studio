@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import { CookieBanner } from '@/components/cookie-banner';
+import { LocaleProvider } from '@/context/LocaleContext';
 
 export const metadata: Metadata = {
   title: 'CCyberGuard',
@@ -24,7 +25,6 @@ export default function RootLayout({
       <head>
         <Script
           async
-          strategy="afterInteractive"
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7698959644327699"
           crossOrigin="anonymous"
         />
@@ -37,9 +37,11 @@ export default function RootLayout({
       <body className={cn('font-body antialiased')} suppressHydrationWarning>
         <FirebaseClientProvider>
           <AuthProvider>
-            <SidebarProvider>
-              <DashboardLayout>{children}</DashboardLayout>
-            </SidebarProvider>
+            <LocaleProvider>
+              <SidebarProvider>
+                <DashboardLayout>{children}</DashboardLayout>
+              </SidebarProvider>
+            </LocaleProvider>
             <Toaster />
           </AuthProvider>
         </FirebaseClientProvider>

@@ -24,6 +24,7 @@ export const GenerateThreatScenarioInputSchema = z.object({
     category: z.string().describe('The cybersecurity category for the scenario (e.g., "Ransomware Attack", "Insider Threat").'),
     profession: z.string().describe('The user\'s profession, to personalize the scenario (e.g., "IT Helpdesk", "HR Manager").'),
     industry: z.string().describe("The industry the user works in, to further tailor the scenario (e.g., 'Healthcare', 'Finance')."),
+    region: z.string().describe("The user's geographical region, to add local context to the scenario (e.g., 'Kenya', 'USA').").optional(),
 });
 
 export type GenerateThreatScenarioInput = z.infer<typeof GenerateThreatScenarioInputSchema>;

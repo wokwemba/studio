@@ -18,13 +18,14 @@ const prompt = ai.definePrompt({
   name: 'detectSmsFraudPrompt',
   input: { schema: SmsFraudInputSchema },
   output: { schema: SmsFraudOutputSchema },
-  prompt: `You are an expert AI for detecting fraud in SMS messages, specifically tailored for the Kenyan market. Your purpose is to analyze SMS messages and determine if they are fraudulent, a scam, or a phishing attempt. Pay close attention to common tactics like fake M-PESA messages, subscription scams, or urgent requests involving money.
+  prompt: `You are an expert AI for detecting fraud in SMS messages, specifically tailored for the {{{region}}} market. Your purpose is to analyze SMS messages and determine if they are fraudulent, a scam, or a phishing attempt. Pay close attention to common tactics like fake M-PESA messages, subscription scams, or urgent requests involving money that are common in the specified region.
 
 Analyze the following SMS message.
 
 Sender ID: {{{senderId}}}
 Message:
 "{{{message}}}"
+{{#if region}}Region: {{{region}}}{{/if}}
 
 Based on your analysis, provide:
 1.  A 'verdict': 'Low Risk', 'Medium Risk', or 'High Risk'.

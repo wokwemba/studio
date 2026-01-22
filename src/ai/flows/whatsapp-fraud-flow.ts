@@ -16,13 +16,14 @@ const prompt = ai.definePrompt({
   name: 'detectWhatsappFraudPrompt',
   input: { schema: WhatsappFraudInputSchema },
   output: { schema: WhatsappFraudOutputSchema },
-  prompt: `You are an expert AI for detecting fraud and scams in WhatsApp messages, particularly for the Kenyan market. Analyze the provided message and determine if it is fraudulent.
+  prompt: `You are an expert AI for detecting fraud and scams in WhatsApp messages, particularly for the {{{region}}} market. Analyze the provided message and determine if it is fraudulent.
 
 Analyze the following WhatsApp message:
 
 Sender Number: {{{sender}}}
 Message:
 "{{{message}}}"
+{{#if region}}Region: {{{region}}}{{/if}}
 
 Based on your analysis, provide:
 1.  A 'verdict': 'Low Risk', 'Medium Risk', or 'High Risk'.

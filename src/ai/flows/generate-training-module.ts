@@ -16,6 +16,7 @@ const GenerateTrainingModuleInputSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).describe('The difficulty level of the training module.'),
   industry: z.string().describe('The industry the training is targeted at.'),
   targetRole: z.string().describe('The target role for the training module.'),
+  region: z.string().describe('The geographical region for which the training is targeted, e.g., "Kenya", "European Union".').optional(),
 });
 
 export type GenerateTrainingModuleInput = z.infer<typeof GenerateTrainingModuleInputSchema>;
@@ -47,12 +48,13 @@ const generateTrainingModulePrompt = ai.definePrompt({
   name: 'generateTrainingModulePrompt',
   input: {schema: GenerateTrainingModuleInputSchema},
   output: {schema: GenerateTrainingModuleOutputSchema},
-  prompt: `You are an expert in creating cybersecurity training modules. Your task is to generate a concise and engaging training module based on the following information:
+  prompt: `You are an expert in creating cybersecurity training modules. Your task is to generate a concise and engaging training module based on the following information. Tailor content, examples, and legal references to be relevant for the specified region.
 
 Topic: {{{topic}}}
 Difficulty: {{{difficulty}}}
 Industry: {{{industry}}}
 Target Role: {{{targetRole}}}
+{{#if region}}Region: {{{region}}}{{/if}}
 
 Generate the following sections:
 - Module Title: A clear and descriptive title for the whole module.

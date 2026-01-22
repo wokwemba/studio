@@ -16,6 +16,7 @@ import { z } from 'genkit';
 
 const GenerateTrainingCampaignsInputSchema = z.object({
   topic: z.string().describe('The topic for the training campaign.'),
+  region: z.string().optional().describe('The geographical region for the campaign, e.g., "USA", "Germany". This will influence examples and legal references.'),
 });
 export type GenerateTrainingCampaignsInput = z.infer<
   typeof GenerateTrainingCampaignsInputSchema
@@ -55,9 +56,10 @@ const prompt = ai.definePrompt({
   name: 'generateTrainingCampaignsPrompt',
   input: { schema: GenerateTrainingCampaignsInputSchema },
   output: { schema: GenerateTrainingCampaignsOutputSchema },
-  prompt: `You are an expert in designing cybersecurity training campaigns. Based on the provided topic, create a comprehensive training campaign.
+  prompt: `You are an expert in designing cybersecurity training campaigns. Based on the provided topic, create a comprehensive training campaign, tailoring examples and legal references to the specified region.
 
 Topic: {{{topic}}}
+{{#if region}}Region: {{{region}}}{{/if}}
 
 Generate a full campaign structure including a title, description, duration, target audience, a list of at least 3 training modules, at least 2 activities, and relevant KPIs.
 `,

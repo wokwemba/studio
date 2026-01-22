@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, type FormEvent } from 'react';
@@ -20,6 +21,7 @@ import { MindMapNode } from '@/components/phishing-engine/mind-map-node';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useLocale } from '@/context/LocaleContext';
 
 
 type SmsAnalysis = SmsFraudOutput & {
@@ -63,7 +65,7 @@ const osintCategories = [
 
 export default function PhishingEngineDashboard() {
     // State for SMS Analysis
-    const [smsFormData, setSmsFormData] = useState<SmsFraudInput>({ senderId: '', message: '' });
+    const [smsFormData, setSmsFormData] = useState<Omit<SmsFraudInput, 'region'>>({ senderId: '', message: '' });
     const [smsAnalysisResult, setSmsAnalysisResult] = useState<SmsFraudOutput | null>(null);
     const [isAnalyzingSms, setIsAnalyzingSms] = useState(false);
     
@@ -73,7 +75,7 @@ export default function PhishingEngineDashboard() {
     const [isAnalyzingEmail, setIsAnalyzingEmail] = useState(false);
     
     // State for WhatsApp Analysis
-    const [whatsappFormData, setWhatsappFormData] = useState<WhatsappFraudInput>({ sender: '', message: '' });
+    const [whatsappFormData, setWhatsappFormData] = useState<Omit<WhatsappFraudInput, 'region'>>({ sender: '', message: '' });
     const [whatsappAnalysisResult, setWhatsappAnalysisResult] = useState<WhatsappFraudOutput | null>(null);
     const [isAnalyzingWhatsapp, setIsAnalyzingWhatsapp] = useState(false);
 
@@ -88,6 +90,7 @@ export default function PhishingEngineDashboard() {
     const { toast } = useToast();
     const { user } = useUser();
     const firestore = useFirestore();
+    const { locale } = useLocale();
 
     // SMS Analysis Data Fetching
     const analysesQuery = useMemoFirebase(
@@ -117,7 +120,7 @@ export default function PhishingEngineDashboard() {
         setIsAnalyzingSms(true);
         setSmsAnalysisResult(null);
         try {
-            const result = await detectSmsFraud(smsFormData);
+            const result = await detectSmsFraud({...smsFormData, region: locale});
             setSmsAnalysisResult(result);
             const analysisRecord = { ...smsFormData, ...result, userId: user.uid, analyzedAt: new Date().toISOString() };
             const analysesCollection = collection(firestore, `users/${user.uid}/sms_analyses`);
@@ -160,7 +163,7 @@ export default function PhishingEngineDashboard() {
         setIsAnalyzingWhatsapp(true);
         setWhatsappAnalysisResult(null);
         try {
-            const result = await detectWhatsappFraud(whatsappFormData);
+            const result = await detectWhatsappFraud({...whatsappFormData, region: locale});
             setWhatsappAnalysisResult(result);
             toast({ title: 'WhatsApp Analysis Complete', description: `The message was rated as ${result.verdict}.` });
         } catch (error: any) {

@@ -3,6 +3,7 @@ import { z } from 'genkit';
 export const WhatsappFraudInputSchema = z.object({
   sender: z.string().describe("The sender's WhatsApp number, e.g., +254712345678."),
   message: z.string().describe('The text content of the WhatsApp message.'),
+  region: z.string().optional().describe('The region for which to tailor the fraud detection logic, e.g., "KE" for Kenya, "US" for United States.'),
 });
 export type WhatsappFraudInput = z.infer<typeof WhatsappFraudInputSchema>;
 

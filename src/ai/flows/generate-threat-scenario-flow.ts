@@ -25,9 +25,10 @@ The challenge should be a cohesive story where each step logically follows the l
 - **Difficulty:** {{{difficulty}}}
 - **User's Profession:** {{{profession}}}
 - **User's Industry:** {{{industry}}}
+{{#if region}}- **Region:** {{{region}}}{{/if}}
 
 **Instructions:**
-1.  **Storytelling:** Create a scenario that is highly relevant to the user's **profession**, **industry**, and the chosen **category**.
+1.  **Storytelling:** Create a scenario that is highly relevant to the user's **profession**, **industry**, and chosen **category**. Use local context from the specified **region** if provided.
 2.  **Difficulty:** Tailor the complexity of the problem, the subtlety of the clues, and the technical jargon to the selected **difficulty**.
 3.  **Structure:** Generate a scenario with a unique slug, a title, a short description, and a compelling intro story.
 4.  **Steps:** Generate between 3 and 5 sequential steps.
