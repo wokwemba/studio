@@ -92,28 +92,32 @@ service cloud.firestore {
     // --- User-Specific Content ---
 
     match /userProgress/{progressId} {
-      // Admins or the owner can get a specific document.
-      allow get: if isOwner(resource.data.userId) || isSuperAdmin() || isTenantAdmin();
+      // Rule for reading single documents. Allows owner or an admin.
+      allow get: if (resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
 
-      // A user can only list documents where their UID matches the `userId` field.
-      // This rule is compatible with list queries because it doesn't use `get()` or `exists()`.
-      allow list: if request.auth.uid == resource.data.userId;
-
-      // Users can create and update their own progress.
+      // Rule for querying (listing) documents.
+      // This is intentionally simple and separate from `get` to ensure it can be evaluated by Firestore's query engine.
+      // It ensures that any query on this collection MUST be constrained to the user's own documents.
+      allow list: if resource.data.userId == request.auth.uid;
+      
+      // Users can create their own progress records.
       allow create: if request.resource.data.userId == request.auth.uid;
-      allow update: if isOwner(resource.data.userId);
-      allow delete: if false; // Deletes are not allowed from the client.
+      
+      // No client-side updates or deletes are allowed to prevent tampering.
+      allow update, delete: if false;
     }
 
     match /user_challenge_attempts/{attemptId} {
-      // Admins or the owner can get a specific document.
-      allow get: if isOwner(resource.data.userId) || isSuperAdmin() || isTenantAdmin();
-
-      // A user can only list documents where their UID matches the `userId` field.
-      allow list: if request.auth.uid == resource.data.userId;
+      // Rule for reading single documents. Allows owner or an admin.
+      allow get: if (resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
+      
+      // Rule for querying (listing) documents.
+      allow list: if resource.data.userId == request.auth.uid;
       
       // Users can only create their own attempts.
       allow create: if request.resource.data.userId == request.auth.uid;
+
+      // No updates or deletes.
       allow update, delete: if false;
     }
 
