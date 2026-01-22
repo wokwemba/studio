@@ -4,162 +4,153 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ========== HELPER FUNCTIONS ==========
+    // =================================
+    //     HELPER FUNCTIONS
+    // =================================
 
-    // Safely return a user's roles or an empty list if they have none.
+    // Safely gets the list of role IDs for the currently authenticated user.
     function getUserRoles() {
-      let path = /databases/$(database)/documents/user_roles/$(request.auth.uid);
-      if (exists(path) && ('roles' in get(path).data)) {
-          return get(path).data.roles;
+      let userRolesPath = /databases/$(database)/documents/user_roles/$(request.auth.uid);
+      if (exists(userRolesPath)) {
+        return get(userRolesPath).data.roles;
       }
       return [];
     }
 
-    // A hardcoded check for the primary super admin email.
+    // Safely gets the tenant ID of the currently authenticated user.
+    function getMyTenantId() {
+      let userProfilePath = /databases/$(database)/documents/users/$(request.auth.uid);
+      if (exists(userProfilePath) && 'tenantId' in get(userProfilePath).data) {
+        return get(userProfilePath).data.tenantId;
+      }
+      return null;
+    }
+    
+    // Hardcoded check for the primary super admin email for bootstrapping/failsafe.
     function isHardcodedSuperAdmin() {
       return request.auth != null && request.auth.token.email == "wokwemba@safaricom.co.ke";
     }
 
-    // Check if the user is a Super Admin via role or hardcoded email.
+    // Tier 0: Full system control.
     function isSuperAdmin() {
-      return request.auth != null && (isHardcodedSuperAdmin() || getUserRoles().hasAny(['DOMAIN_ADMIN']));
+      return request.auth != null && (isHardcodedSuperAdmin() || getUserRoles().hasAny(['DOMAIN_ADMIN', 'SECURITY_ADMIN']));
     }
 
-    // Check if the user is a Security Admin via role or hardcoded email.
-    function isSecurityAdmin() {
-      return request.auth != null && (isHardcodedSuperAdmin() || getUserRoles().hasAny(['SECURITY_ADMIN']));
-    }
-
-    // A user is a Tenant Admin if they are a Super Admin or have the specific role.
+    // Tier 2: Manages users and resources within their own tenant.
     function isTenantAdmin() {
-      return request.auth != null && (isSuperAdmin() || getUserRoles().hasAny(['TENANT_ADMIN']));
+      return request.auth != null && getUserRoles().hasAny(['TENANT_ADMIN']);
     }
-
+    
+    // Tier 2: Manages partner-related data.
     function isPartnerAdmin() {
       return request.auth != null && getUserRoles().hasAny(['PARTNER_ADMIN']);
     }
     
+    // Read-Only: For viewing audit logs.
     function isAuditor() {
       return request.auth != null && getUserRoles().hasAny(['AUDITOR']);
     }
 
-    // Check if the requesting user is the owner of a document.
+    // Checks if the requesting user is the owner of the document.
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    // Safely gets the tenant ID of the currently authenticated user.
-    function getMyTenantId() {
-      let myPath = /databases/$(database)/documents/users/$(request.auth.uid);
-      return exists(myPath) && ('tenantId' in get(myPath).data) ? get(myPath).data.tenantId : null;
-    }
+    // =================================
+    //     COLLECTION RULES
+    // =================================
 
-    // ========== COLLECTION RULES ==========
+    // --- User and Role Management ---
 
-    // /users/{userId}
     match /users/{userId} {
-      allow get: if isOwner(userId) || isSuperAdmin() || isSecurityAdmin() || (isTenantAdmin() && resource.data.tenantId == getMyTenantId());
-      allow list: if isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
-      allow create: if (request.auth != null && request.auth.uid == userId) || isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
-      allow update: if isOwner(userId) || isSuperAdmin() || isSecurityAdmin() || (isTenantAdmin() && resource.data.tenantId == getMyTenantId());
-      allow delete: if isSuperAdmin() || isSecurityAdmin();
+      allow get: if isOwner(userId)
+                   || isSuperAdmin()
+                   || (isTenantAdmin() && resource.data.tenantId == getMyTenantId());
+      allow list: if isSuperAdmin() 
+                    || (isTenantAdmin() && request.query.tenantId == getMyTenantId());
+      allow create: if request.auth != null; // Any authenticated user can sign up, admins can create.
+      allow update: if isOwner(userId)
+                      || isSuperAdmin()
+                      || (isTenantAdmin() && resource.data.tenantId == getMyTenantId());
+      allow delete: if isSuperAdmin();
     }
 
-    // /user_roles/{userId}
     match /user_roles/{userId} {
-      allow get: if isOwner(userId) || isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
-      allow list: if isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
-      allow create: if (request.auth != null && request.auth.uid == userId) || isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
-      allow update, delete: if isSuperAdmin() || isSecurityAdmin() || isTenantAdmin();
+      allow get: if isOwner(userId) || isSuperAdmin() || isTenantAdmin();
+      allow list: if isSuperAdmin() || isTenantAdmin();
+      // Only Super Admins can change roles to prevent privilege escalation.
+      allow create, update, delete: if isSuperAdmin();
     }
-
-    // /roles/{roleId}
+    
     match /roles/{roleId} {
       allow read: if request.auth != null;
-      allow write: if isSuperAdmin() || isSecurityAdmin();
+      allow write: if isSuperAdmin(); // Only Super Admins can define what roles exist.
     }
 
-    // /audit_logs/{logId}
-    match /audit_logs/{logId} {
-      allow create: if request.auth != null;
-      allow read: if isSuperAdmin() || isSecurityAdmin() || isAuditor();
-      allow update, delete: if false;
-    }
-    
-    // /partner_requests/{requestId}
-    match /partner_requests/{requestId} {
-      allow read, write: if isSuperAdmin() || isSecurityAdmin() || isTenantAdmin() || isPartnerAdmin();
-    }
+    // --- Admin & Tenant Management ---
 
-    // /tenants/{tenantId}
     match /tenants/{tenantId} {
-      allow get: if isSuperAdmin() || isSecurityAdmin() || (isTenantAdmin() && getMyTenantId() == tenantId);
-      allow list, create, update, delete: if isSuperAdmin() || isSecurityAdmin();
-    }
-
-    // /tenants/{tenantId}/campaigns/{campaignId}
-    match /tenants/{tenantId}/campaigns/{campaignId} {
-      allow read, write: if isSuperAdmin() || isSecurityAdmin() || (isTenantAdmin() && getMyTenantId() == tenantId);
+      allow get: if isSuperAdmin() || (isTenantAdmin() && getMyTenantId() == tenantId);
+      allow list, create, update, delete: if isSuperAdmin();
     }
     
-    // /trainingModules/{moduleId}
-    match /trainingModules/{moduleId} {
-      allow read: if request.auth != null;
-      allow write: if isSuperAdmin() || isSecurityAdmin();
+    match /partner_requests/{requestId} {
+      allow read, write: if isSuperAdmin() || isPartnerAdmin();
     }
-
-    // /userProgress/{progressId}
+    
+    // Tenant-specific subcollections
+    match /tenants/{tenantId}/{subcollection}/{docId} {
+       allow read, write: if isSuperAdmin() || (isTenantAdmin() && getMyTenantId() == tenantId);
+    }
+    
+    // --- User-Specific Content (Progress, Attempts, etc.) ---
+    
     match /userProgress/{progressId} {
-      // User can list their own progress docs if they query by their uid.
+      // Secure list operation: A user can only list their OWN progress docs.
+      // This forces the client query to include `where('userId', '==', auth.uid)`.
       allow list: if request.query.userId == request.auth.uid;
       
-      // `get` is for single document reads. Check for ownership or admin privileges.
-      allow get: if (request.auth != null && resource.data.userId == request.auth.uid) || isSuperAdmin() || isSecurityAdmin();
-    
-      // A user can create or update their own progress.
+      allow get: if (request.auth != null && resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
-      
-      // Deletes are not allowed from the client.
-      allow delete: if false;
+      allow delete: if false; // Deletes are not allowed from the client.
     }
     
-    // /user_challenge_attempts/{attemptId}
     match /user_challenge_attempts/{attemptId} {
-      // User can list their own attempts if they query by their uid.
       allow list: if request.query.userId == request.auth.uid;
-      
-      allow get: if (request.auth != null && resource.data.userId == request.auth.uid) || isSuperAdmin() || isSecurityAdmin();
+      allow get: if (request.auth != null && resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
     
-    // Other admin-managed collections
-    match /assignments/{assignmentId} { allow read, write: if isTenantAdmin() || isSuperAdmin() || isSecurityAdmin(); }
-    match /phishingSimulations/{simId} { allow read, write: if isTenantAdmin() || isSuperAdmin() || isSecurityAdmin(); }
-    match /reports/{reportId} { allow read, write: if isTenantAdmin() || isSuperAdmin() || isSecurityAdmin(); }
-    
-    // Global read, admin write collections
-    match /phishing_templates/{templateId} { allow read: if request.auth != null; allow write: if isSuperAdmin() || isSecurityAdmin(); }
-    match /subscription_plans/{planId} { allow read: if request.auth != null; allow write: if isSuperAdmin() || isSecurityAdmin(); }
-    match /compliance_rules/{ruleId} { allow read: if request.auth != null; allow write: if isSuperAdmin() || isSecurityAdmin(); }
-    match /threat_scenarios/{scenarioId} { allow read: if request.auth != null; allow write: if isSuperAdmin() || isSecurityAdmin(); }
-    
-    // /risk_scores/{userId}
-    match /risk_scores/{userId} {
-      allow get: if isOwner(userId) || isTenantAdmin() || isSuperAdmin() || isSecurityAdmin();
-      allow list, create, update, delete: if isSuperAdmin() || isSecurityAdmin();
-    }
-    
-    // /users/{userId}/sms_analyses/{analysisId}
     match /users/{userId}/sms_analyses/{analysisId} {
         allow read, create, list: if isOwner(userId);
         allow update, delete: if false;
     }
+
+    // --- Global Content & Configuration ---
+
+    match /trainingModules/{moduleId}      { allow read: if request.auth != null; allow write: if isSuperAdmin(); }
+    match /phishing_templates/{templateId} { allow read: if request.auth != null; allow write: if isSuperAdmin(); }
+    match /subscription_plans/{planId}     { allow read: if request.auth != null; allow write: if isSuperAdmin(); }
+    match /compliance_rules/{ruleId}       { allow read: if request.auth != null; allow write: if isSuperAdmin(); }
+    match /threat_scenarios/{scenarioId}   { allow read: if request.auth != null; allow write: if isSuperAdmin(); }
+
+    // --- System & Audit Collections ---
+
+    match /audit_logs/{logId} {
+      allow create: if request.auth != null; // System actions can create logs.
+      allow read: if isAuditor() || isSuperAdmin();
+      allow update, delete: if false; // Logs are immutable.
+    }
+
+    match /risk_scores/{userId} {
+      allow get: if isOwner(userId) || isTenantAdmin() || isSuperAdmin();
+      allow list, create, update, delete: if isSuperAdmin(); // Risk calculation is a backend/admin process.
+    }
     
-    // /admin_impersonation/{adminId}
     match /admin_impersonation/{adminId} {
-        allow read, write: if isSuperAdmin() || isSecurityAdmin();
+        allow read, write: if isSuperAdmin();
     }
   }
 }
