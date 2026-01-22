@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
-import { collection, query, orderBy, doc, where } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader, AlertTriangle, FileText, Lightbulb, Bell, Clock, Check } from 'lucide-react';
@@ -11,25 +12,27 @@ import { cn } from '@/lib/utils';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuthContext } from '@/components/auth/AuthProvider';
-import type { UserProgress } from '@/docs/backend-schema';
+
+// The UserProgress document is an aggregate of a user's progress.
+type UserProgressAggregate = {
+  completedModules?: Array<{
+      moduleId: string;
+      status: string;
+      completedAt?: string;
+      score?: number;
+  }>;
+};
 
 function UserTrainingDashboard() {
   const { user, loading: isAuthLoading } = useAuthContext();
   const firestore = useFirestore();
 
-  const trainingResultsQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return query(
-      collection(firestore, `userProgress`),
-      where('userId', '==', user.uid),
-      orderBy('completedAt', 'desc')
-    );
-  }, [user, firestore]);
-  
-  const { data: trainingResults, isLoading: isLoadingResults } = useCollection<UserProgress>(
-    trainingResultsQuery,
-    { skip: !trainingResultsQuery }
+  // Correctly fetch the single document for the user's progress.
+  const userProgressDocRef = useMemoFirebase(
+    () => (user && firestore ? doc(firestore, 'userProgress', user.uid) : null),
+    [user, firestore]
   );
+  const { data: userProgress, isLoading: isLoadingResults } = useDoc<UserProgressAggregate>(userProgressDocRef);
 
   const userDocRef = useMemoFirebase(
     () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
@@ -48,6 +51,15 @@ function UserTrainingDashboard() {
   }, [userData]);
   
   const isLoading = isLoadingResults || isLoadingUser || isAuthLoading;
+  
+  const recentCompletions = useMemo(() => {
+    if (!userProgress?.completedModules) return [];
+    // Sort by completion date descending and take top 3
+    return [...userProgress.completedModules]
+      .sort((a, b) => new Date(b.completedAt || 0).getTime() - new Date(a.completedAt || 0).getTime())
+      .slice(0, 3);
+  }, [userProgress]);
+
 
   if (isLoading) {
     return (
@@ -105,15 +117,15 @@ function UserTrainingDashboard() {
                     </CardHeader>
                      <CardContent>
                         <ul className="space-y-2 text-sm">
-                            {trainingResults?.slice(0, 3).map(cert => cert.id && (
-                                <li key={cert.id} className="flex justify-between items-center hover:bg-muted p-2 rounded-md">
+                            {recentCompletions.map(cert => (
+                                <li key={cert.moduleId} className="flex justify-between items-center hover:bg-muted p-2 rounded-md">
                                     <span>{cert.moduleId}</span>
                                     <Button variant="link" size="sm" asChild>
                                         <Link href="/certificates">Download</Link>
                                     </Button>
                                 </li>
                             ))}
-                             {(!trainingResults || trainingResults.length === 0) && (
+                             {(!recentCompletions || recentCompletions.length === 0) && (
                                 <p className="text-xs text-muted-foreground text-center py-4">No certificates earned yet.</p>
                             )}
                         </ul>
