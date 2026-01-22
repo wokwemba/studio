@@ -305,39 +305,39 @@
       },
       "required": ["title", "category", "difficulty", "duration"]
     },
-    "UserProgress": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "UserProgress",
+    "UserProgressEntry": {
+        "title": "User Progress Entry",
         "type": "object",
-        "description": "Tracks a single user's progress for a single module.",
+        "description": "An entry for a single completed module within a user's aggregate progress document.",
         "properties": {
-            "userId": { "type": "string" },
             "moduleId": { "type": "string" },
-            "tenantId": { "type": "string" },
             "status": { "type": "string", "enum": ["not_started", "in_progress", "completed", "expired"] },
             "startedAt": { "type": "string", "format": "date-time" },
             "completedAt": { "type": "string", "format": "date-time" },
-            "score": { "type": "number" },
-            "attempts": { "type": "array", "items": { "type": "object" } },
-            "certificate": {
-                "type": "object",
-                "properties": {
-                    "issuedAt": { "type": "string", "format": "date-time" },
-                    "expiresAt": { "type": "string", "format": "date-time" },
-                    "certificateId": { "type": "string" },
-                    "downloadUrl": { "type": "string", "format": "uri" }
-                }
-            }
+            "score": { "type": "number" }
         },
-        "required": ["userId", "moduleId", "tenantId", "status"]
+        "required": ["moduleId", "status"]
     },
-    "UserChallengeAttempt": {
-      "title": "User Challenge Attempt",
+    "UserProgress": {
+        "title": "User Progress Aggregate",
+        "type": "object",
+        "description": "Aggregated progress for a single user across all modules.",
+        "properties": {
+            "userId": { "type": "string" },
+            "tenantId": { "type": "string" },
+            "completedModules": {
+                "type": "array",
+                "items": { "$ref": "#/entities/UserProgressEntry" }
+            },
+            "updatedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["userId", "tenantId"]
+    },
+    "UserChallengeAttemptEntry": {
+      "title": "User Challenge Attempt Entry",
       "type": "object",
-      "description": "Records the result of a user's attempt at a gamified challenge.",
+      "description": "An entry for a single attempt at a gamified challenge.",
       "properties": {
-        "userId": { "type": "string" },
-        "tenantId": { "type": "string" },
         "challengeType": { "type": "string", "enum": ["escape-room", "vuln-challenge", "api-lab", "threat-scenario"] },
         "challengeName": { "type": "string" },
         "score": { "type": "number" },
@@ -345,7 +345,22 @@
         "percentage": { "type": "number" },
         "completedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["userId", "tenantId", "challengeType", "challengeName", "score", "maxScore", "percentage", "completedAt"]
+      "required": ["challengeType", "challengeName", "score", "maxScore", "percentage", "completedAt"]
+    },
+    "UserChallengeAttempt": {
+      "title": "User Challenge Attempt Aggregate",
+      "type": "object",
+      "description": "Aggregated results of a user's attempts at gamified challenges.",
+      "properties": {
+        "userId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "attempts": {
+            "type": "array",
+            "items": { "$ref": "#/entities/UserChallengeAttemptEntry" }
+        },
+        "lastAttemptAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "tenantId"]
     },
     "Assignment": {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -702,8 +717,8 @@
     "/tenants/{tenantId}/campaigns/{campaignId}": { "schema": { "$ref": "#/entities/Campaign" }, "description": "Training campaigns for a specific tenant." },
     "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "Top-level collection for all users." },
     "/trainingModules/{moduleId}": { "schema": { "$ref": "#/entities/TrainingModule" }, "description": "Global library of training modules." },
-    "/userProgress/{progressId}": { "schema": { "$ref": "#/entities/UserProgress" }, "description": "Tracks user progress in modules." },
-    "/user_challenge_attempts/{attemptId}": { "schema": { "$ref": "#/entities/UserChallengeAttempt" }, "description": "Collection of all user attempts at gamified challenges." },
+    "/userProgress/{userId}": { "schema": { "$ref": "#/entities/UserProgress" }, "description": "Tracks a user's aggregate progress in modules." },
+    "/user_challenge_attempts/{userId}": { "schema": { "$ref": "#/entities/UserChallengeAttempt" }, "description": "Collection of all user attempts at gamified challenges." },
     "/assignments/{assignmentId}": { "schema": { "$ref": "#/entities/Assignment" }, "description": "Training assignments for tenants." },
     "/phishingSimulations/{simId}": { "schema": { "$ref": "#/entities/PhishingSimulation" }, "description": "Phishing simulations for tenants." },
     "/phishing_templates/{templateId}": { "schema": { "$ref": "#/entities/PhishingTemplate" }, "description": "Global library of phishing templates." },
@@ -719,5 +734,3 @@
     "/threat_scenarios/{scenarioId}": { "schema": { "$ref": "#/entities/ThreatScenario" }, "description": "Library of interactive 'Serious Game' training scenarios." }
   }
 }
-
-  

@@ -1,12 +1,9 @@
 
 'use client';
-import { addDocumentNonBlocking } from '@/firebase';
-import { collection, type Firestore } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, arrayUnion, type Firestore } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
 
-export type ChallengeAttempt = {
-    userId: string;
-    tenantId: string;
+export type ChallengeAttemptEntry = {
     challengeType: 'escape-room' | 'vuln-challenge' | 'api-lab' | 'threat-scenario';
     challengeName: string; // e.g., "Phishing Awareness" or "API1: IDOR"
     score: number;
@@ -15,7 +12,7 @@ export type ChallengeAttempt = {
     completedAt: string;
 };
 
-export function saveChallengeAttempt(firestore: Firestore, user: User, attempt: Omit<ChallengeAttempt, 'userId' | 'tenantId' | 'completedAt'>) {
+export function saveChallengeAttempt(firestore: Firestore, user: User, attempt: Omit<ChallengeAttemptEntry, 'completedAt'>) {
     if (!firestore || !user) {
         console.error("Firestore or user not available for saving challenge attempt.");
         return;
@@ -26,15 +23,22 @@ export function saveChallengeAttempt(firestore: Firestore, user: User, attempt: 
         return;
     }
 
-    const attemptData: ChallengeAttempt = {
+    const attemptData: ChallengeAttemptEntry = {
         ...attempt,
-        userId: user.uid,
-        tenantId,
         completedAt: new Date().toISOString(),
     };
-
-    const attemptsCollection = collection(firestore, 'user_challenge_attempts');
-    addDocumentNonBlocking(attemptsCollection, attemptData);
-}
-
     
+    const userAttemptsDocRef = doc(firestore, 'user_challenge_attempts', user.uid);
+
+    // Use setDoc with merge to create the document if it doesn't exist,
+    // or update it if it does. arrayUnion ensures we add to the array without duplicates.
+    setDoc(userAttemptsDocRef, {
+        userId: user.uid,
+        tenantId: tenantId,
+        attempts: arrayUnion(attemptData),
+        lastAttemptAt: attemptData.completedAt,
+    }, { merge: true }).catch(error => {
+        console.error("Failed to save challenge attempt:", error);
+        // Optionally, you can emit a global error here if needed
+    });
+}

@@ -1,26 +1,27 @@
+
 'use client';
 
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, where } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Loader, History } from 'lucide-react';
-import type { UserProgress } from '@/docs/backend-schema';
+import type { UserProgress, UserProgressEntry } from '@/docs/backend-schema';
 
 export default function TrainingHistoryPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const trainingResultsQuery = useMemoFirebase(
-    () => (user && firestore ? query(
-        collection(firestore, `userProgress`),
-        where('userId', '==', user.uid),
-        orderBy('completedAt', 'desc')
-    ) : null),
+  const userProgressDocRef = useMemoFirebase(
+    () => (user && firestore ? doc(firestore, 'userProgress', user.uid) : null),
     [user, firestore]
   );
-  const { data: trainingResults, isLoading } = useCollection<UserProgress>(trainingResultsQuery);
+  const { data: userProgress, isLoading } = useDoc<UserProgress>(userProgressDocRef);
+  
+  const trainingResults = userProgress?.completedModules?.sort((a, b) => 
+    new Date(b.completedAt || 0).getTime() - new Date(a.completedAt || 0).getTime()
+  ) || [];
 
   return (
     <Card>
@@ -53,8 +54,8 @@ export default function TrainingHistoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {trainingResults.map((result) => (result.completedAt && result.id) && (
-                <TableRow key={result.id}>
+              {trainingResults.map((result) => (result.completedAt && result.moduleId) && (
+                <TableRow key={result.moduleId}>
                   <TableCell className="font-medium">{result.moduleId}</TableCell>
                   <TableCell className="text-center">
                     <Badge variant={(result.score || 0) < 80 ? 'destructive' : 'success'}>

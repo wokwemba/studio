@@ -1,12 +1,13 @@
+
 'use client';
 
 import { useMemo } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, where } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader, BarChart, Trophy, Percent, TrendingDown } from 'lucide-react';
+import { Loader, BarChart, Trophy, Percent } from 'lucide-react';
 import {
   BarChart as RechartsBarChart,
   Bar,
@@ -35,25 +36,23 @@ export default function PerformancePage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const trainingResultsQuery = useMemoFirebase(
-    () => (user && firestore ? query(
-        collection(firestore, `userProgress`),
-        where('userId', '==', user.uid),
-        orderBy('completedAt', 'desc')
-    ) : null),
+  const userProgressDocRef = useMemoFirebase(
+    () => (user && firestore ? doc(firestore, 'userProgress', user.uid) : null),
     [user, firestore]
   );
-  const { data: trainingResults, isLoading } = useCollection<UserProgress>(trainingResultsQuery);
+  const { data: userProgress, isLoading } = useDoc<UserProgress>(userProgressDocRef);
 
+  const trainingResults = userProgress?.completedModules || [];
+  
   const { topicPerformance, scoreDistribution, personalBest, averageScore } = useMemo(() => {
-    if (!trainingResults) {
+    if (!trainingResults || trainingResults.length === 0) {
       return { topicPerformance: [], scoreDistribution: [], personalBest: 0, averageScore: 0 };
     }
 
     // Calculate Topic Performance
     const performance: Record<string, { totalScore: number; count: number }> = {};
     trainingResults.forEach(result => {
-      if (result.score === undefined) return;
+      if (result.score === undefined || !result.moduleId) return;
       if (!performance[result.moduleId]) {
         performance[result.moduleId] = { totalScore: 0, count: 0 };
       }
@@ -104,7 +103,7 @@ export default function PerformancePage() {
     );
   }
   
-  const weakestTopic = topicPerformance.length > 0 ? topicPerformance[topicPerformance.length - 1] : null;
+  const weakestTopic = topicPerformance.length > 0 ? [...topicPerformance].sort((a,b) => a.averageScore - b.averageScore)[0] : null;
 
   return (
     <div className="space-y-6">

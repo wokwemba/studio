@@ -10,8 +10,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useUser, useFirestore, updateDocumentNonBlocking } from '@/firebase';
+import { doc, setDoc, arrayUnion } from 'firebase/firestore';
 import { Label } from '@/components/ui/label';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -92,22 +92,29 @@ export default function GenerateTrainingModulePage() {
    const handleSaveResults = async () => {
     if (quizScore === null || !user || !firestore || !module) return;
     setIsSaving(true);
-    try {
-      const resultsCollection = collection(firestore, `userProgress`);
-      
-      addDocumentNonBlocking(resultsCollection, {
-        moduleId: topic, // using topic as a pseudo-id
-        userId: user.uid,
+    
+    const tenantId = (user as any).tenantId || 'default-tenant-ccyberguard';
+    const progressDocRef = doc(firestore, `userProgress`, user.uid);
+
+    const newProgressEntry = {
+        moduleId: topic,
         score: quizScore,
-        tenantId: (user as any).tenantId || 'default-tenant-ccyberguard',
         status: 'completed',
         completedAt: new Date().toISOString(),
-      });
+    };
 
-      toast({
-        title: 'Results Saved',
-        description: 'Your quiz results have been saved to your profile.',
-      });
+    try {
+        await setDoc(progressDocRef, {
+            userId: user.uid,
+            tenantId: tenantId,
+            completedModules: arrayUnion(newProgressEntry),
+            updatedAt: new Date().toISOString(),
+        }, { merge: true });
+
+        toast({
+            title: 'Results Saved',
+            description: 'Your quiz results have been saved to your profile.',
+        });
     } catch (error) {
         console.error("Error saving results: ", error);
         toast({

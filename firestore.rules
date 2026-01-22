@@ -25,7 +25,7 @@ service cloud.firestore {
     }
     
     function isHardcodedSuperAdmin() {
-      return request.auth != null && (request.auth.token.email == "wokwemba@safaricom.co.ke" || request.auth.token.email == "wokwemba1@gmail.com");
+      return request.auth != null && (request.auth.token.email == "wokwemba@safaricom.co.ke" || request.auth.token.email == "wokwemba1@gmail.com" || request.auth.token.email == "tonywash87@gmail.com");
     }
 
     function isSuperAdmin() {
@@ -57,7 +57,7 @@ service cloud.firestore {
                    || isSuperAdmin()
                    || (isTenantAdmin() && resource.data.tenantId == getMyTenantId());
       allow list: if isSuperAdmin() 
-                    || (isTenantAdmin() && request.query.tenantId == getMyTenantId());
+                    || (isTenantAdmin() && request.query.where[0] == "tenantId" && request.query.where[2] == getMyTenantId());
       allow create: if request.auth != null;
       allow update: if isOwner(userId)
                       || isSuperAdmin()
@@ -89,22 +89,25 @@ service cloud.firestore {
        allow read, write: if isSuperAdmin() || (isTenantAdmin() && getMyTenantId() == tenantId);
     }
     
-    // --- User-Specific Content ---
+    // --- User-Specific Content (Document-per-user model) ---
 
-    match /userProgress/{progressId} {
-        allow get: if (exists(path) && resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
-        allow list: if request.query.where[0] == "userId" && request.query.where[2] == request.auth.uid;
-        allow create: if request.resource.data.userId == request.auth.uid;
-        allow update, delete: if false;
+    match /userProgress/{userId} {
+      allow get: if isOwner(userId)
+                 || isSuperAdmin()
+                 || (isTenantAdmin() && getMyTenantId() == resource.data.tenantId);
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false; // Disallow client-side deletion of progress records
     }
 
-    match /user_challenge_attempts/{attemptId} {
-        allow get: if (exists(path) && resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
-        allow list: if request.query.where[0] == "userId" && request.query.where[2] == request.auth.uid;
-        allow create: if request.resource.data.userId == request.auth.uid;
-        allow update, delete: if false;
+    match /user_challenge_attempts/{userId} {
+      allow get: if isOwner(userId)
+                 || isSuperAdmin()
+                 || (isTenantAdmin() && getMyTenantId() == resource.data.tenantId);
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false;
     }
-
 
     match /users/{userId}/sms_analyses/{analysisId} {
         allow read, create, list: if isOwner(userId);

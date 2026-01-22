@@ -1,18 +1,20 @@
+
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format, addYears } from 'date-fns';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { Download, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CertificateTemplate } from '@/components/training/certificate';
 import { useToast } from '@/hooks/use-toast';
-import type { UserProgress } from '@/docs/backend-schema';
+import type { UserProgress, UserProgressEntry } from '@/docs/backend-schema';
+
 
 export default function CertificatesPage() {
   const { user, isUserLoading } = useUser();
@@ -21,19 +23,19 @@ export default function CertificatesPage() {
   const [generatingCertId, setGeneratingCertId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const trainingResultsQuery = useMemoFirebase(
-    () => (user && firestore ? query(
-        collection(firestore, `userProgress`),
-        where('userId', '==', user.uid),
-        where('score', '>=', 80)
-      ) : null),
+  const userProgressDocRef = useMemoFirebase(
+    () => (user && firestore ? doc(firestore, `userProgress`, user.uid) : null),
     [user, firestore]
   );
-  const { data: earnedCertificates, isLoading: isLoadingCertificates } = useCollection<UserProgress>(trainingResultsQuery);
+  const { data: userProgress, isLoading: isLoadingCertificates } = useDoc<UserProgress>(userProgressDocRef);
 
-  const handleGenerateCertificate = async (certificate: UserProgress) => {
-    if (!certificateRef.current || !user || !certificate.completedAt || !certificate.id) return;
-    setGeneratingCertId(certificate.id);
+  const earnedCertificates = useMemo(() => {
+    return userProgress?.completedModules?.filter(m => (m.score || 0) >= 80) || [];
+  }, [userProgress]);
+
+  const handleGenerateCertificate = async (certificate: UserProgressEntry) => {
+    if (!certificateRef.current || !user || !certificate.completedAt || !certificate.moduleId) return;
+    setGeneratingCertId(certificate.moduleId);
     try {
       const canvas = await html2canvas(certificateRef.current, { scale: 2 });
       const imgData = canvas.toDataURL('image/png');
@@ -63,18 +65,24 @@ export default function CertificatesPage() {
   };
   
   const isLoading = isUserLoading || isLoadingCertificates;
+  
+  const currentlyGeneratingCertificate = useMemo(() => {
+    if (!generatingCertId) return null;
+    return earnedCertificates.find(c => c.moduleId === generatingCertId);
+  }, [generatingCertId, earnedCertificates]);
+
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       {/* This hidden div is used for generating the PDF. It's populated with the data of the currently generating cert */}
       <div style={{ position: 'fixed', left: '-9999px', top: '0' }}>
-         {user && generatingCertId && earnedCertificates && (
+         {user && currentlyGeneratingCertificate && (
             <CertificateTemplate
                 ref={certificateRef}
                 userName={user.displayName || user.email || 'Valued User'}
-                courseName={earnedCertificates.find(c => c.id === generatingCertId)?.moduleId || ''}
-                completionDate={format(new Date(earnedCertificates.find(c => c.id === generatingCertId)?.completedAt || new Date()), 'MMMM d, yyyy')}
-                expiryDate={format(addYears(new Date(earnedCertificates.find(c => c.id === generatingCertId)?.completedAt || new Date()), 1), 'MMMM d, yyyy')}
+                courseName={currentlyGeneratingCertificate.moduleId}
+                completionDate={format(new Date(currentlyGeneratingCertificate.completedAt!), 'MMMM d, yyyy')}
+                expiryDate={format(addYears(new Date(currentlyGeneratingCertificate.completedAt!), 1), 'MMMM d, yyyy')}
             />
          )}
       </div>
@@ -108,8 +116,8 @@ export default function CertificatesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {earnedCertificates.map((cert) => (cert.completedAt && cert.id) && (
-                <TableRow key={cert.id}>
+              {earnedCertificates.map((cert) => (cert.completedAt && cert.moduleId) && (
+                <TableRow key={cert.moduleId}>
                   <TableCell className="font-medium">{cert.moduleId}</TableCell>
                   <TableCell>{format(new Date(cert.completedAt), 'yyyy-MM-dd')}</TableCell>
                   <TableCell>{format(addYears(new Date(cert.completedAt), 1), 'yyyy-MM-dd')}</TableCell>
@@ -118,9 +126,9 @@ export default function CertificatesPage() {
                       variant="ghost" 
                       size="icon" 
                       onClick={() => handleGenerateCertificate(cert)}
-                      disabled={generatingCertId === cert.id}
+                      disabled={generatingCertId === cert.moduleId}
                     >
-                      {generatingCertId === cert.id ? <Loader className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                      {generatingCertId === cert.moduleId ? <Loader className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                       <span className="sr-only">Download Certificate</span>
                     </Button>
                   </TableCell>
