@@ -106,19 +106,19 @@ service cloud.firestore {
     // --- User-Specific Content (Progress, Attempts, etc.) ---
     
     match /userProgress/{progressId} {
-      // Secure list operation: A user can only list their OWN progress docs.
-      // This forces the client query to include `where('userId', '==', auth.uid)`.
-      allow list: if request.query.userId == request.auth.uid;
+      // A user can ONLY read their OWN progress documents.
+      // This simplified rule ensures client-side queries for a user's own data are always allowed and performant.
+      allow read: if request.auth.uid == resource.data.userId;
       
-      allow get: if (request.auth != null && resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
       allow delete: if false; // Deletes are not allowed from the client.
     }
     
     match /user_challenge_attempts/{attemptId} {
-      allow list: if request.query.userId == request.auth.uid;
-      allow get: if (request.auth != null && resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
+      // A user can ONLY read their OWN attempts.
+      allow read: if request.auth.uid == resource.data.userId;
+
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
