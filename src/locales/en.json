@@ -1,3 +1,4 @@
+
 {
   "home.title": "Cybersecurity Training and Consultancy",
   "home.description": "Sharpen your skills with AI-powered training modules, realistic simulations, and personalized learning paths.",
@@ -36,5 +37,19 @@
   "sidebar.ir_playbook_generator": "IR Playbook Generator",
   "sidebar.threat_intelligence": "Threat Intelligence",
   "sidebar.osint_dark_web": "OSINT & Dark Web Intel",
-  "sidebar.threat_actor_profiles": "Threat Actor Profiles"
+  "sidebar.threat_actor_profiles": "Threat Actor Profiles",
+  "header.my_account": "My Account",
+  "header.profile": "Profile",
+  "header.settings": "Settings",
+  "header.logout": "Logout",
+  "header.stop_impersonating": "Stop Impersonating",
+  "flashcards.title": "Cybersecurity Flashcards",
+  "flashcards.generate_title": "Generate Flashcards",
+  "flashcards.description": "Enter a cybersecurity topic to generate a set of interactive flashcards.",
+  "flashcards.topic_label": "Topic",
+  "flashcards.topic_placeholder": "e.g., SQL Injection, Social Engineering...",
+  "flashcards.generate_button": "Generate",
+  "flashcards.generating_button": "Generating...",
+  "flashcards.generated_title": "Your Flashcards on {topic}",
+  "flashcards.instruction": "Click on a card to flip it over."
 }

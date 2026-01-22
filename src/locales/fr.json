@@ -1,3 +1,4 @@
+
 {
   "home.title": "Formation et Conseil en Cybersécurité",
   "home.description": "Affinez vos compétences avec des modules de formation basés sur l'IA, des simulations réalistes et des parcours d'apprentissage personnalisés.",
@@ -36,5 +37,19 @@
   "sidebar.ir_playbook_generator": "Générateur de Playbook RI",
   "sidebar.threat_intelligence": "Renseignement sur les Menaces",
   "sidebar.osint_dark_web": "OSINT & Renseignements Dark Web",
-  "sidebar.threat_actor_profiles": "Profils d'Acteurs de Menace"
+  "sidebar.threat_actor_profiles": "Profils d'Acteurs de Menace",
+  "header.my_account": "Mon Compte",
+  "header.profile": "Profil",
+  "header.settings": "Paramètres",
+  "header.logout": "Déconnexion",
+  "header.stop_impersonating": "Arrêter l'Usurpation",
+  "flashcards.title": "Flashcards de Cybersécurité",
+  "flashcards.generate_title": "Générer des Flashcards",
+  "flashcards.description": "Entrez un sujet de cybersécurité pour générer un jeu de flashcards interactives.",
+  "flashcards.topic_label": "Sujet",
+  "flashcards.topic_placeholder": "Ex: Injection SQL, Ingénierie Sociale...",
+  "flashcards.generate_button": "Générer",
+  "flashcards.generating_button": "Génération...",
+  "flashcards.generated_title": "Vos Flashcards sur {topic}",
+  "flashcards.instruction": "Cliquez sur une carte pour la retourner."
 }

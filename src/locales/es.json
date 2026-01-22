@@ -1,3 +1,4 @@
+
 {
   "home.title": "Formación y Consultoría en Ciberseguridad",
   "home.description": "Mejore sus habilidades con módulos de capacitación impulsados por IA, simulaciones realistas y rutas de aprendizaje personalizadas.",
@@ -36,5 +37,19 @@
   "sidebar.ir_playbook_generator": "Generador de Playbooks de RI",
   "sidebar.threat_intelligence": "Inteligencia de Amenazas",
   "sidebar.osint_dark_web": "OSINT e Intel de Dark Web",
-  "sidebar.threat_actor_profiles": "Perfiles de Actores de Amenaza"
+  "sidebar.threat_actor_profiles": "Perfiles de Actores de Amenaza",
+  "header.my_account": "Mi Cuenta",
+  "header.profile": "Perfil",
+  "header.settings": "Configuración",
+  "header.logout": "Cerrar Sesión",
+  "header.stop_impersonating": "Dejar de Suplantar",
+  "flashcards.title": "Tarjetas de Ciberseguridad",
+  "flashcards.generate_title": "Generar Tarjetas",
+  "flashcards.description": "Ingrese un tema de ciberseguridad para generar un conjunto de tarjetas interactivas.",
+  "flashcards.topic_label": "Tema",
+  "flashcards.topic_placeholder": "Ej: Inyección SQL, Ingeniería Social...",
+  "flashcards.generate_button": "Generar",
+  "flashcards.generating_button": "Generando...",
+  "flashcards.generated_title": "Tus Tarjetas sobre {topic}",
+  "flashcards.instruction": "Haz clic en una tarjeta para voltearla."
 }

@@ -102,15 +102,17 @@ export default function Header() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{isImpersonating ? `Impersonating: ${user?.displayName}` : 'My Account'}</DropdownMenuLabel>
+            <DropdownMenuLabel>{isImpersonating ? `Impersonating: ${user?.displayName}` : t('header.my_account')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/profile">Profile</Link>
+              <Link href="/profile">{t('header.profile')}</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href="/profile">{t('header.settings')}</Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogoutOrStopImpersonation}>
-                {isImpersonating ? 'Stop Impersonating' : 'Logout'}
+                {isImpersonating ? t('header.stop_impersonating') : t('header.logout')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, type FormEvent } from 'react';
@@ -84,31 +85,30 @@ export default function FlashcardsPage() {
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       <div className="flex items-center gap-2 mb-6">
         <Copy className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold font-headline">Cybersecurity Flashcards</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('flashcards.title')}</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Generate Flashcards</CardTitle>
+          <CardTitle className="font-headline">{t('flashcards.generate_title')}</CardTitle>
           <CardDescription>
-            Enter a cybersecurity topic to generate a set of interactive
-            flashcards.
+            {t('flashcards.description')}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleGenerate}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="topic">Topic</Label>
+              <Label htmlFor="topic">{t('flashcards.topic_label')}</Label>
               <Input
                 id="topic"
-                placeholder="e.g., SQL Injection, Social Engineering..."
+                placeholder={t('flashcards.topic_placeholder')}
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="language">Language</Label>
+                <Label htmlFor="language">{t('language')}</Label>
                 <Select value={language} onValueChange={setLanguage} disabled={isLoading}>
                     <SelectTrigger id="language">
                         <SelectValue placeholder="Select language" />
@@ -124,7 +124,7 @@ export default function FlashcardsPage() {
           <CardFooter>
             <Button type="submit" disabled={isLoading || !topic.trim()}>
               {isLoading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-              {isLoading ? 'Generating...' : 'Generate'}
+              {isLoading ? t('flashcards.generating_button') : t('flashcards.generate_button')}
             </Button>
           </CardFooter>
         </form>
@@ -137,9 +137,9 @@ export default function FlashcardsPage() {
       {flashcards.length > 0 && (
         <div className="mt-8">
           <h2 className="text-2xl font-bold font-headline mb-4 text-center">
-            Your Flashcards on &quot;{topic}&quot;
+            {t('flashcards.generated_title').replace('{topic}', `"${topic}"`)}
           </h2>
-          <p className="text-center text-muted-foreground mb-6">Click on a card to flip it over.</p>
+          <p className="text-center text-muted-foreground mb-6">{t('flashcards.instruction')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatePresence>
                 {flashcards.map((card, index) => (
