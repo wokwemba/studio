@@ -25,7 +25,7 @@ service cloud.firestore {
     }
     
     function isHardcodedSuperAdmin() {
-      return request.auth != null && request.auth.token.email == "wokwemba@safaricom.co.ke";
+      return request.auth != null && (request.auth.token.email == "wokwemba@safaricom.co.ke" || request.auth.token.email == "wokwemba1@gmail.com");
     }
 
     function isSuperAdmin() {
@@ -92,32 +92,16 @@ service cloud.firestore {
     // --- User-Specific Content ---
 
     match /userProgress/{progressId} {
-      // Rule for reading single documents. Allows owner or an admin.
-      allow get: if (resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
-
-      // Rule for querying (listing) documents.
-      // This is intentionally simple and separate from `get` to ensure it can be evaluated by Firestore's query engine.
-      // It ensures that any query on this collection MUST be constrained to the user's own documents.
-      allow list: if request.query.userId == request.auth.uid;
-      
-      // Users can create their own progress records.
+      allow get: if (exists(path) && resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
+      allow list: if request.query.where.userId == request.auth.uid || isSuperAdmin() || isTenantAdmin();
       allow create: if request.resource.data.userId == request.auth.uid;
-      
-      // No client-side updates or deletes are allowed to prevent tampering.
       allow update, delete: if false;
     }
 
     match /user_challenge_attempts/{attemptId} {
-      // Rule for reading single documents. Allows owner or an admin.
-      allow get: if (resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
-      
-      // Rule for querying (listing) documents.
-      allow list: if request.query.userId == request.auth.uid;
-      
-      // Users can only create their own attempts.
+      allow get: if (exists(path) && resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
+      allow list: if request.query.where.userId == request.auth.uid || isSuperAdmin() || isTenantAdmin();
       allow create: if request.resource.data.userId == request.auth.uid;
-
-      // No updates or deletes.
       allow update, delete: if false;
     }
 
