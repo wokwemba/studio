@@ -107,8 +107,8 @@ service cloud.firestore {
     
     match /userProgress/{progressId} {
       // A user can ONLY read their OWN progress documents.
-      // This simplified rule ensures client-side queries for a user's own data are always allowed and performant.
-      allow read: if request.auth.uid == resource.data.userId;
+      // This rule ensures client-side queries for a user's own data are always allowed and performant.
+      allow read: if 'userId' in resource.data && resource.data.userId == request.auth.uid;
       
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
@@ -117,7 +117,7 @@ service cloud.firestore {
     
     match /user_challenge_attempts/{attemptId} {
       // A user can ONLY read their OWN attempts.
-      allow read: if request.auth.uid == resource.data.userId;
+      allow read: if 'userId' in resource.data && resource.data.userId == request.auth.uid;
 
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
