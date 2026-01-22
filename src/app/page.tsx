@@ -1,14 +1,17 @@
-
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuthContext } from '@/components/auth/AuthProvider';
+import { Loader } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff, Key, Users, ShieldAlert, Blocks, ShieldQuestion } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { CyberGuardLogo } from '@/components/icons/cyber-guard-logo';
 
-export default function Home() {
+function PublicHomePage() {
     const { t } = useTranslation();
 
     const features = [
@@ -181,4 +184,41 @@ export default function Home() {
             </div>
         </div>
     );
+}
+
+
+export default function Home() {
+  const { user, roles, loading } = useAuthContext();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+    
+    if (user) {
+      const isAdmin = roles?.some(r => 
+          r.name === 'Domain Administrator' || 
+          r.name === 'Security Administrator' ||
+          r.name === 'Tenant Administrator'
+      ) || false;
+
+      if (isAdmin) {
+        router.replace('/admin/dashboard');
+      } else {
+        router.replace('/training');
+      }
+    }
+  }, [user, roles, loading, router]);
+
+  if (loading || user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Only render the public page if not loading and no user is authenticated
+  return <PublicHomePage />;
 }
