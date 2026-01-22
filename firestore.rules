@@ -98,7 +98,7 @@ service cloud.firestore {
       // Rule for querying (listing) documents.
       // This is intentionally simple and separate from `get` to ensure it can be evaluated by Firestore's query engine.
       // It ensures that any query on this collection MUST be constrained to the user's own documents.
-      allow list: if resource.data.userId == request.auth.uid;
+      allow list: if request.query.userId == request.auth.uid;
       
       // Users can create their own progress records.
       allow create: if request.resource.data.userId == request.auth.uid;
@@ -112,7 +112,7 @@ service cloud.firestore {
       allow get: if (resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
       
       // Rule for querying (listing) documents.
-      allow list: if resource.data.userId == request.auth.uid;
+      allow list: if request.query.userId == request.auth.uid;
       
       // Users can only create their own attempts.
       allow create: if request.resource.data.userId == request.auth.uid;
