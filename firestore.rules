@@ -106,19 +106,27 @@ service cloud.firestore {
     // --- User-Specific Content (Progress, Attempts, etc.) ---
     
     match /userProgress/{progressId} {
-      // A user can ONLY read their OWN progress documents.
-      // This rule ensures client-side queries for a user's own data are always allowed and performant.
-      allow read: if 'userId' in resource.data && resource.data.userId == request.auth.uid;
+      // GET: Allow reading a specific document if the user is the owner or an admin.
+      allow get: if (isOwner(resource.data.userId) || isSuperAdmin() || isTenantAdmin());
       
+      // LIST: Allow querying the collection only if the query is filtered by the requesting user's ID.
+      // This is the key fix. It tells Firestore that any list query on this collection is secure.
+      allow list: if (request.auth != null && request.query.where.userId == request.auth.uid);
+      
+      // WRITE: Only the user can create or update their own progress. No deletes from client.
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow delete: if false; // Deletes are not allowed from the client.
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if false;
     }
     
     match /user_challenge_attempts/{attemptId} {
-      // A user can ONLY read their OWN attempts.
-      allow read: if 'userId' in resource.data && resource.data.userId == request.auth.uid;
+      // GET: Allow reading a specific document if the user is the owner.
+      allow get: if isOwner(resource.data.userId);
 
+      // LIST: A user can only list their own attempts, by filtering on their UID.
+      allow list: if request.auth != null && request.query.where.userId == request.auth.uid;
+      
+      // WRITE: Users can only create their own attempts. No updates or deletes.
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
