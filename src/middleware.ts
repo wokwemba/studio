@@ -52,5 +52,6 @@ export const config = {
     '/threat-intelligence/:path*',
     '/vulnerability-challenge/:path*',
     '/escape-room/:path*',
+    '/admin/marketing/:path*',
   ],
 };
