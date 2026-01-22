@@ -8,16 +8,6 @@ service cloud.firestore {
     //     HELPER FUNCTIONS
     // =================================
 
-    // Safely gets the list of role IDs for the currently authenticated user.
-    function getUserRoles() {
-      let userRolesPath = /databases/$(database)/documents/user_roles/$(request.auth.uid);
-      if (exists(userRolesPath)) {
-        return get(userRolesPath).data.roles;
-      }
-      return [];
-    }
-
-    // Safely gets the tenant ID of the currently authenticated user.
     function getMyTenantId() {
       let userProfilePath = /databases/$(database)/documents/users/$(request.auth.uid);
       if (exists(userProfilePath) && 'tenantId' in get(userProfilePath).data) {
@@ -25,33 +15,35 @@ service cloud.firestore {
       }
       return null;
     }
+
+    function getUserRoles() {
+      let userRolesPath = /databases/$(database)/documents/user_roles/$(request.auth.uid);
+      if (exists(userRolesPath)) {
+        return get(userRolesPath).data.roles;
+      }
+      return [];
+    }
     
-    // Hardcoded check for the primary super admin email for bootstrapping/failsafe.
     function isHardcodedSuperAdmin() {
       return request.auth != null && request.auth.token.email == "wokwemba@safaricom.co.ke";
     }
 
-    // Tier 0: Full system control.
     function isSuperAdmin() {
       return request.auth != null && (isHardcodedSuperAdmin() || getUserRoles().hasAny(['DOMAIN_ADMIN', 'SECURITY_ADMIN']));
     }
-
-    // Tier 2: Manages users and resources within their own tenant.
+    
     function isTenantAdmin() {
       return request.auth != null && getUserRoles().hasAny(['TENANT_ADMIN']);
     }
-    
-    // Tier 2: Manages partner-related data.
+
     function isPartnerAdmin() {
       return request.auth != null && getUserRoles().hasAny(['PARTNER_ADMIN']);
     }
-    
-    // Read-Only: For viewing audit logs.
+
     function isAuditor() {
       return request.auth != null && getUserRoles().hasAny(['AUDITOR']);
     }
 
-    // Checks if the requesting user is the owner of the document.
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
@@ -60,15 +52,13 @@ service cloud.firestore {
     //     COLLECTION RULES
     // =================================
 
-    // --- User and Role Management ---
-
     match /users/{userId} {
       allow get: if isOwner(userId)
                    || isSuperAdmin()
                    || (isTenantAdmin() && resource.data.tenantId == getMyTenantId());
       allow list: if isSuperAdmin() 
                     || (isTenantAdmin() && request.query.tenantId == getMyTenantId());
-      allow create: if request.auth != null; // Any authenticated user can sign up, admins can create.
+      allow create: if request.auth != null;
       allow update: if isOwner(userId)
                       || isSuperAdmin()
                       || (isTenantAdmin() && resource.data.tenantId == getMyTenantId());
@@ -78,16 +68,13 @@ service cloud.firestore {
     match /user_roles/{userId} {
       allow get: if isOwner(userId) || isSuperAdmin() || isTenantAdmin();
       allow list: if isSuperAdmin() || isTenantAdmin();
-      // Only Super Admins can change roles to prevent privilege escalation.
       allow create, update, delete: if isSuperAdmin();
     }
     
     match /roles/{roleId} {
       allow read: if request.auth != null;
-      allow write: if isSuperAdmin(); // Only Super Admins can define what roles exist.
+      allow write: if isSuperAdmin();
     }
-
-    // --- Admin & Tenant Management ---
 
     match /tenants/{tenantId} {
       allow get: if isSuperAdmin() || (isTenantAdmin() && getMyTenantId() == tenantId);
@@ -98,39 +85,38 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin() || isPartnerAdmin();
     }
     
-    // Tenant-specific subcollections
     match /tenants/{tenantId}/{subcollection}/{docId} {
        allow read, write: if isSuperAdmin() || (isTenantAdmin() && getMyTenantId() == tenantId);
     }
     
-    // --- User-Specific Content (Progress, Attempts, etc.) ---
-    
-    match /userProgress/{progressId} {
-      // GET: Allow reading a specific document if the user is the owner or an admin.
-      allow get: if (isOwner(resource.data.userId) || isSuperAdmin() || isTenantAdmin());
-      
-      // LIST: Allow querying the collection only if the query is filtered by the requesting user's ID.
-      // This is the key fix. It tells Firestore that any list query on this collection is secure.
-      allow list: if (request.auth != null && request.query.where.userId == request.auth.uid);
-      
-      // WRITE: Only the user can create or update their own progress. No deletes from client.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if isOwner(resource.data.userId);
-      allow delete: if false;
-    }
-    
-    match /user_challenge_attempts/{attemptId} {
-      // GET: Allow reading a specific document if the user is the owner.
-      allow get: if isOwner(resource.data.userId);
+    // --- User-Specific Content ---
 
-      // LIST: A user can only list their own attempts, by filtering on their UID.
-      allow list: if request.auth != null && request.query.where.userId == request.auth.uid;
+    match /userProgress/{progressId} {
+      // Admins or the owner can get a specific document.
+      allow get: if isOwner(resource.data.userId) || isSuperAdmin() || isTenantAdmin();
+
+      // A user can only list documents where their UID matches the `userId` field.
+      // This rule is compatible with list queries because it doesn't use `get()` or `exists()`.
+      allow list: if request.auth.uid == resource.data.userId;
+
+      // Users can create and update their own progress.
+      allow create: if request.resource.data.userId == request.auth.uid;
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if false; // Deletes are not allowed from the client.
+    }
+
+    match /user_challenge_attempts/{attemptId} {
+      // Admins or the owner can get a specific document.
+      allow get: if isOwner(resource.data.userId) || isSuperAdmin() || isTenantAdmin();
+
+      // A user can only list documents where their UID matches the `userId` field.
+      allow list: if request.auth.uid == resource.data.userId;
       
-      // WRITE: Users can only create their own attempts. No updates or deletes.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      // Users can only create their own attempts.
+      allow create: if request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
-    
+
     match /users/{userId}/sms_analyses/{analysisId} {
         allow read, create, list: if isOwner(userId);
         allow update, delete: if false;
@@ -147,14 +133,14 @@ service cloud.firestore {
     // --- System & Audit Collections ---
 
     match /audit_logs/{logId} {
-      allow create: if request.auth != null; // System actions can create logs.
+      allow create: if request.auth != null;
       allow read: if isAuditor() || isSuperAdmin();
-      allow update, delete: if false; // Logs are immutable.
+      allow update, delete: if false;
     }
 
     match /risk_scores/{userId} {
       allow get: if isOwner(userId) || isTenantAdmin() || isSuperAdmin();
-      allow list, create, update, delete: if isSuperAdmin(); // Risk calculation is a backend/admin process.
+      allow list, create, update, delete: if isSuperAdmin();
     }
     
     match /admin_impersonation/{adminId} {
