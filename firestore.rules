@@ -92,16 +92,35 @@ service cloud.firestore {
     // --- User-Specific Content ---
 
     match /userProgress/{progressId} {
-      allow get: if (exists(path) && resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
-      allow list: if request.query.where.userId == request.auth.uid || isSuperAdmin() || isTenantAdmin();
+      // A user can get their own progress doc. Admins can also get any specific doc.
+      allow get: if (exists(path) && resource.data.userId == request.auth.uid)
+                   || isSuperAdmin()
+                   || isTenantAdmin();
+
+      // A user can ONLY list their own progress documents by filtering on their userId.
+      // This is a secure and performant rule for collection queries.
+      allow list: if request.query.where.userId == request.auth.uid;
+
+      // A user can create their own progress doc.
       allow create: if request.resource.data.userId == request.auth.uid;
+
+      // Updates and deletes should be handled by a backend function if needed.
       allow update, delete: if false;
     }
 
     match /user_challenge_attempts/{attemptId} {
-      allow get: if (exists(path) && resource.data.userId == request.auth.uid) || isSuperAdmin() || isTenantAdmin();
-      allow list: if request.query.where.userId == request.auth.uid || isSuperAdmin() || isTenantAdmin();
+      // A user can get their own attempt doc. Admins can also get any specific doc.
+      allow get: if (exists(path) && resource.data.userId == request.auth.uid)
+                   || isSuperAdmin()
+                   || isTenantAdmin();
+      
+      // A user can ONLY list their own attempts by filtering on their userId.
+      allow list: if request.query.where.userId == request.auth.uid;
+
+      // A user can create their own attempt doc.
       allow create: if request.resource.data.userId == request.auth.uid;
+
+      // Updates and deletes should be handled by a backend function if needed.
       allow update, delete: if false;
     }
 
