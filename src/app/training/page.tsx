@@ -7,7 +7,7 @@ import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader, AlertTriangle, FileText, Lightbulb, Bell, Clock, Check } from 'lucide-react';
+import { Loader, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -113,7 +113,7 @@ function UserTrainingDashboard() {
                 {/* Recent Certificates */}
                 <ClickableCard href='/certificates'>
                     <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2"><FileText className="text-primary"/>Recent Certificates</CardTitle>
+                        <CardTitle className="font-headline flex items-center gap-2">Certificates</CardTitle>
                     </CardHeader>
                      <CardContent>
                         <ul className="space-y-2 text-sm">

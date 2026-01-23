@@ -112,8 +112,10 @@ export type User = {
     email: string;
     displayName: string;
     tenantId: string;
-    department: string;
-    jobTitle?: string;
+    department?: string;
+    jobTitle: string;
+    industry: string;
+    interests?: Array<string>;
     status: 'active' | 'invited' | 'suspended' | 'archived';
     risk?: 'Low' | 'Medium' | 'High';
     trainingStats?: {
@@ -175,32 +177,45 @@ export type TrainingModule = {
         tiers?: Array<string>;
     };
 };
-export type UserProgress = {
-    id?: string;
-    userId: string;
+export type UserProgressEntry = {
     moduleId: string;
-    tenantId: string;
     status: 'not_started' | 'in_progress' | 'completed' | 'expired';
     startedAt?: string;
     completedAt?: string;
     score?: number;
-    attempts?: Array<Record<string, any>>;
-    certificate?: {
-        issuedAt?: string;
-        expiresAt?: string;
-        certificateId?: string;
-        downloadUrl?: string;
-    };
 };
-export type UserChallengeAttempt = {
+export type UserProgress = {
     userId: string;
     tenantId: string;
+    completedModules?: Array<{
+        moduleId: string;
+        status: 'not_started' | 'in_progress' | 'completed' | 'expired';
+        startedAt?: string;
+        completedAt?: string;
+        score?: number;
+    }>;
+    updatedAt?: string;
+};
+export type UserChallengeAttemptEntry = {
     challengeType: 'escape-room' | 'vuln-challenge' | 'api-lab' | 'threat-scenario';
     challengeName: string;
     score: number;
     maxScore: number;
     percentage: number;
     completedAt: string;
+};
+export type UserChallengeAttempt = {
+    userId: string;
+    tenantId: string;
+    attempts?: Array<{
+        challengeType: 'escape-room' | 'vuln-challenge' | 'api-lab' | 'threat-scenario';
+        challengeName: string;
+        score: number;
+        maxScore: number;
+        percentage: number;
+        completedAt: string;
+    }>;
+    lastAttemptAt?: string;
 };
 export type Assignment = {
     tenantId: string;

@@ -1,0 +1,742 @@
+
+{
+  "entities": {
+    "ThreatScenario": {
+      "title": "Threat Scenario",
+      "type": "object",
+      "description": "Represents a structured, interactive training scenario or 'Serious Game'.",
+      "properties": {
+        "slug": { "type": "string", "description": "A unique, URL-friendly identifier for the scenario." },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "difficulty": { "type": "string", "enum": ["easy", "medium", "hard", "expert"] },
+        "introStory": { "type": "string", "description": "The initial narrative to set the scene for the user." },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stepId": { "type": "string" },
+              "title": { "type": "string" },
+              "content": { "type": "string" },
+              "type": { "type": "string", "enum": ["multiple-choice", "audio-challenge"] },
+              "assetUrl": { "type": "string", "format": "uri", "description": "URL to an image, audio, or video file for the step." },
+              "choices": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "choiceId": { "type": "string" },
+                    "text": { "type": "string" }
+                  },
+                  "required": ["choiceId", "text"]
+                }
+              },
+              "correctChoiceId": { "type": "string" },
+              "feedback": {
+                "type": "object",
+                "properties": {
+                  "correct": { "type": "string" },
+                  "incorrect": { "type": "string" }
+                },
+                "required": ["correct", "incorrect"]
+              }
+            },
+            "required": ["stepId", "title", "content", "type", "choices", "correctChoiceId", "feedback"]
+          }
+        },
+        "scoring": {
+          "type": "object",
+          "properties": {
+            "pointsPerCorrect": { "type": "number" }
+          }
+        }
+      },
+      "required": ["slug", "title", "description", "introStory", "steps"]
+    },
+    "Campaign": {
+        "title": "Training Campaign",
+        "type": "object",
+        "description": "A structured training campaign, often AI-generated.",
+        "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "duration": { "type": "string" },
+            "audience": { "type": "string" },
+            "modules": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": { "type": "string" },
+                        "title": { "type": "string" },
+                        "description": { "type": "string" }
+                    },
+                    "required": ["id", "title", "description"]
+                }
+            },
+            "activities": { "type": "array", "items": { "type": "string" } },
+            "kpis": { "type": "string" },
+            "status": { "type": "string", "enum": ["draft", "scheduled", "active", "completed"] },
+            "type": { "type": "string", "enum": ["training", "phishing"] },
+            "start_date": { "type": "string", "format": "date-time" },
+            "end_date": { "type": "string", "format": "date-time" },
+            "tenantId": { "type": "string" }
+        },
+        "required": ["title", "description", "status", "tenantId", "modules"]
+    },
+    "PartnerRequest": {
+      "title": "Partner Request",
+      "type": "object",
+      "description": "Represents a registration request from a potential corporate partner.",
+      "properties": {
+        "companyName": { "type": "string", "description": "Name of the partner company or organization." },
+        "industry": { "type": "string", "description": "The industry the partner operates in." },
+        "country": { "type": "string", "description": "The country where the partner is based." },
+        "contactPersonName": { "type": "string", "description": "Full name of the primary contact person." },
+        "contactPersonTitle": { "type": "string", "description": "Job title or role of the contact person." },
+        "email": { "type": "string", "format": "email", "description": "Official email address for communication." },
+        "phone": { "type": "string", "description": "Contact phone number." },
+        "message": { "type": "string", "description": "An optional message from the potential partner." },
+        "status": { "type": "string", "enum": ["new", "contacted", "closed", "archived"], "description": "The current status of the request." },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"], "description": "The priority of the partner request." },
+        "requestedAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the request was submitted." },
+        "notes": {
+          "type": "array",
+          "description": "Internal notes added by administrators.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string" },
+              "authorId": { "type": "string" },
+              "authorName": { "type": "string" },
+              "createdAt": { "type": "string", "format": "date-time" }
+            },
+            "required": ["text", "authorId", "authorName", "createdAt"]
+          }
+        }
+      },
+      "required": ["companyName", "industry", "contactPersonName", "email", "status", "requestedAt"]
+    },
+    "Tenant": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Tenant",
+      "type": "object",
+      "description": "Represents a tenant (e.g., a company) using the platform.",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the tenant (e.g., 'Safaricom PLC')." },
+        "region": { "type": "string", "description": "The geographical region of the tenant." },
+        "status": { "type": "string", "enum": ["active", "suspended", "trial", "expired"], "description": "The current status of the tenant." },
+        "subscription": {
+          "type": "object",
+          "properties": {
+            "tier": { "type": "string", "enum": ["basic", "pro", "enterprise"] },
+            "startDate": { "type": "string", "format": "date-time" },
+            "renewalDate": { "type": "string", "format": "date-time" },
+            "maxUsers": { "type": "number" },
+            "features": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "branding": {
+              "type": "object",
+              "properties": {
+                "logoUrl": { "type": "string", "format": "uri" },
+                "primaryColor": { "type": "string" },
+                "secondaryColor": { "type": "string" }
+              }
+            },
+            "security": {
+              "type": "object",
+              "properties": {
+                "passwordPolicy": { "type": "string" },
+                "mfaRequired": { "type": "boolean" },
+                "sessionTimeout": { "type": "number" }
+              }
+            },
+            "compliance": {
+              "type": "object",
+              "properties": {
+                "regulations": { "type": "array", "items": { "type": "string" } },
+                "requireCertificates": { "type": "boolean" }
+              }
+            }
+          }
+        },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "adminEmail": { "type": "string", "format": "email" },
+            "billingEmail": { "type": "string", "format": "email" },
+            "phone": { "type": "string" },
+            "address": { "type": "string" }
+          }
+        },
+        "stats": {
+            "type": "object",
+            "properties": {
+                "totalUsers": { "type": "number" },
+                "activeUsers": { "type": "number" },
+                "completionRate": { "type": "number" },
+                "avgScore": { "type": "number" }
+            }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "region", "status"]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the platform.",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "tenantId": { "type": "string", "description": "Primary reference to Tenant." },
+        "department": { "type": "string" },
+        "jobTitle": { "type": "string", "description": "The user's profession or job title." },
+        "industry": { "type": "string", "description": "The industry the user works in." },
+        "interests": {
+          "type": "array",
+          "description": "A list of cybersecurity topics the user is interested in.",
+          "items": { "type": "string" }
+        },
+        "status": { "type": "string", "enum": ["active", "invited", "suspended", "archived"] },
+        "risk": { "type": "string", "enum": ["Low", "Medium", "High"], "description": "The user's overall risk level." },
+        "trainingStats": {
+            "type": "object",
+            "properties": {
+                "completedModules": { "type": "number" },
+                "totalModules": { "type": "number" },
+                "avgScore": { "type": "number" },
+                "lastCompleted": { "type": "string", "format": "date-time" },
+                "complianceScore": { "type": "number" }
+            }
+        },
+        "phishingStats": {
+            "type": "object",
+            "properties": {
+                "simulatedReceived": { "type": "number" },
+                "clicked": { "type": "number" },
+                "reported": { "type": "number" },
+                "riskScore": { "type": "string", "enum": ["low", "medium", "high", "critical"] }
+            }
+        },
+        "challengeStats": {
+          "type": "object",
+          "description": "Aggregated stats from gamified challenges.",
+          "properties": {
+            "totalCompleted": {
+              "type": "number"
+            },
+            "avgScore": {
+              "type": "number"
+            }
+          }
+        },
+        "preferences": {
+            "type": "object",
+            "properties": {
+                "language": { "type": "string" },
+                "notifications": { "type": "boolean" },
+                "darkMode": { "type": "boolean" }
+            }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastLogin": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "displayName", "tenantId", "status", "jobTitle", "industry"]
+    },
+    "TrainingModule": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TrainingModule",
+      "type": "object",
+      "description": "Represents a training module.",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "difficulty": { "type": "string", "enum": ["beginner", "intermediate", "advanced"] },
+        "duration": { "type": "number", "description": "Duration in minutes." },
+        "content": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["video", "slides", "interactive", "document"] },
+            "url": { "type": "string", "format": "uri" },
+            "slides": { "type": "array", "items": { "type": "object" } },
+            "transcript": { "type": "string" }
+          }
+        },
+        "quiz": {
+          "type": "object",
+          "properties": {
+            "questions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "question": { "type": "string" },
+                  "options": { "type": "array", "items": { "type": "string" } },
+                  "correctAnswer": { "type": "number" },
+                  "explanation": { "type": "string" }
+                }
+              }
+            },
+            "passingScore": { "type": "number" },
+            "attemptsAllowed": { "type": "number" }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "version": { "type": "string" },
+            "createdBy": { "type": "string" },
+            "lastUpdated": { "type": "string", "format": "date-time" },
+            "tags": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "availability": {
+          "type": "object",
+          "properties": {
+            "global": { "type": "boolean" },
+            "tenantIds": { "type": "array", "items": { "type": "string" } },
+            "tiers": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      },
+      "required": ["title", "category", "difficulty", "duration"]
+    },
+    "UserProgressEntry": {
+        "title": "User Progress Entry",
+        "type": "object",
+        "description": "An entry for a single completed module within a user's aggregate progress document.",
+        "properties": {
+            "moduleId": { "type": "string" },
+            "status": { "type": "string", "enum": ["not_started", "in_progress", "completed", "expired"] },
+            "startedAt": { "type": "string", "format": "date-time" },
+            "completedAt": { "type": "string", "format": "date-time" },
+            "score": { "type": "number" }
+        },
+        "required": ["moduleId", "status"]
+    },
+    "UserProgress": {
+        "title": "User Progress Aggregate",
+        "type": "object",
+        "description": "Aggregated progress for a single user across all modules.",
+        "properties": {
+            "userId": { "type": "string" },
+            "tenantId": { "type": "string" },
+            "completedModules": {
+                "type": "array",
+                "items": { "$ref": "#/entities/UserProgressEntry" }
+            },
+            "updatedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["userId", "tenantId"]
+    },
+    "UserChallengeAttemptEntry": {
+      "title": "User Challenge Attempt Entry",
+      "type": "object",
+      "description": "An entry for a single attempt at a gamified challenge.",
+      "properties": {
+        "challengeType": { "type": "string", "enum": ["escape-room", "vuln-challenge", "api-lab", "threat-scenario"] },
+        "challengeName": { "type": "string" },
+        "score": { "type": "number" },
+        "maxScore": { "type": "number" },
+        "percentage": { "type": "number" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["challengeType", "challengeName", "score", "maxScore", "percentage", "completedAt"]
+    },
+    "UserChallengeAttempt": {
+      "title": "User Challenge Attempt Aggregate",
+      "type": "object",
+      "description": "Aggregated results of a user's attempts at gamified challenges.",
+      "properties": {
+        "userId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "attempts": {
+            "type": "array",
+            "items": { "$ref": "#/entities/UserChallengeAttemptEntry" }
+        },
+        "lastAttemptAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "tenantId"]
+    },
+    "Assignment": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Assignment",
+        "type": "object",
+        "description": "Represents a training assignment for users.",
+        "properties": {
+            "tenantId": { "type": "string" },
+            "moduleId": { "type": "string" },
+            "assignedBy": { "type": "string" },
+            "assignedTo": {
+                "type": "object",
+                "properties": {
+                    "type": { "type": "string", "enum": ["all", "department", "group", "individual"] },
+                    "department": { "type": "string" },
+                    "groupId": { "type": "string" },
+                    "userIds": { "type": "array", "items": { "type": "string" } }
+                }
+            },
+            "dueDate": { "type": "string", "format": "date-time" },
+            "priority": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+            "status": { "type": "string", "enum": ["active", "completed", "cancelled"] },
+            "reminderSettings": {
+                "type": "object",
+                "properties": {
+                    "daysBefore": { "type": "array", "items": { "type": "number" } },
+                    "notifications": { "type": "boolean" }
+                }
+            },
+            "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["tenantId", "moduleId", "assignedBy", "assignedTo", "status"]
+    },
+    "PhishingSimulation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PhishingSimulation",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["email", "sms", "social"] },
+        "template": { "type": "string" },
+        "targetGroup": { "type": "object" },
+        "schedule": { "type": "object" },
+        "results": { "type": "object" },
+        "status": { "type": "string", "enum": ["draft", "scheduled", "sent", "completed"] }
+      },
+      "required": ["tenantId", "name", "type", "status"]
+    },
+    "PhishingTemplate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PhishingTemplate",
+      "type": "object",
+      "description": "Represents a template for a phishing simulation.",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+        "email": {
+          "type": "object",
+          "properties": {
+            "fromName": { "type": "string" },
+            "fromEmail": { "type": "string", "format": "email" },
+            "subject": { "type": "string" },
+            "htmlBody": { "type": "string" },
+            "textBody": { "type": "string" },
+            "attachments": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "type": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "landingPage": {
+          "type": "object",
+          "properties": {
+            "url": { "type": "string", "format": "uri" },
+            "design": { "type": "string" },
+            "captureCredentials": { "type": "boolean" },
+            "redirectTo": { "type": "string", "format": "uri" }
+          }
+        },
+        "educationalContent": {
+          "type": "object",
+          "properties": {
+            "debriefMessage": { "type": "string" },
+            "trainingModule": { "type": "string" },
+            "tips": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      },
+      "required": ["name", "category", "difficulty", "email"]
+    },
+    "Report": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Report",
+        "type": "object",
+        "properties": {
+            "tenantId": { "type": "string" },
+            "name": { "type": "string" },
+            "type": { "type": "string", "enum": ["compliance", "training", "phishing", "custom"] },
+            "period": { "type": "object" },
+            "filters": { "type": "object" },
+            "data": { "type": "object" },
+            "generatedBy": { "type": "string" },
+            "generatedAt": { "type": "string", "format": "date-time" },
+            "downloadUrl": { "type": "string", "format": "uri" }
+        },
+        "required": ["tenantId", "name", "type", "generatedBy", "generatedAt"]
+    },
+    "Role": {
+      "title": "Role",
+      "type": "object",
+      "description": "Defines a user role and its permissions, representing a security group.",
+      "properties": {
+        "name": { "type": "string" },
+        "tier": { "type": "number", "description": "Privilege tier (0=Highest)." },
+        "description": { "type": "string" },
+        "permissions": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["name", "tier"]
+    },
+     "UserRole": {
+      "title": "User Role",
+      "type": "object",
+      "description": "Maps a user to their assigned roles (security group membership).",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "An array of role IDs (e.g., ['DOMAIN_ADMIN', 'DEVELOPER'])."
+        }
+      },
+      "required": ["roles"]
+    },
+    "SubscriptionPlan": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "SubscriptionPlan",
+        "type": "object",
+        "description": "Defines a subscription plan for tenants.",
+        "properties": {
+          "name": { "type": "string", "description": "Name of the plan (e.g., 'Enterprise')." },
+          "price": {
+            "type": "object",
+            "properties": {
+              "monthly": { "type": "number" },
+              "annual": { "type": "number" },
+              "currency": { "type": "string", "default": "USD" }
+            }
+          },
+          "limits": {
+            "type": "object",
+            "properties": {
+              "maxUsers": { "type": "number" },
+              "maxAdmins": { "type": "number" },
+              "storageGB": { "type": "number" },
+              "apiCalls": { "type": "number" }
+            }
+          },
+          "features": {
+            "type": "object",
+            "properties": {
+              "training": {
+                "type": "object",
+                "properties": {
+                  "customContent": { "type": "boolean" },
+                  "advancedAnalytics": { "type": "boolean" },
+                  "apiAccess": { "type": "boolean" }
+                }
+              },
+              "phishing": {
+                "type": "object",
+                "properties": {
+                  "simulations": { "type": "boolean" },
+                  "customTemplates": { "type": "boolean" },
+                  "advancedReporting": { "type": "boolean" }
+                }
+              },
+              "compliance": {
+                "type": "object",
+                "properties": {
+                  "automatedReports": { "type": "boolean" },
+                  "customCertificates": { "type": "boolean" },
+                  "auditTrail": { "type": "boolean" }
+                }
+              },
+              "support": {
+                "type": "object",
+                "properties": {
+                  "priority": { "type": "boolean" },
+                  "sso": { "type": "boolean" },
+                  "customBranding": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "required": ["name", "price", "limits", "features"]
+      },
+    "ComplianceRule": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "ComplianceRule",
+        "type": "object",
+        "description": "Defines a compliance rule mapping regulations to training.",
+        "properties": {
+          "regulation": { "type": "string" },
+          "article": { "type": "string" },
+          "requirement": { "type": "string" },
+          "frequency": { "type": "string" },
+          "requiredModules": { "type": "array", "items": { "type": "string" } },
+          "evidenceRequired": { "type": "array", "items": { "type": "string" } },
+          "reporting": {
+            "type": "object",
+            "properties": {
+              "format": { "type": "string" },
+              "fields": { "type": "array", "items": { "type": "string" } },
+              "retentionPeriod": { "type": "number" }
+            }
+          }
+        },
+        "required": ["regulation", "requirement", "frequency"]
+    },
+    "RiskScore": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RiskScore",
+      "type": "object",
+      "description": "Represents a user's calculated risk score.",
+      "properties": {
+        "userId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "overallScore": { "type": "number" },
+        "components": {
+          "type": "object",
+          "properties": {
+            "training": {
+              "type": "object",
+              "properties": {
+                "score": { "type": "number" },
+                "weight": { "type": "number" },
+                "factors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "factor": { "type": "string" },
+                      "value": { "type": "any" },
+                      "impact": { "type": "string", "enum": ["low", "medium", "high"] }
+                    }
+                  }
+                }
+              }
+            },
+            "phishing": {
+              "type": "object",
+              "properties": {
+                "score": { "type": "number" },
+                "weight": { "type": "number" },
+                "factors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "factor": { "type": "string" },
+                      "value": { "type": "any" },
+                      "impact": { "type": "string", "enum": ["low", "medium", "high"] }
+                    }
+                  }
+                }
+              }
+            },
+            "behavior": {
+              "type": "object",
+              "properties": {
+                "score": { "type": "number" },
+                "weight": { "type": "number" },
+                "factors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "factor": { "type": "string" },
+                      "value": { "type": "any" },
+                      "impact": { "type": "string", "enum": ["low", "medium", "high"] }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "riskLevel": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "recommendations": { "type": "array", "items": { "type": "string" } },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "tenantId", "overallScore", "riskLevel"]
+    },
+    "SmsAnalysis": {
+      "title": "SMS Analysis",
+      "type": "object",
+      "description": "Represents the result of an AI-powered SMS fraud analysis.",
+      "properties": {
+        "userId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "message": { "type": "string" },
+        "verdict": { "type": "string", "enum": ["Low Risk", "Medium Risk", "High Risk"] },
+        "riskScore": { "type": "number" },
+        "explanation": { "type": "string" },
+        "recommendation": { "type": "string" },
+        "indicators": { "type": "array", "items": { "type": "string" } },
+        "potentialFraudAmount": { "type": "number" },
+        "currency": { "type": "string" },
+        "analyzedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "senderId", "message", "verdict", "riskScore", "analyzedAt"]
+    },
+    "AdminImpersonation": {
+      "title": "Admin Impersonation",
+      "type": "object",
+      "description": "Tracks an active admin impersonation session.",
+      "properties": {
+        "targetUserId": { "type": "string", "description": "The UID of the user being impersonated." },
+        "targetUserEmail": { "type": "string", "description": "The email of the user being impersonated." },
+        "startedAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the session started." }
+      },
+      "required": ["targetUserId", "targetUserEmail", "startedAt"]
+    },
+    "AuditLog": {
+      "title": "Audit Log",
+      "type": "object",
+      "description": "Records a significant event that occurred in the system.",
+      "properties": {
+        "actorUid": { "type": "string", "description": "The UID of the user who performed the action." },
+        "actorEmail": { "type": "string", "description": "The email of the user who performed the action." },
+        "action": { "type": "string", "description": "A machine-readable key for the action (e.g., 'USER_LOGIN', 'IMPERSONATION_START')." },
+        "targetType": { "type": "string", "description": "The type of entity being acted upon (e.g., 'USER', 'TENANT')." },
+        "targetId": { "type": "string", "description": "The ID of the entity being acted upon." },
+        "metadata": { "type": "object", "description": "A flexible object for additional context about the event." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Timestamp of when the event occurred." }
+      },
+      "required": ["actorUid", "action", "timestamp"]
+    }
+  },
+  "auth": {
+    "providers": ["password", "anonymous", "google.com"]
+  },
+  "firestore": {
+    "/partner_requests/{requestId}": { "schema": { "$ref": "#/entities/PartnerRequest" }, "description": "Collection of partnership registration requests." },
+    "/tenants/{tenantId}": { "schema": { "$ref": "#/entities/Tenant" }, "description": "Top-level collection of tenants." },
+    "/tenants/{tenantId}/campaigns/{campaignId}": { "schema": { "$ref": "#/entities/Campaign" }, "description": "Training campaigns for a specific tenant." },
+    "/users/{userId}": { "schema": { "$ref": "#/entities/User" }, "description": "Top-level collection for all users." },
+    "/trainingModules/{moduleId}": { "schema": { "$ref": "#/entities/TrainingModule" }, "description": "Global library of training modules." },
+    "/userProgress/{userId}": { "schema": { "$ref": "#/entities/UserProgress" }, "description": "Tracks a user's aggregate progress in modules." },
+    "/user_challenge_attempts/{userId}": { "schema": { "$ref": "#/entities/UserChallengeAttempt" }, "description": "Collection of all user attempts at gamified challenges." },
+    "/assignments/{assignmentId}": { "schema": { "$ref": "#/entities/Assignment" }, "description": "Training assignments for tenants." },
+    "/phishingSimulations/{simId}": { "schema": { "$ref": "#/entities/PhishingSimulation" }, "description": "Phishing simulations for tenants." },
+    "/phishing_templates/{templateId}": { "schema": { "$ref": "#/entities/PhishingTemplate" }, "description": "Global library of phishing templates." },
+    "/reports/{reportId}": { "schema": { "$ref": "#/entities/Report" }, "description": "Generated reports for tenants." },
+    "/roles/{roleId}": { "schema": { "$ref": "#/entities/Role" }, "description": "System-wide roles (security groups)." },
+    "/user_roles/{userId}": { "schema": { "$ref": "#/entities/UserRole" }, "description": "Maps users to their assigned roles." },
+    "/subscription_plans/{planId}": { "schema": { "$ref": "#/entities/SubscriptionPlan" }, "description": "Defines the available subscription plans." },
+    "/compliance_rules/{ruleId}": { "schema": { "$ref": "#/entities/ComplianceRule" }, "description": "Global library of compliance rules and mappings." },
+    "/risk_scores/{userId}": { "schema": { "$ref": "#/entities/RiskScore" }, "description": "Calculated risk scores for users." },
+    "/users/{userId}/sms_analyses/{analysisId}": { "schema": { "$ref": "#/entities/SmsAnalysis" }, "description": "Stores the results of SMS fraud analyses for a specific user." },
+    "/admin_impersonation/{adminId}": { "schema": { "$ref": "#/entities/AdminImpersonation" }, "description": "Stores active admin impersonation sessions." },
+    "/audit_logs/{logId}": { "schema": { "$ref": "#/entities/AuditLog" }, "description": "Collection of system-wide audit trail events." },
+    "/threat_scenarios/{scenarioId}": { "schema": { "$ref": "#/entities/ThreatScenario" }, "description": "Library of interactive 'Serious Game' training scenarios." }
+  }
+}
