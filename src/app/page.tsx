@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Wand2, FlaskConical, BarChart3, BrainCircuit, ScanLine, FileBadge, Copy, Trophy, ClipboardList, GitPullRequest, FileText, BookUser, ClipboardCheck, ShieldOff, Key, Users, ShieldAlert, Blocks, ShieldQuestion } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { CyberGuardLogo } from '@/components/icons/cyber-guard-logo';
+import { TrendingNews } from '@/components/dashboard/trending-news';
 
 function PublicHomePage() {
     const { t } = useTranslation();
@@ -162,6 +163,8 @@ function PublicHomePage() {
                 </Button>
             </div>
             
+            <TrendingNews />
+
              <div className="w-full max-w-7xl mx-auto py-16 mt-10">
                 <h2 className="text-3xl font-bold font-headline mb-12 text-center">{t('home.explore_tools')}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
