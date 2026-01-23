@@ -11,154 +11,134 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { CyberGuardLogo } from '@/components/icons/cyber-guard-logo';
 import { TrendingNews } from '@/components/dashboard/trending-news';
 import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 function PublicHomePage() {
     const { t } = useTranslation();
 
     const features = [
         {
-            imageUrl: 'https://picsum.photos/seed/aicontent/600/400',
-            imageHint: 'AI generation',
+            imageId: 'feature-ai-content',
             title: 'AI Content Generation',
             description: "Instantly generate custom training modules and quizzes on any cybersecurity topic.",
             href: '/training/module'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/simulation/600/400',
-            imageHint: 'cyber simulation',
+            imageId: 'feature-simulation',
             title: 'Realistic Simulations',
             description: "Test your readiness against a wide range of simulated cyber attacks, from phishing to DDoS.",
             href: '/simulations'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/riskanalysis/600/400',
-            imageHint: 'risk analysis',
+            imageId: 'feature-risk-analysis',
             title: 'Intelligent Risk Analysis',
             description: "Get a clear view of your organization's security posture with AI-driven insights.",
             href: '/risk-profile'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/tutor/600/400',
-            imageHint: 'AI tutor',
+            imageId: 'feature-ai-tutor',
             title: 'AI Cybersecurity Tutor',
             description: "Get 1-on-1 help from an AI tutor to master complex cybersecurity concepts.",
             href: '/tutor'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/escaperoom/600/400',
-            imageHint: 'escape room',
+            imageId: 'feature-escape-room',
             title: 'Cyber Escape Room',
             description: 'Test your problem-solving skills in a high-pressure, simulated incident scenario.',
             href: '/escape-room'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/vulnerability/600/400',
-            imageHint: 'vulnerability scan',
+            imageId: 'feature-vulnerability',
             title: 'Vulnerability Challenge',
             description: 'A gamified challenge to test your ability to prioritize and manage security vulnerabilities.',
             href: '/vulnerability-challenge'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/irplaybook/600/400',
-            imageHint: 'incident response',
+            imageId: 'feature-ir-playbook',
             title: 'IR Playbook Generator',
             description: 'Use AI to generate detailed Incident Response playbooks for various security scenarios.',
             href: '/incident-response-playbook'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/threatactor/600/400',
-            imageHint: 'hacker profile',
+            imageId: 'feature-threat-actor',
             title: 'Threat Actor Profiler',
             description: 'Generate and study profiles of known cyber threat actors and APT groups.',
             href: '/threat-intelligence/actors'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/apilab/600/400',
-            imageHint: 'API security',
+            imageId: 'feature-api-lab',
             title: 'API Security Lab',
             description: 'Practice finding and exploiting common API vulnerabilities in a safe, sandboxed environment.',
             href: '/api-security-lab'
         },
          {
-            imageUrl: 'https://picsum.photos/seed/threatscenario/600/400',
-            imageHint: 'threat scenario',
+            imageId: 'feature-threat-scenario',
             title: 'Interactive Threat Scenarios',
             description: 'Engage in realistic, story-driven security challenges to test your decision-making skills.',
             href: '/threat-scenarios'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/phishing/600/400',
-            imageHint: 'phishing email',
+            imageId: 'feature-phishing-engine',
             title: 'Phishing Detector Engine',
             description: 'Analyze suspicious SMS, email, and WhatsApp messages for fraud and phishing attempts.',
             href: '/phishing-engine/dashboard'
         },
          {
-            imageUrl: 'https://picsum.photos/seed/darkweb/600/400',
-            imageHint: 'dark web',
+            imageId: 'feature-dark-web',
             title: 'Dark Web Monitor',
             description: 'Simulate a scan of the dark web for mentions of your company and keywords.',
             href: '/dark-web-monitor'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/vapt/600/400',
-            imageHint: 'penetration testing',
+            imageId: 'feature-vapt',
             title: 'VAPT Console',
             description: 'Request professional vulnerability assessments and penetration testing.',
             href: '/vapt'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/compliance/600/400',
-            imageHint: 'compliance report',
+            imageId: 'feature-compliance',
             title: 'Compliance & Reporting',
             description: "Manage compliance requirements and generate detailed reports for your organization.",
             href: '/admin/analytics'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/flashcards/600/400',
-            imageHint: 'learning flashcards',
+            imageId: 'feature-flashcards',
             title: 'Interactive Flashcards',
             description: 'Study key cybersecurity terms and concepts with AI-generated flashcard decks.',
             href: '/flashcards'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/leaderboard/600/400',
-            imageHint: 'leaderboard trophy',
+            imageId: 'feature-leaderboard',
             title: 'Gamified Leaderboard',
             description: 'Compete with your colleagues and climb the ranks based on your security score.',
             href: '/leaderboard'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/certificate/600/400',
-            imageHint: 'digital certificate',
+            imageId: 'feature-certificate',
             title: 'Certificate Management',
             description: 'Earn and manage official certificates for completed training modules.',
             href: '/certificates'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/irplanning/600/400',
-            imageHint: 'incident plan',
+            imageId: 'feature-ir-planning',
             title: 'Incident Response Planning',
             description: 'Submit requests for guided Incident Response tabletop exercises and drills.',
             href: '/incident-response'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/campaign/600/400',
-            imageHint: 'training campaign',
+            imageId: 'feature-campaign-builder',
             title: 'Automated Campaign Builder',
             description: "Let AI design end-to-end security awareness campaigns for your organization.",
             href: '/admin/campaigns'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/customtraining/600/400',
-            imageHint: 'custom training',
+            imageId: 'feature-custom-training',
             title: 'Custom Training',
             description: 'Request the creation of bespoke training modules tailored to your specific needs.',
             href: '/custom-training'
         },
         {
-            imageUrl: 'https://picsum.photos/seed/systemaudit/600/400',
-            imageHint: 'system audit',
+            imageId: 'feature-system-audit',
             title: 'System Audit',
             description: 'Request a formal audit of a system, application, or process against a specific framework.',
             href: '/system-audit'
@@ -193,17 +173,21 @@ function PublicHomePage() {
                 <div className="lg:col-span-3">
                     <h2 className="text-3xl font-bold font-headline mb-8 text-center lg:text-left">{t('home.explore_tools')}</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {features.sort((a,b) => a.title.localeCompare(b.title)).map((feature) => (
+                        {features.sort((a,b) => a.title.localeCompare(b.title)).map((feature) => {
+                            const image = PlaceHolderImages.find(p => p.id === feature.imageId);
+                            if (!image) return null;
+                            
+                            return (
                              <Link href={feature.href} key={feature.title}>
                                 <Card className="h-full hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer flex flex-col overflow-hidden group">
                                     <div className="relative w-full h-40">
                                         <Image
-                                            src={feature.imageUrl}
+                                            src={image.imageUrl}
                                             alt={feature.title}
                                             fill
                                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                             className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                            data-ai-hint={feature.imageHint}
+                                            data-ai-hint={image.imageHint}
                                         />
                                     </div>
                                     <CardHeader>
@@ -214,7 +198,7 @@ function PublicHomePage() {
                                     </CardContent>
                                 </Card>
                             </Link>
-                        ))}
+                        )})}
                     </div>
                 </div>
 

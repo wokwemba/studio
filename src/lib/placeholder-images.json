@@ -53,6 +53,132 @@
       "description": "Leaderboard user avatar 4",
       "imageUrl": "https://images.unsplash.com/photo-1599566150163-29194dcaad36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwZXJzb24lMjBhdmF0YXJ8ZW58MHx8fHwxNzY3ODA3MDAxfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "person avatar"
+    },
+    {
+      "id": "feature-ai-content",
+      "description": "Feature image for AI Content Generation",
+      "imageUrl": "https://images.unsplash.com/photo-1762330467475-a565d04e1808?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxBSSUyMGdlbmVyYXRpb258ZW58MHx8fHwxNzY5MTkzMjcwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "AI generation"
+    },
+    {
+      "id": "feature-simulation",
+      "description": "Feature image for Realistic Simulations",
+      "imageUrl": "https://images.unsplash.com/photo-1669023414162-5bb06bbff0ec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjeWJlciUyMHNpbXVsYXRpb258ZW58MHx8fHwxNzY5MTkzMjcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cyber simulation"
+    },
+    {
+      "id": "feature-risk-analysis",
+      "description": "Feature image for Intelligent Risk Analysis",
+      "imageUrl": "https://images.unsplash.com/photo-1768055104923-a6f76e7478c7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxyaXNrJTIwYW5hbHlzaXN8ZW58MHx8fHwxNzY5MTkzMjcwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "risk analysis"
+    },
+    {
+      "id": "feature-ai-tutor",
+      "description": "Feature image for AI Cybersecurity Tutor",
+      "imageUrl": "https://picsum.photos/seed/ai-tutor/600/400",
+      "imageHint": "AI tutor"
+    },
+    {
+      "id": "feature-escape-room",
+      "description": "Feature image for Cyber Escape Room",
+      "imageUrl": "https://images.unsplash.com/photo-1496361769828-9e27149aa2e0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxlc2NhcGUlMjByb29tfGVufDB8fHx8MTc2OTE2NDc1MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "escape room"
+    },
+    {
+      "id": "feature-vulnerability",
+      "description": "Feature image for Vulnerability Challenge",
+      "imageUrl": "https://images.unsplash.com/photo-1762340915700-356b34475448?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx2dWxuZXJhYmlsaXR5JTIwc2NhbnxlbnwwfHx8fDE3NjkxOTMyNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "vulnerability scan"
+    },
+    {
+      "id": "feature-ir-playbook",
+      "description": "Feature image for IR Playbook Generator",
+      "imageUrl": "https://images.unsplash.com/photo-1764314660743-77db4e1a33d5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxpbmNpZGVudCUyMHJlc3BvbnNlfGVufDB8fHx8MTc2OTE5MzI3MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "incident response"
+    },
+    {
+      "id": "feature-threat-actor",
+      "description": "Feature image for Threat Actor Profiler",
+      "imageUrl": "https://images.unsplash.com/photo-1555209183-8facf96a4349?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8aGFja2VyJTIwcHJvZmlsZXxlbnwwfHx8fDE3NjkxOTMyNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "hacker profile"
+    },
+    {
+      "id": "feature-api-lab",
+      "description": "Feature image for API Security Lab",
+      "imageUrl": "https://images.unsplash.com/photo-1570781921561-39a8a5d57313?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8QVBJJTIwc2VjdXJpdHl8ZW58MHx8fHwxNzY5MTkzMjcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "API security"
+    },
+    {
+      "id": "feature-threat-scenario",
+      "description": "Feature image for Interactive Threat Scenarios",
+      "imageUrl": "https://picsum.photos/seed/threat-scenario/600/400",
+      "imageHint": "threat scenario"
+    },
+    {
+      "id": "feature-phishing-engine",
+      "description": "Feature image for Phishing Detector Engine",
+      "imageUrl": "https://images.unsplash.com/photo-1563762270340-3f5fde3243cd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwaGlzaGluZyUyMGVtYWlsfGVufDB8fHx8MTc2OTEwNjI5OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "phishing email"
+    },
+    {
+      "id": "feature-dark-web",
+      "description": "Feature image for Dark Web Monitor",
+      "imageUrl": "https://images.unsplash.com/photo-1514168757508-07ffe9ae125b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkYXJrJTIwd2VifGVufDB8fHx8MTc2OTE5MzI3MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "dark web"
+    },
+    {
+      "id": "feature-vapt",
+      "description": "Feature image for VAPT Console",
+      "imageUrl": "https://images.unsplash.com/photo-1761496704895-41ed21a3d4bd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwZW5ldHJhdGlvbiUyMHRlc3Rpbmd8ZW58MHx8fHwxNzY5MTM0Mjg3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "penetration testing"
+    },
+    {
+      "id": "feature-compliance",
+      "description": "Feature image for Compliance & Reporting",
+      "imageUrl": "https://picsum.photos/seed/compliance-report/600/400",
+      "imageHint": "compliance report"
+    },
+    {
+      "id": "feature-flashcards",
+      "description": "Feature image for Interactive Flashcards",
+      "imageUrl": "https://images.unsplash.com/photo-1722962495656-a03012c7fdc3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxsZWFybmluZyUyMGZsYXNoY2FyZHN8ZW58MHx8fHwxNzY5MTkzMjcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "learning flashcards"
+    },
+    {
+      "id": "feature-leaderboard",
+      "description": "Feature image for Gamified Leaderboard",
+      "imageUrl": "https://images.unsplash.com/photo-1711654519812-991dacafee41?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bGVhZGVyYm9hcmQlMjB0cm9waHl8ZW58MHx8fHwxNzY5MTkzMjcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "leaderboard trophy"
+    },
+    {
+      "id": "feature-certificate",
+      "description": "Feature image for Certificate Management",
+      "imageUrl": "https://images.unsplash.com/photo-1762330916233-221b49fce7f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkaWdpdGFsJTIwY2VydGlmaWNhdGV8ZW58MHx8fHwxNzY5MTkzMjcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "digital certificate"
+    },
+    {
+      "id": "feature-ir-planning",
+      "description": "Feature image for Incident Response Planning",
+      "imageUrl": "https://picsum.photos/seed/incident-plan/600/400",
+      "imageHint": "incident plan"
+    },
+    {
+      "id": "feature-campaign-builder",
+      "description": "Feature image for Automated Campaign Builder",
+      "imageUrl": "https://images.unsplash.com/photo-1755183199092-d7cbf2ec5be7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx0cmFpbmluZyUyMGNhbXBhaWdufGVufDB8fHx8MTc2OTE5MzI3Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "training campaign"
+    },
+    {
+      "id": "feature-custom-training",
+      "description": "Feature image for Custom Training",
+      "imageUrl": "https://images.unsplash.com/photo-1758875568722-72961c05d5dd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y3VzdG9tJTIwdHJhaW5pbmd8ZW58MHx8fHwxNzY5MTkzMjcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "custom training"
+    },
+    {
+      "id": "feature-system-audit",
+      "description": "Feature image for System Audit",
+      "imageUrl": "https://images.unsplash.com/photo-1768839721719-c5ed97c1fd58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzeXN0ZW0lMjBhdWRpdHxlbnwwfHx8fDE3NjkxOTMyNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "system audit"
     }
   ]
 }
