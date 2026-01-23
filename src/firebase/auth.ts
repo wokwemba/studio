@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Auth,
@@ -20,6 +21,15 @@ import { logAuditEvent } from '@/lib/audit';
 
 const DEFAULT_TENANT_ID = 'default-tenant-ccyberguard';
 
+export type SignUpData = {
+    email: string;
+    password: string;
+    displayName: string;
+    industry: string;
+    jobTitle: string;
+    interests: string[];
+}
+
 /**
  * Given a list of role IDs, finds the highest-tier role (tier 0 is highest).
  * @param roleIds - Array of role IDs.
@@ -38,12 +48,12 @@ const getPrimaryRole = (roleIds: string[]): Role | undefined => {
  * Creates user profile and role documents if they don't exist.
  * This is the single source of truth for user creation logic post-authentication.
  */
-const createUserProfileAndRoles = async (user: User): Promise<string> => {
+const createUserProfileAndRoles = async (user: User, profileData?: Partial<Omit<SignUpData, 'password'>>): Promise<string> => {
     const db = getFirestore(user.auth.app);
     const userDocRef = doc(db, 'users', user.uid);
     const userRolesRef = doc(db, 'user_roles', user.uid);
 
-    const isAdminEmail = user.email === 'wokwemba@safaricom.co.ke';
+    const isAdminEmail = user.email === 'wokwemba@safaricom.co.ke' || user.email === 'wokwemba1@gmail.com' || user.email === 'tonywash87@gmail.com';
 
     const userDocSnap = await getDoc(userDocRef);
     const userRolesSnap = await getDoc(userRolesRef);
@@ -78,13 +88,17 @@ const createUserProfileAndRoles = async (user: User): Promise<string> => {
     
     const newUserProfile: any = {
         email: user.email,
-        displayName: user.displayName || user.email?.split('@')[0] || `Anonymous User`,
+        displayName: profileData?.displayName || user.displayName || user.email?.split('@')[0] || `Anonymous User`,
         tenantId: DEFAULT_TENANT_ID,
         status: 'Active',
         risk: 'Low',
         photoURL: user.photoURL || null,
         avatarId: user.photoURL ? null : `user-avatar-${Math.floor(Math.random() * 5) + 1}`,
         createdAt: new Date().toISOString(),
+        industry: profileData?.industry || 'Other',
+        jobTitle: profileData?.jobTitle || 'Other',
+        department: profileData?.jobTitle || 'Other',
+        interests: profileData?.interests || [],
     };
     if (user.isAnonymous) {
         newUserProfile.displayName = `Anonymous User ${user.uid.substring(0, 5)}`;
@@ -231,16 +245,16 @@ export async function resetInvitedUserPassword(
 
 export async function signUpWithEmail(
   auth: Auth,
-  email: string,
-  password: string
+  data: SignUpData
 ): Promise<{ success: boolean; role?: string; error?: string }> {
   const firestore = getFirestore(auth.app);
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const roleName = await createUserProfileAndRoles(userCredential.user);
+    const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+    const { password, ...profileData } = data;
+    const roleName = await createUserProfileAndRoles(userCredential.user, profileData);
     await logAuditEvent(firestore, {
         action: 'USER_SIGNUP',
-        actor: { uid: userCredential.user.uid, email, role: roleName },
+        actor: { uid: userCredential.user.uid, email: data.email, role: roleName },
         metadata: { method: 'email' },
     });
     return { success: true, role: roleName };
