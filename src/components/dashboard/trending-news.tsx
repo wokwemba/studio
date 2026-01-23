@@ -31,42 +31,38 @@ export function TrendingNews() {
     }, [locale]);
 
     return (
-        <div className="w-full max-w-7xl mx-auto py-16">
-            <h2 className="text-3xl font-bold font-headline mb-12 text-center flex items-center justify-center gap-3">
-                <Rss className="w-8 h-8 text-primary" />
-                What's Trending in Cybersecurity
-            </h2>
-            <Card>
-                <CardContent className="p-6">
-                    {isLoading && (
-                        <div className="flex flex-col items-center justify-center h-64 gap-4">
-                            <Loader className="w-8 h-8 animate-spin text-primary" />
-                            <p className="text-muted-foreground">Fetching latest intelligence...</p>
-                        </div>
-                    )}
-                    {error && <p className="text-center text-destructive">{error}</p>}
-                    {news && (
-                        <ul className="space-y-6">
-                            {news.map((item, index) => (
-                                <li key={index} className="group grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-center border-b pb-4 last:border-b-0 last:pb-0">
-                                    <div>
-                                        <p className="text-xs text-primary font-semibold tracking-wider uppercase">{item.source}</p>
-                                        <h3 className="font-headline text-lg font-semibold group-hover:text-primary transition-colors">
-                                            <a href={item.link} target="_blank" rel="noopener noreferrer">{item.title}</a>
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground mt-1">{item.summary}</p>
-                                    </div>
-                                    <a href={item.link} target="_blank" rel="noopener noreferrer" className="hidden md:block">
-                                        <Button variant="ghost" size="icon">
-                                            <ArrowRight className="w-4 h-4" />
-                                        </Button>
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
+        <Card className="h-full">
+            <CardHeader>
+                 <CardTitle className="font-headline text-2xl flex items-center gap-3">
+                     <Rss className="w-6 h-6 text-primary" />
+                     <span>What's Trending</span>
+                </CardTitle>
+                 <CardDescription>Latest cybersecurity news and insights.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoading && (
+                    <div className="flex flex-col items-center justify-center h-64 gap-4">
+                        <Loader className="w-8 h-8 animate-spin text-primary" />
+                        <p className="text-muted-foreground">Fetching latest intelligence...</p>
+                    </div>
+                )}
+                {error && <p className="text-center text-destructive">{error}</p>}
+                {news && (
+                     <ul className="space-y-4">
+                        {news.map((item, index) => (
+                            <li key={index} className="group flex items-start gap-4 border-b pb-4 last:border-b-0 last:pb-0">
+                                <Rss className="w-4 h-4 text-primary/70 mt-1 flex-shrink-0" />
+                                <div>
+                                    <h3 className="font-headline text-base font-semibold group-hover:text-primary transition-colors leading-tight">
+                                        <a href={item.link} target="_blank" rel="noopener noreferrer">{item.title}</a>
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground mt-1">{item.source}</p>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </CardContent>
+        </Card>
     );
 }
