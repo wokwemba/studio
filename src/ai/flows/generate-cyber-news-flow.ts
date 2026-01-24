@@ -9,7 +9,7 @@ import {
 } from './schemas/cyber-news-schema';
 
 const fallbackNews: GenerateCyberNewsOutput = {
-    headlines: [
+    items: [
         "CISA warns of new Log4j-style vulnerability in widely used Java library.",
         "Healthcare sector targeted by 'Medusa' ransomware gang.",
         "Apple releases emergency patch for zero-day exploit in iOS.",
@@ -27,11 +27,12 @@ const prompt = ai.definePrompt({
   name: 'generateCyberNewsPrompt',
   input: { schema: GenerateCyberNewsInputSchema },
   output: { schema: GenerateCyberNewsOutputSchema },
-  prompt: `List 7 current and impactful cybersecurity news headlines.
+  prompt: `List 5 current cybersecurity threats.
 Rules:
-- Max 15 words per item.
+- Max 10 words per item.
 - Provide only the headline.
 - No explanations.
+- Bullet points only.
 - If a region is provided (e.g., 'KE' for Kenya), include at least two locally relevant threat headlines.
 
 {{#if region}}
@@ -48,7 +49,7 @@ const generateCyberNewsFlow = ai.defineFlow(
   async (input) => {
     try {
         const { output } = await prompt(input);
-        if (!output || !output.headlines || output.headlines.length === 0) {
+        if (!output || !output.items || output.items.length === 0) {
             console.warn('AI returned empty or invalid news data, returning fallback.');
             return fallbackNews;
         }
@@ -60,3 +61,5 @@ const generateCyberNewsFlow = ai.defineFlow(
     }
   }
 );
+
+    

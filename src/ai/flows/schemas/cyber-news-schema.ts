@@ -6,6 +6,8 @@ export const GenerateCyberNewsInputSchema = z.object({
 export type GenerateCyberNewsInput = z.infer<typeof GenerateCyberNewsInputSchema>;
 
 export const GenerateCyberNewsOutputSchema = z.object({
-  headlines: z.array(z.string()).max(10).describe('An array of up to 10 trending news headlines.'),
+  items: z.array(z.string()).max(10).describe('An array of up to 10 trending news headlines.'),
 });
 export type GenerateCyberNewsOutput = z.infer<typeof GenerateCyberNewsOutputSchema>;
+
+    

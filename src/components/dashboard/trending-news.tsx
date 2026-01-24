@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Loader, Rss, ArrowRight } from 'lucide-react';
 import { useLocale } from '@/context/LocaleContext';
-import { type GenerateCyberNewsOutput } from '@/ai/flows/generate-cyber-news-flow';
 
 export function TrendingNews() {
     const [news, setNews] = useState<string[] | null>(null);
@@ -19,13 +18,19 @@ export function TrendingNews() {
             try {
                 const response = await fetch(`/api/cyber-news?region=${locale}`);
                 if (!response.ok) {
-                    throw new Error('Failed to fetch news data.');
+                    const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response.' }));
+                    console.error("Cyber news API failed:", response.status, errorData.message);
+                    throw new Error(`Failed to fetch news data (${response.status}).`);
                 }
-                const result: GenerateCyberNewsOutput = await response.json();
-                setNews(result.headlines);
+                const result = await response.json();
+                setNews(result.items ?? []);
             } catch (err: any) {
                 console.error("Failed to fetch cyber news:", err);
                 setError("Could not load trending topics. Please try again later.");
+                setNews([
+                    "Cybersecurity updates temporarily unavailable.",
+                    "Please check back later for the latest threats.",
+                ]);
             } finally {
                 setIsLoading(false);
             }
@@ -50,8 +55,8 @@ export function TrendingNews() {
                         <p className="text-muted-foreground">Fetching latest intelligence...</p>
                     </div>
                 )}
-                {error && <p className="text-center text-destructive">{error}</p>}
-                {news && (
+                {error && !isLoading && <p className="text-center text-destructive">{error}</p>}
+                {news && !isLoading && (
                      <ul className="space-y-4">
                         {news.map((item, index) => (
                             <li key={index} className="group flex items-start gap-4 border-b pb-4 last:border-b-0 last:pb-0">
@@ -69,3 +74,5 @@ export function TrendingNews() {
         </Card>
     );
 }
+
+    

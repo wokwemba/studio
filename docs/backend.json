@@ -712,6 +712,18 @@
         "timestamp": { "type": "string", "format": "date-time", "description": "Timestamp of when the event occurred." }
       },
       "required": ["actorUid", "action", "timestamp"]
+    },
+    "AICache": {
+      "title": "AI Cache",
+      "type": "object",
+      "description": "Stores the results of expensive AI generation tasks.",
+      "properties": {
+        "items": { "type": "array", "items": { "type": "string" } },
+        "source": { "type": "string" },
+        "lastUpdated": { "type": "string", "format": "date-time" },
+        "region": { "type": "string" }
+      },
+      "required": ["items", "source", "lastUpdated"]
     }
   },
   "auth": {
@@ -737,6 +749,9 @@
     "/users/{userId}/sms_analyses/{analysisId}": { "schema": { "$ref": "#/entities/SmsAnalysis" }, "description": "Stores the results of SMS fraud analyses for a specific user." },
     "/admin_impersonation/{adminId}": { "schema": { "$ref": "#/entities/AdminImpersonation" }, "description": "Stores active admin impersonation sessions." },
     "/audit_logs/{logId}": { "schema": { "$ref": "#/entities/AuditLog" }, "description": "Collection of system-wide audit trail events." },
-    "/threat_scenarios/{scenarioId}": { "schema": { "$ref": "#/entities/ThreatScenario" }, "description": "Library of interactive 'Serious Game' training scenarios." }
+    "/threat_scenarios/{scenarioId}": { "schema": { "$ref": "#/entities/ThreatScenario" }, "description": "Library of interactive 'Serious Game' training scenarios." },
+    "/ai_cache/{cacheId}": { "schema": { "$ref": "#/entities/AICache" }, "description": "A cache for AI-generated content to reduce API calls." }
   }
 }
+
+    

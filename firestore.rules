@@ -138,5 +138,11 @@ service cloud.firestore {
     match /admin_impersonation/{adminId} {
         allow read, write: if isSuperAdmin();
     }
+
+    match /ai_cache/{cacheId} {
+        allow read, write: if true; // Public cache, written by server-side API
+    }
   }
 }
+
+    
