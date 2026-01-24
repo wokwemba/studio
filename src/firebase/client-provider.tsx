@@ -2,7 +2,38 @@
 
 import React, { useMemo, type ReactNode } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
-import { initializeFirebase } from '@/firebase';
+import { firebaseConfig } from '@/firebase/config';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
+
+
+function getSdks() {
+  const firebaseApp = getApps().length ? getApp() : undefined;
+  if (!firebaseApp) {
+    // This case should ideally not be hit on the client.
+    return {
+      firebaseApp: null,
+      auth: null,
+      firestore: null,
+    } as unknown as { firebaseApp: FirebaseApp; auth: Auth; firestore: Firestore };
+  }
+
+  return {
+    firebaseApp,
+    auth: getAuth(firebaseApp),
+    firestore: getFirestore(firebaseApp)
+  };
+}
+
+function initializeFirebase() {
+  if (getApps().length) {
+    return getSdks();
+  }
+  initializeApp(firebaseConfig);
+  return getSdks();
+}
+
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
