@@ -2,7 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { generateCyberNews } from "@/ai/flows/generate-cyber-news-flow";
 import { initializeFirebase } from "@/firebase";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
-import type { AICache } from "@/docs/backend-schema";
+
+type AICache = {
+  items: string[];
+  source: string;
+  lastUpdated: Timestamp;
+};
 
 const CACHE_TTL_HOURS = 24;
 
@@ -23,7 +28,7 @@ export async function GET(request: NextRequest) {
     const cacheSnap = await getDoc(cacheDocRef);
 
     if (cacheSnap.exists()) {
-      const cacheData = cacheSnap.data();
+      const cacheData = cacheSnap.data() as AICache;
       // Firestore Timestamps need to be converted to JS Dates to work with them
       const lastUpdated = (cacheData.lastUpdated as Timestamp).toDate();
       const now = new Date();
@@ -38,13 +43,20 @@ export async function GET(request: NextRequest) {
     // Data is stale or doesn't exist, generate fresh data
     const result = await generateCyberNews({ region: region.toUpperCase() });
     
-    const newCacheData: AICache = {
+    const newCacheData = {
       items: result.headlines,
       source: "gemini",
-      lastUpdated: Timestamp.now() as any, // The type from client SDK can be different
+      lastUpdated: Timestamp.now(),
     };
-    await setDoc(cacheDocRef, newCacheData);
+    await setDoc(cacheDocRef, newCacheData as any);
 
     return NextResponse.json(result);
 
   } catch (error: any) {
+    console.error(`API route '/api/cyber-news' failed: ${error.message}`);
+    return new Response(
+      JSON.stringify({ message: "Failed to fetch news data.", error: error.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+}

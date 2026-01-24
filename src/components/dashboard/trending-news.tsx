@@ -7,7 +7,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { type GenerateCyberNewsOutput } from '@/ai/flows/generate-cyber-news-flow';
 
 export function TrendingNews() {
-    const [news, setNews] = useState<GenerateCyberNewsOutput['articles'] | null>(null);
+    const [news, setNews] = useState<string[] | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { locale } = useLocale();
@@ -22,7 +22,7 @@ export function TrendingNews() {
                     throw new Error('Failed to fetch news data.');
                 }
                 const result: GenerateCyberNewsOutput = await response.json();
-                setNews(result.articles);
+                setNews(result.headlines);
             } catch (err: any) {
                 console.error("Failed to fetch cyber news:", err);
                 setError("Could not load trending topics. Please try again later.");
@@ -58,9 +58,8 @@ export function TrendingNews() {
                                 <Rss className="w-4 h-4 text-primary/70 mt-1 flex-shrink-0" />
                                 <div>
                                     <h3 className="font-headline text-base font-semibold group-hover:text-primary transition-colors leading-tight">
-                                        <a href={item.link} target="_blank" rel="noopener noreferrer">{item.title}</a>
+                                        <a href={`https://www.google.com/search?q=${encodeURIComponent(item)}`} target="_blank" rel="noopener noreferrer">{item}</a>
                                     </h3>
-                                    <p className="text-xs text-muted-foreground mt-1">{item.source}</p>
                                 </div>
                             </li>
                         ))}
