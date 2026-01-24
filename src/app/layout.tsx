@@ -27,14 +27,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem('theme') || 'dark';
-                  document.documentElement.classList.add(theme);
-                } catch (e) {}
-              })();
-            `,
+            __html: `(function() { try { var theme = localStorage.getItem('theme') || 'dark'; document.documentElement.classList.add(theme); } catch (e) {} })();`,
           }}
         />
         <script
