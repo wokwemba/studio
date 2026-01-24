@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Loader, Rss, ArrowRight } from 'lucide-react';
 import { useLocale } from '@/context/LocaleContext';
-import { generateCyberNews, type GenerateCyberNewsOutput } from '@/ai/flows/generate-cyber-news-flow';
+import { type GenerateCyberNewsOutput } from '@/ai/flows/generate-cyber-news-flow';
 
 export function TrendingNews() {
     const [news, setNews] = useState<GenerateCyberNewsOutput['articles'] | null>(null);
@@ -17,11 +17,15 @@ export function TrendingNews() {
             setIsLoading(true);
             setError(null);
             try {
-                const result = await generateCyberNews({ region: locale });
+                const response = await fetch(`/api/cyber-news?region=${locale}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch news data.');
+                }
+                const result: GenerateCyberNewsOutput = await response.json();
                 setNews(result.articles);
             } catch (err: any) {
                 console.error("Failed to fetch cyber news:", err);
-                setError("Could not load trending topics. The AI service may be busy.");
+                setError("Could not load trending topics. Please try again later.");
             } finally {
                 setIsLoading(false);
             }
