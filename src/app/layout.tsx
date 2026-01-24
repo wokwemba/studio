@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import DashboardLayout from '@/components/dashboard-layout';
@@ -27,14 +28,15 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function() { try { var theme = localStorage.getItem('theme') || 'dark'; document.documentElement.classList.add(theme); } catch (e) {} })();`,
+            __html: `(function(){try{var e=localStorage.getItem("theme")||"dark";document.documentElement.classList.add(e)}catch(e){}})()`,
           }}
         />
-        <script
+        <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7698959644327699"
           crossOrigin="anonymous"
-        ></script>
+          strategy="afterInteractive"
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
