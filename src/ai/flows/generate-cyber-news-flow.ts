@@ -58,3 +58,5 @@ const generateCyberNewsFlow = ai.defineFlow(
         console.warn(`Cyber news generation failed: ${error.message}. Returning fallback data.`);
         return fallbackNews;
     }
+  }
+);
