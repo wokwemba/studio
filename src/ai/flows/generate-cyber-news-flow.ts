@@ -1,3 +1,4 @@
+
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -38,7 +39,23 @@ const generateCyberNewsFlow = ai.defineFlow(
     outputSchema: GenerateCyberNewsOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+    const maxRetries = 3;
+    let attempt = 0;
+    while (attempt < maxRetries) {
+      try {
+        const { output } = await prompt(input);
+        return output!;
+      } catch (error) {
+        console.error(`Cyber news generation attempt ${attempt + 1} failed:`, error);
+        attempt++;
+        if (attempt >= maxRetries) {
+           throw new Error("Failed to generate cyber news after multiple retries. The AI service may be temporarily unavailable.");
+        }
+        // Wait a moment before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+    // This line should be unreachable
+    throw new Error('Exhausted all retries for cyber news generation.');
   }
 );
