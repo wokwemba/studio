@@ -5,14 +5,7 @@ export const GenerateCyberNewsInputSchema = z.object({
 });
 export type GenerateCyberNewsInput = z.infer<typeof GenerateCyberNewsInputSchema>;
 
-const NewsArticleSchema = z.object({
-    title: z.string().describe('A concise, compelling headline for the news article.'),
-    summary: z.string().describe('A one-to-two sentence summary of the article.'),
-    source: z.string().describe('The name of the publication, e.g., "SecurityWeek", "KE-CIRT".'),
-    link: z.string().url().describe('A plausible but fictional URL to the full article.'),
-});
-
 export const GenerateCyberNewsOutputSchema = z.object({
-  articles: z.array(NewsArticleSchema).length(10).describe('An array of exactly 10 trending news articles.'),
+  headlines: z.array(z.string()).max(10).describe('An array of up to 10 trending news headlines.'),
 });
 export type GenerateCyberNewsOutput = z.infer<typeof GenerateCyberNewsOutputSchema>;
