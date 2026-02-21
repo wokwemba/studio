@@ -4,142 +4,167 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthContext } from '@/components/auth/AuthProvider';
-import { Loader, ShieldCheck, Zap, ArrowRight, ShieldAlert } from 'lucide-react';
+import { 
+    Loader, 
+    ShieldCheck, 
+    Zap, 
+    ArrowRight, 
+    ShieldAlert, 
+    Wand2, 
+    BrainCircuit, 
+    Blocks, 
+    GitPullRequest, 
+    Award, 
+    BarChart3, 
+    BookUser, 
+    Key, 
+    GitBranch, 
+    Trophy, 
+    ClipboardList, 
+    Activity, 
+    Copy, 
+    ShieldQuestion, 
+    FileText, 
+    ScanLine, 
+    FlaskConical, 
+    ClipboardCheck, 
+    Users,
+    Monitor,
+    Lock
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/useTranslation';
 import { CyberGuardLogo } from '@/components/icons/cyber-guard-logo';
 import { TrendingNews } from '@/components/dashboard/trending-news';
-import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 function PublicHomePage() {
     const { t } = useTranslation();
 
     const features = [
         {
-            imageId: 'feature-ai-content',
+            icon: Wand2,
             title: 'AI Content Generation',
             description: "Instantly generate custom training modules and quizzes on any cybersecurity topic.",
             href: '/training/module'
         },
         {
-            imageId: 'feature-simulation',
+            icon: FlaskConical,
             title: 'Realistic Simulations',
             description: "Test your readiness against a wide range of simulated cyber attacks, from phishing to DDoS.",
             href: '/simulations'
         },
         {
-            imageId: 'feature-risk-analysis',
+            icon: Activity,
             title: 'Intelligent Risk Analysis',
             description: "Get a clear view of your organization's security posture with AI-driven insights.",
             href: '/risk-profile'
         },
         {
-            imageId: 'feature-ai-tutor',
+            icon: BrainCircuit,
             title: 'AI Cybersecurity Tutor',
             description: "Get 1-on-1 help from an AI tutor to master complex cybersecurity concepts.",
             href: '/tutor'
         },
         {
-            imageId: 'feature-escape-room',
+            icon: Key,
             title: 'Cyber Escape Room',
             description: 'Test your problem-solving skills in a high-pressure, simulated incident scenario.',
             href: '/escape-room'
         },
         {
-            imageId: 'feature-vulnerability',
+            icon: ShieldAlert,
             title: 'Vulnerability Challenge',
             description: 'A gamified challenge to test your ability to prioritize and manage security vulnerabilities.',
             href: '/vulnerability-challenge'
         },
         {
-            imageId: 'feature-ir-playbook',
+            icon: FileText,
             title: 'IR Playbook Generator',
             description: 'Use AI to generate detailed Incident Response playbooks for various security scenarios.',
             href: '/incident-response-playbook'
         },
         {
-            imageId: 'feature-threat-actor',
+            icon: Users,
             title: 'Threat Actor Profiler',
             description: 'Generate and study profiles of known cyber threat actors and APT groups.',
             href: '/threat-intelligence/actors'
         },
         {
-            imageId: 'feature-api-lab',
+            icon: Blocks,
             title: 'API Security Lab',
             description: 'Practice finding and exploiting common API vulnerabilities in a safe, sandboxed environment.',
             href: '/api-security-lab'
         },
          {
-            imageId: 'feature-threat-scenario',
+            icon: ShieldQuestion,
             title: 'Interactive Threat Scenarios',
             description: 'Engage in realistic, story-driven security challenges to test your decision-making skills.',
             href: '/threat-scenarios'
         },
         {
-            imageId: 'feature-phishing-engine',
+            icon: ScanLine,
             title: 'Phishing Detector Engine',
             description: 'Analyze suspicious SMS, email, and WhatsApp messages for fraud and phishing attempts.',
             href: '/phishing-engine/dashboard'
         },
          {
-            imageId: 'feature-dark-web',
+            icon: GitBranch,
             title: 'Dark Web Monitor',
             description: 'Simulate a scan of the dark web for mentions of your company and keywords.',
             href: '/dark-web-monitor'
         },
         {
-            imageId: 'feature-vapt',
+            icon: Monitor,
             title: 'VAPT Console',
             description: 'Request professional vulnerability assessments and penetration testing.',
             href: '/vapt'
         },
         {
-            imageId: 'feature-compliance',
+            icon: BarChart3,
             title: 'Compliance & Reporting',
             description: "Manage compliance requirements and generate detailed reports for your organization.",
             href: '/admin/analytics'
         },
         {
-            imageId: 'feature-flashcards',
+            icon: Copy,
             title: 'Interactive Flashcards',
             description: 'Study key cybersecurity terms and concepts with AI-generated flashcard decks.',
             href: '/flashcards'
         },
         {
-            imageId: 'feature-leaderboard',
+            icon: Trophy,
             title: 'Gamified Leaderboard',
             description: 'Compete with your colleagues and climb the ranks based on your security score.',
             href: '/leaderboard'
         },
         {
-            imageId: 'feature-certificate',
+            icon: Award,
             title: 'Certificate Management',
             description: 'Earn and manage official certificates for completed training modules.',
             href: '/certificates'
         },
         {
-            imageId: 'feature-ir-planning',
+            icon: ClipboardList,
             title: 'Incident Response Planning',
             description: 'Submit requests for guided Incident Response tabletop exercises and drills.',
             href: '/incident-response'
         },
         {
-            imageId: 'feature-campaign-builder',
+            icon: GitPullRequest,
             title: 'Automated Campaign Builder',
             description: "Let AI design end-to-end security awareness campaigns for your organization.",
             href: '/admin/campaigns'
         },
         {
-            imageId: 'feature-custom-training',
+            icon: BookUser,
             title: 'Custom Training',
             description: 'Request the creation of bespoke training modules tailored to your specific needs.',
             href: '/custom-training'
         },
         {
-            imageId: 'feature-system-audit',
+            icon: ClipboardCheck,
             title: 'System Audit',
             description: 'Request a formal audit of a system, application, or process against a specific framework.',
             href: '/system-audit'
@@ -147,131 +172,133 @@ function PublicHomePage() {
     ];
 
     return (
-        <div className="container mx-auto px-4 py-12 md:py-20">
+        <div className="container mx-auto px-4 py-12 md:py-24">
             {/* Hero Section */}
-            <div className="flex flex-col items-center text-center mb-24 max-w-4xl mx-auto">
-                <CyberGuardLogo className="w-24 h-24 text-primary mb-6" />
+            <div className="flex flex-col items-center text-center mb-32 max-w-4xl mx-auto">
+                <div className="relative mb-8">
+                    <div className="absolute inset-0 blur-3xl bg-primary/20 rounded-full animate-pulse" />
+                    <CyberGuardLogo className="relative w-28 h-28 text-primary" />
+                </div>
                 
-                <Badge variant="outline" className="mb-4 text-primary border-primary px-4 py-1 animate-pulse">
+                <Badge variant="outline" className="mb-6 text-primary border-primary/50 bg-primary/5 px-6 py-1.5 text-sm font-mono tracking-tight uppercase animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {t('home.hero_hook')}
                 </Badge>
                 
-                <h1 className="text-5xl md:text-6xl font-bold font-headline mb-6 tracking-tight text-foreground">
+                <h1 className="text-6xl md:text-7xl font-bold font-headline mb-8 tracking-tighter text-foreground leading-[1.1]">
                     {t('home.title')}
                 </h1>
                 
-                <p className="text-xl md:text-2xl text-muted-foreground mb-4 leading-relaxed font-semibold">
+                <p className="text-2xl md:text-3xl text-foreground font-semibold mb-6 max-w-3xl leading-snug">
                     {t('home.hero_problem')}
                 </p>
                 
-                <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+                <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
                     {t('home.description')}
                 </p>
 
-                <div className="flex flex-wrap justify-center gap-4 mb-6">
-                    <Button asChild size="lg" className="h-14 px-8 text-lg font-bold">
+                <div className="flex flex-wrap justify-center gap-6 mb-8">
+                    <Button asChild size="lg" className="h-16 px-10 text-xl font-bold rounded-xl shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
                         <Link href="/signup">{t('home.signup')}</Link>
                     </Button>
-                    <Button asChild variant="secondary" size="lg" className="h-14 px-8 text-lg font-bold">
+                    <Button asChild variant="outline" size="lg" className="h-16 px-10 text-xl font-bold rounded-xl border-2 hover:bg-accent transition-colors">
                         <Link href="/partner-registration">{t('home.partner_registration')}</Link>
                     </Button>
                 </div>
                 
-                <p className="text-sm font-mono text-muted-foreground uppercase tracking-widest">
+                <p className="text-xs font-mono text-muted-foreground uppercase tracking-[0.2em]">
                     {t('home.differentiator')}
                 </p>
             </div>
 
             {/* Value Props Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
-                <Card className="bg-primary/5 border-primary/20">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-32">
+                <Card className="bg-card/50 backdrop-blur border-primary/10 hover:border-primary/30 transition-colors shadow-2xl">
                     <CardHeader>
-                        <ShieldCheck className="w-10 h-10 text-primary mb-2" />
-                        <CardTitle className="font-headline">Prevention Through Education</CardTitle>
+                        <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                            <ShieldCheck className="w-8 h-8 text-primary" />
+                        </div>
+                        <CardTitle className="font-headline text-2xl">Prevention Through Education</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">Stop attacks before they happen. Our interactive AI-driven training builds a culture of vigilance.</p>
+                        <p className="text-muted-foreground text-lg leading-relaxed">Stop attacks before they happen. Our interactive AI-driven training builds a culture of continuous vigilance.</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-primary/5 border-primary/20">
+                <Card className="bg-card/50 backdrop-blur border-primary/10 hover:border-primary/30 transition-colors shadow-2xl">
                     <CardHeader>
-                        <Zap className="w-10 h-10 text-primary mb-2" />
-                        <CardTitle className="font-headline">Scalable Protection</CardTitle>
+                        <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                            <Zap className="w-8 h-8 text-primary" />
+                        </div>
+                        <CardTitle className="font-headline text-2xl">Scalable Protection</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">From individual freelancers to large corporations, we scale our security intelligence to your needs.</p>
+                        <p className="text-muted-foreground text-lg leading-relaxed">From individual freelancers to large corporations, we scale our security intelligence to meet your specific needs.</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-primary/5 border-primary/20">
+                <Card className="bg-card/50 backdrop-blur border-primary/10 hover:border-primary/30 transition-colors shadow-2xl">
                     <CardHeader>
-                        <ShieldAlert className="w-10 h-10 text-primary mb-2" />
-                        <CardTitle className="font-headline">Expert Consulting</CardTitle>
+                        <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                            <ShieldAlert className="w-8 h-8 text-primary" />
+                        </div>
+                        <CardTitle className="font-headline text-2xl">Expert Consulting</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">Don't just detect—respond. Get professional VAPT, audits, and incident response playbooks.</p>
+                        <p className="text-muted-foreground text-lg leading-relaxed">Don't just detect — respond. Access professional VAPT, system audits, and automated incident response playbooks.</p>
                     </CardContent>
                 </Card>
             </div>
             
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-12 items-start border-t pt-16">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 items-start border-t border-primary/10 pt-24">
                 {/* Left column for Tools */}
                 <div className="lg:col-span-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-                        <h2 className="text-3xl font-bold font-headline">{t('home.explore_tools')}</h2>
-                        <Button variant="link" asChild className="p-0 h-auto text-primary">
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-6">
+                        <div>
+                            <h2 className="text-4xl font-bold font-headline tracking-tight mb-2">{t('home.explore_tools')}</h2>
+                            <p className="text-muted-foreground text-lg">Deploy enterprise-grade security tools from your personal console.</p>
+                        </div>
+                        <Button variant="link" asChild className="p-0 h-auto text-primary font-bold">
                             <Link href="/login" className="flex items-center gap-2">
                                 Already have an account? Sign In <ArrowRight className="w-4 h-4" />
                             </Link>
                         </Button>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {features.sort((a,b) => a.title.localeCompare(b.title)).map((feature) => {
-                            const image = PlaceHolderImages.find(p => p.id === feature.imageId);
-                            if (!image) return null;
-                            
-                            return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {features.sort((a,b) => a.title.localeCompare(b.title)).map((feature) => (
                              <Link href={feature.href} key={feature.title}>
-                                <Card className="h-full hover:border-primary/50 hover:shadow-xl transition-all cursor-pointer flex flex-col overflow-hidden group border-muted">
-                                    <div className="relative w-full h-44">
-                                        <Image
-                                            src={image.imageUrl}
-                                            alt={feature.title}
-                                            fill
-                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                            className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                            data-ai-hint={image.imageHint}
-                                        />
-                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
-                                    </div>
-                                    <CardHeader className="pb-2">
-                                        <CardTitle className="font-headline text-lg group-hover:text-primary transition-colors">{feature.title}</CardTitle>
+                                <Card className="h-full hover:border-primary/50 hover:bg-primary/[0.02] transition-all cursor-pointer flex flex-col group border-primary/5 bg-card/30">
+                                    <CardHeader className="pb-4">
+                                        <div className="w-12 h-12 bg-primary/5 border border-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                                            <feature.icon className="w-6 h-6" />
+                                        </div>
+                                        <CardTitle className="font-headline text-xl group-hover:text-primary transition-colors">{feature.title}</CardTitle>
                                     </CardHeader>
                                     <CardContent className="flex-1">
-                                        <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
+                                        <p className="text-muted-foreground text-sm leading-relaxed mb-6">{feature.description}</p>
                                     </CardContent>
-                                    <div className="px-6 pb-4">
-                                        <div className="text-xs font-bold text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            LAUNCH TOOL <ArrowRight className="w-3 h-3" />
+                                    <div className="px-6 pb-6">
+                                        <div className="text-xs font-mono font-bold text-primary flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0 duration-300">
+                                            <Lock className="w-3 h-3" />
+                                            LAUNCH MODULE <ArrowRight className="w-3 h-3" />
                                         </div>
                                     </div>
                                 </Card>
                             </Link>
-                        )})}
+                        ))}
                     </div>
                 </div>
 
                 {/* Right column for Trending News */}
                 <div className="w-full lg:sticky lg:top-24 space-y-8">
                     <TrendingNews />
-                    <Card className="bg-muted/50 border-dashed">
+                    <Card className="bg-primary/5 border-2 border-primary/20 border-dashed relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150 duration-500" />
                         <CardHeader>
-                            <CardTitle className="text-sm font-headline">Enterprise Solutions</CardTitle>
+                            <CardTitle className="text-lg font-headline">Enterprise Solutions</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <p className="text-xs text-muted-foreground">Looking for managed security, employee compliance tracking, or custom simulations?</p>
-                            <Button asChild variant="outline" size="sm" className="w-full">
+                        <CardContent className="space-y-6 relative z-10">
+                            <p className="text-sm text-muted-foreground">Looking for managed security, employee compliance tracking, or custom high-fidelity simulations?</p>
+                            <Button asChild variant="outline" size="lg" className="w-full font-bold border-2">
                                 <Link href="/partner-registration">Contact Sales</Link>
                             </Button>
                         </CardContent>
@@ -315,6 +342,5 @@ export default function Home() {
     );
   }
 
-  // Only render the public page if not loading and no user is authenticated
   return <PublicHomePage />;
 }
