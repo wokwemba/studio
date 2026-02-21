@@ -7,6 +7,7 @@ import { useAuthContext } from '@/components/auth/AuthProvider';
 import { Loader, ShieldCheck, Zap, ArrowRight, ShieldAlert } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/useTranslation';
 import { CyberGuardLogo } from '@/components/icons/cyber-guard-logo';
 import { TrendingNews } from '@/components/dashboard/trending-news';
