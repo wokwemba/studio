@@ -8,6 +8,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import { CookieBanner } from '@/components/cookie-banner';
 import { LocaleProvider } from '@/context/LocaleContext';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'CCyberGuard',
@@ -26,14 +27,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <script
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var e=localStorage.getItem("theme")||"dark";document.documentElement.classList.add(e)}catch(e){}})()`,
           }}
-        />
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7698959644327699"
-          crossOrigin="anonymous"
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -42,6 +39,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet" />
       </head>
       <body className={cn('font-body antialiased')} suppressHydrationWarning>
+        <Script
+          id="adsense-script"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7698959644327699"
+          strategy="beforeInteractive"
+          crossOrigin="anonymous"
+        />
         <FirebaseClientProvider>
           <AuthProvider>
             <LocaleProvider>
