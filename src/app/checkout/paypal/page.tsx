@@ -3,34 +3,65 @@
 
 import { useRouter } from 'next/navigation';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
-import { Lock, ShieldCheck, CreditCard, ChevronLeft } from 'lucide-react';
+import { Lock, ShieldCheck, CreditCard, ChevronLeft, Loader } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { useUser, useFirestore, updateDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { useState } from 'react';
 
 /**
  * @fileOverview PayPal Checkout Page
  * Renders the official PayPal buttons for the "Pro" plan subscription.
+ * Upon success, it updates the user's Firestore record to 'paid' status.
  */
 export default function PayPalCheckoutPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const paypalOptions = {
-    "client-id": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
+    "client-id": "ARCioT1rXIcAVr_6yu3dNZg4XoKQmUxIwvDx0GwGf1loAVdd26MHDClOqPsXLavlleQZe_pHYzAhaoHM",
     currency: "USD",
     intent: "capture",
   };
 
   const handleApprove = (data: any, actions: any) => {
-    return actions.order.capture().then((details: any) => {
-      toast({
-        title: "Payment Successful!",
-        description: `Thank you, ${details.payer.name.given_name}. Your account has been upgraded to Pro.`,
-      });
-      // In a real app, you would call a server action here to update the user's role in Firestore
-      router.push('/training');
+    return actions.order.capture().then(async (details: any) => {
+      setIsProcessing(true);
+      
+      if (user && firestore) {
+        try {
+          const userRef = doc(firestore, 'users', user.uid);
+          // Update database record immediately on success
+          updateDocumentNonBlocking(userRef, {
+            accountType: 'paid',
+            subscriptionStatus: 'active',
+            paymentProvider: 'paypal',
+            lastPaymentDate: new Date().toISOString()
+          });
+
+          toast({
+            title: "Payment Successful!",
+            description: `Thank you, ${details.payer.name.given_name}. Your account has been upgraded to Pro.`,
+          });
+          
+          router.push('/training');
+        } catch (dbError) {
+          console.error("Failed to update user status:", dbError);
+          toast({
+            variant: "destructive",
+            title: "Fulfillment Error",
+            description: "Payment was successful, but we had trouble updating your account. Please contact support.",
+          });
+        }
+      }
+      
+      setIsProcessing(false);
     });
   };
 
@@ -42,6 +73,17 @@ export default function PayPalCheckoutPage() {
       description: "There was an issue processing your payment. Please try again.",
     });
   };
+
+  if (isUserLoading || isProcessing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader className="h-12 w-12 animate-spin text-primary" />
+          <p className="text-muted-foreground animate-pulse font-headline">Processing your request...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
@@ -81,7 +123,7 @@ export default function PayPalCheckoutPage() {
                 <p className="font-bold font-mono">$19.99</p>
               </div>
               <div className="border-t border-primary/10 pt-4 flex justify-between items-center text-lg">
-                <p className="font-bold">Total Details</p>
+                <p className="font-bold">Total Due Today</p>
                 <p className="font-bold font-headline text-primary">$19.99</p>
               </div>
             </CardContent>

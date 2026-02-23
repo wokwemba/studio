@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuthContext } from '@/components/auth/AuthProvider';
+import { AdBanner } from '@/components/ads/ad-banner';
 
 // The UserProgress document is an aggregate of a user's progress.
 type UserProgressAggregate = {
@@ -38,13 +39,13 @@ function UserTrainingDashboard() {
     () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
     [user, firestore]
   );
-  const { data: userData, isLoading: isLoadingUser } = useDoc<{risk: 'Low' | 'Medium' | 'High', trainingStats?: { completedModules?: number, totalModules?: number, avgScore?: number, complianceScore?: number }}>(userDocRef);
+  const { data: userData, isLoading: isLoadingUser } = useDoc<{risk: 'Low' | 'Medium' | 'High', accountType?: string, trainingStats?: { completedModules?: number, totalModules?: number, avgScore?: number, complianceScore?: number }}>(userDocRef);
 
   const metrics = useMemo(() => {
     const stats = userData?.trainingStats || {};
     return [
         { label: 'Compliance', value: `${stats.complianceScore || 0}%`, subValue: 'Overall' },
-        { label: 'Completed', value: `${stats.completedModules || 0}/${stats.totalModules || 0}`, subValue: 'Modules' },
+        { label: 'Tier', value: userData?.accountType?.toUpperCase() || 'FREE', subValue: 'Account Type' },
         { label: 'Avg Score', value: `${stats.avgScore || 0}%`, subValue: 'All quizzes' },
         { label: 'Risk', value: userData?.risk || 'N/A', subValue: 'Current Level' },
     ];
@@ -86,6 +87,9 @@ function UserTrainingDashboard() {
          <Button><Bell className="mr-2 h-4 w-4" />View Notifications</Button>
        </div>
         
+        {/* Ad Section - Intelligent display logic inside component */}
+        <AdBanner />
+
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {metrics.map((metric: any) => (

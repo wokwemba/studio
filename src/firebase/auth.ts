@@ -90,6 +90,9 @@ const createUserProfileAndRoles = async (user: User, profileData?: Partial<Omit<
         email: user.email,
         displayName: profileData?.displayName || user.displayName || user.email?.split('@')[0] || `Anonymous User`,
         tenantId: DEFAULT_TENANT_ID,
+        accountType: 'free', // Default tier
+        subscriptionStatus: 'inactive',
+        paymentProvider: null,
         status: 'Active',
         risk: 'Low',
         photoURL: user.photoURL || null,
@@ -302,6 +305,8 @@ export async function inviteUserByEmail(
             email: email,
             displayName: email.split('@')[0],
             tenantId: tenantId,
+            accountType: 'free',
+            subscriptionStatus: 'inactive',
             status: 'Invited',
             risk: 'Low',
             avatarId: `user-avatar-${Math.floor(Math.random() * 5) + 1}`,
