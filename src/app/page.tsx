@@ -30,14 +30,120 @@ import {
     ClipboardCheck, 
     Users,
     Monitor,
-    Lock
+    Lock,
+    CheckCircle2
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/useTranslation';
 import { CyberGuardLogo } from '@/components/icons/cyber-guard-logo';
 import { TrendingNews } from '@/components/dashboard/trending-news';
+import { cn } from '@/lib/utils';
+
+function PricingSection() {
+    const plans = [
+        {
+            name: "Individual",
+            price: "Free",
+            description: "Essential training for anyone looking to stay safe online.",
+            features: [
+                "AI Module Generator (3/mo)",
+                "Basic Phishing Simulations",
+                "Community Leaderboard",
+                "Digital Certificates",
+                "AI Tutor Support"
+            ],
+            cta: "Get Started",
+            href: "/signup",
+            variant: "outline" as const
+        },
+        {
+            name: "Pro",
+            price: "$19.99",
+            description: "Deep dive for security enthusiasts and professionals.",
+            features: [
+                "Unlimited AI Modules",
+                "Priority AI Tutor Access",
+                "Advanced Threat Scenarios",
+                "Detailed Risk Analytics",
+                "Downloadable IR Playbooks",
+                "Early Beta Access"
+            ],
+            cta: "Upgrade Now",
+            href: "/checkout/paypal",
+            variant: "default" as const,
+            popular: true
+        },
+        {
+            name: "Enterprise",
+            price: "Custom",
+            description: "Managed security and compliance for your organization.",
+            features: [
+                "Full Tenant Management",
+                "Professional VAPT Audits",
+                "SSO & API Integrations",
+                "24/7 Dedicated Support",
+                "Custom Audit Reports",
+                "On-site Training Options"
+            ],
+            cta: "Contact Sales",
+            href: "/partner-registration",
+            variant: "outline" as const
+        }
+    ];
+
+    return (
+        <section className="py-32 border-t border-primary/10">
+            <div className="text-center mb-20 max-w-2xl mx-auto">
+                <Badge variant="outline" className="mb-4 text-primary border-primary/30 font-mono">PLANS & PRICING</Badge>
+                <h2 className="text-4xl md:text-5xl font-bold font-headline mb-6 tracking-tight">Invest in Your Protection</h2>
+                <p className="text-xl text-muted-foreground leading-relaxed">Whether you're a student or a CEO, we have a protection plan tailored to your needs.</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {plans.map((plan) => (
+                    <Card key={plan.name} className={cn(
+                        "relative flex flex-col h-full transition-all duration-500 hover:translate-y-[-8px]",
+                        plan.popular ? "border-primary shadow-2xl shadow-primary/10 bg-primary/[0.02]" : "bg-card/30 border-primary/5"
+                    )}>
+                        {plan.popular && (
+                            <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                                <Badge className="bg-primary text-primary-foreground px-4 py-1 font-bold shadow-lg">
+                                    MOST POPULAR
+                                </Badge>
+                            </div>
+                        )}
+                        <CardHeader className="pb-8">
+                            <CardTitle className="font-headline text-2xl mb-2">{plan.name}</CardTitle>
+                            <div className="flex items-baseline gap-1 mt-4">
+                                <span className="text-5xl font-bold tracking-tighter">{plan.price}</span>
+                                {plan.price !== "Custom" && plan.price !== "Free" && <span className="text-muted-foreground font-medium">/mo</span>}
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-4 leading-relaxed">{plan.description}</p>
+                        </CardHeader>
+                        <CardContent className="flex-1 space-y-6">
+                            <Separator className="bg-primary/10" />
+                            <ul className="space-y-4">
+                                {plan.features.map((feature) => (
+                                    <li key={feature} className="flex items-start gap-3 text-sm group">
+                                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0 transition-transform group-hover:scale-110" />
+                                        <span className="text-foreground/90">{feature}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                        <CardFooter className="pt-8">
+                            <Button asChild variant={plan.variant} size="lg" className="w-full font-bold h-14 text-lg rounded-xl shadow-xl shadow-primary/5">
+                                <Link href={plan.href}>{plan.cta}</Link>
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                ))}
+            </div>
+        </section>
+    );
+}
 
 function PublicHomePage() {
     const { t } = useTranslation();
@@ -246,6 +352,9 @@ function PublicHomePage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Pricing Section */}
+            <PricingSection />
             
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 items-start border-t border-primary/10 pt-24">
