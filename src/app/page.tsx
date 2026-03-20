@@ -97,7 +97,7 @@ function PricingSection() {
     return (
         <section className="py-32 border-t border-primary/10">
             <div className="text-center mb-20 max-w-2xl mx-auto">
-                <Badge variant="outline" className="mb-4 text-primary border-primary/30 font-mono">PLANS & PRICING</Badge>
+                <Badge variant="outline" className="mb-4 text-primary border-primary/30 font-mono uppercase">PLANS & PRICING</Badge>
                 <h2 className="text-4xl md:text-5xl font-bold font-headline mb-6 tracking-tight">Invest in Your Protection</h2>
                 <p className="text-xl text-muted-foreground leading-relaxed">Whether you're a student or a CEO, we have a protection plan tailored to your needs.</p>
             </div>
@@ -150,132 +150,27 @@ function PublicHomePage() {
     const { t } = useTranslation();
 
     const features = [
-        {
-            icon: Wand2,
-            title: 'AI Content Generation',
-            description: "Instantly generate custom training modules and quizzes on any cybersecurity topic.",
-            href: '/training/module'
-        },
-        {
-            icon: FlaskConical,
-            title: 'Realistic Simulations',
-            description: "Test your readiness against a wide range of simulated cyber attacks, from phishing to DDoS.",
-            href: '/simulations'
-        },
-        {
-            icon: Activity,
-            title: 'Intelligent Risk Analysis',
-            description: "Get a clear view of your organization's security posture with AI-driven insights.",
-            href: '/risk-profile'
-        },
-        {
-            icon: BrainCircuit,
-            title: 'AI Cybersecurity Tutor',
-            description: "Get 1-on-1 help from an AI tutor to master complex cybersecurity concepts.",
-            href: '/tutor'
-        },
-        {
-            icon: Key,
-            title: 'Cyber Escape Room',
-            description: 'Test your problem-solving skills in a high-pressure, simulated incident scenario.',
-            href: '/escape-room'
-        },
-        {
-            icon: ShieldAlert,
-            title: 'Vulnerability Challenge',
-            description: 'A gamified challenge to test your ability to prioritize and manage security vulnerabilities.',
-            href: '/vulnerability-challenge'
-        },
-        {
-            icon: FileText,
-            title: 'IR Playbook Generator',
-            description: 'Use AI to generate detailed Incident Response playbooks for various security scenarios.',
-            href: '/incident-response-playbook'
-        },
-        {
-            icon: Users,
-            title: 'Threat Actor Profiler',
-            description: 'Generate and study profiles of known cyber threat actors and APT groups.',
-            href: '/threat-intelligence/actors'
-        },
-        {
-            icon: Blocks,
-            title: 'API Security Lab',
-            description: 'Practice finding and exploiting common API vulnerabilities in a safe, sandboxed environment.',
-            href: '/api-security-lab'
-        },
-         {
-            icon: ShieldQuestion,
-            title: 'Interactive Threat Scenarios',
-            description: 'Engage in realistic, story-driven security challenges to test your decision-making skills.',
-            href: '/threat-scenarios'
-        },
-        {
-            icon: ScanLine,
-            title: 'Phishing Detector Engine',
-            description: 'Analyze suspicious SMS, email, and WhatsApp messages for fraud and phishing attempts.',
-            href: '/phishing-engine/dashboard'
-        },
-         {
-            icon: GitBranch,
-            title: 'Dark Web Monitor',
-            description: 'Simulate a scan of the dark web for mentions of your company and keywords.',
-            href: '/dark-web-monitor'
-        },
-        {
-            icon: Monitor,
-            title: 'VAPT Console',
-            description: 'Request professional vulnerability assessments and penetration testing.',
-            href: '/vapt'
-        },
-        {
-            icon: BarChart3,
-            title: 'Compliance & Reporting',
-            description: "Manage compliance requirements and generate detailed reports for your organization.",
-            href: '/admin/analytics'
-        },
-        {
-            icon: Copy,
-            title: 'Interactive Flashcards',
-            description: 'Study key cybersecurity terms and concepts with AI-generated flashcard decks.',
-            href: '/flashcards'
-        },
-        {
-            icon: Trophy,
-            title: 'Gamified Leaderboard',
-            description: 'Compete with your colleagues and climb the ranks based on your security score.',
-            href: '/leaderboard'
-        },
-        {
-            icon: Award,
-            title: 'Certificate Management',
-            description: 'Earn and manage official certificates for completed training modules.',
-            href: '/certificates'
-        },
-        {
-            icon: ClipboardList,
-            title: 'Incident Response Planning',
-            description: 'Submit requests for guided Incident Response tabletop exercises and drills.',
-            href: '/incident-response'
-        },
-        {
-            icon: GitPullRequest,
-            title: 'Automated Campaign Builder',
-            description: "Let AI design end-to-end security awareness campaigns for your organization.",
-            href: '/admin/campaigns'
-        },
-        {
-            icon: BookUser,
-            title: 'Custom Training',
-            description: 'Request the creation of bespoke training modules tailored to your specific needs.',
-            href: '/custom-training'
-        },
-        {
-            icon: ClipboardCheck,
-            title: 'System Audit',
-            description: 'Request a formal audit of a system, application, or process against a specific framework.',
-            href: '/system-audit'
-        }
+        { icon: Wand2, title: 'AI Content Generation', description: "Instantly generate custom training modules and quizzes on any cybersecurity topic.", href: '/training/module' },
+        { icon: FlaskConical, title: 'Realistic Simulations', description: "Test your readiness against a wide range of simulated cyber attacks, from phishing to DDoS.", href: '/simulations' },
+        { icon: Activity, title: 'Intelligent Risk Analysis', description: "Get a clear view of your organization's security posture with AI-driven insights.", href: '/risk-profile' },
+        { icon: BrainCircuit, title: 'AI Cybersecurity Tutor', description: "Get 1-on-1 help from an AI tutor to master complex cybersecurity concepts.", href: '/tutor' },
+        { icon: Key, title: 'Cyber Escape Room', description: 'Test your problem-solving skills in a high-pressure, simulated incident scenario.', href: '/escape-room' },
+        { icon: ShieldAlert, title: 'Vulnerability Challenge', description: 'A gamified challenge to test your ability to prioritize and manage security vulnerabilities.', href: '/vulnerability-challenge' },
+        { icon: FileText, title: 'IR Playbook Generator', description: 'Use AI to generate detailed Incident Response playbooks for various security scenarios.', href: '/incident-response-playbook' },
+        { icon: Users, title: 'Threat Actor Profiler', description: 'Generate and study profiles of known cyber threat actors and APT groups.', href: '/threat-intelligence/actors' },
+        { icon: Blocks, title: 'API Security Lab', description: 'Practice finding and exploiting common API vulnerabilities in a safe, sandboxed environment.', href: '/api-security-lab' },
+        { icon: ShieldQuestion, title: 'Interactive Threat Scenarios', description: 'Engage in realistic, story-driven security challenges to test your decision-making skills.', href: '/threat-scenarios' },
+        { icon: ScanLine, title: 'Phishing Detector Engine', description: 'Analyze suspicious SMS, email, and WhatsApp messages for fraud and phishing attempts.', href: '/phishing-engine/dashboard' },
+        { icon: GitBranch, title: 'Dark Web Monitor', description: 'Simulate a scan of the dark web for mentions of your company and keywords.', href: '/dark-web-monitor' },
+        { icon: Monitor, title: 'VAPT Console', description: 'Request professional vulnerability assessments and penetration testing.', href: '/vapt' },
+        { icon: BarChart3, title: 'Compliance & Reporting', description: "Manage compliance requirements and generate detailed reports for your organization.", href: '/admin/analytics' },
+        { icon: Copy, title: 'Interactive Flashcards', description: 'Study key cybersecurity terms and concepts with AI-generated flashcard decks.', href: '/flashcards' },
+        { icon: Trophy, title: 'Gamified Leaderboard', description: 'Compete with your colleagues and climb the ranks based on your security score.', href: '/leaderboard' },
+        { icon: Award, title: 'Certificate Management', description: 'Earn and manage official certificates for completed training modules.', href: '/certificates' },
+        { icon: ClipboardList, title: 'Incident Response Planning', description: 'Submit requests for guided Incident Response tabletop exercises and drills.', href: '/incident-response' },
+        { icon: GitPullRequest, title: 'Automated Campaign Builder', description: "Let AI design end-to-end security awareness campaigns for your organization.", href: '/admin/campaigns' },
+        { icon: BookUser, title: 'Custom Training', description: 'Request the creation of bespoke training modules tailored to your specific needs.', href: '/custom-training' },
+        { icon: ClipboardCheck, title: 'System Audit', description: 'Request a formal audit of a system, application, or process against a specific framework.', href: '/system-audit' }
     ];
 
     return (
@@ -359,7 +254,6 @@ function PublicHomePage() {
             
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 items-start border-t border-primary/10 pt-24">
-                {/* Left column for Tools */}
                 <div className="lg:col-span-3">
                     <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-6">
                         <div>
@@ -398,7 +292,6 @@ function PublicHomePage() {
                     </div>
                 </div>
 
-                {/* Right column for Trending News */}
                 <div className="w-full lg:sticky lg:top-24 space-y-8">
                     <TrendingNews />
                     <Card className="bg-primary/5 border-2 border-primary/20 border-dashed relative overflow-hidden group">
@@ -419,15 +312,12 @@ function PublicHomePage() {
     );
 }
 
-
 export default function Home() {
   const { user, roles, loading } = useAuthContext();
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) {
-      return;
-    }
+    if (loading) return;
     
     if (user) {
       const isAdmin = roles?.some(r => 

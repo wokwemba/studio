@@ -1,0 +1,20 @@
+This is a high-fidelity Next.js 15 project called "CyberGuard". It is a professional cybersecurity training and consulting platform.
+
+PROJECT GOALS:
+1. Provide AI-powered training (Genkit + Gemini).
+2. Offer tiered access (Free with Ads vs Pro with PayPal).
+3. Act as a bridge between individual education and enterprise VAPT/Audit services.
+
+TECH STACK:
+- Framework: Next.js 15 (App Router)
+- AI: Genkit v1.x (@genkit-ai/google-genai)
+- UI: ShadCN, Tailwind CSS, Lucide Icons
+- Backend: Firebase Auth & Firestore (blueprinted in docs/backend.json)
+- Payments: PayPal SDK (Live Mode)
+
+INSTRUCTIONS FOR AI STUDIO:
+1. Analyze the 'src/ai/flows' directory; these are the core intelligence engines.
+2. The 'src/app/checkout/paypal' directory handles monetization.
+3. The 'src/components/ads' component handles the free-tier ad logic.
+4. Ensure the environment variables for FIREBASE, PAYPAL_CLIENT_ID, and GEMINI_API_KEY are configured.
+5. You can now continue building features or refining the UI based on the existing architectural patterns.

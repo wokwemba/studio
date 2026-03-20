@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -12,11 +11,6 @@ import { useUser, useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useState } from 'react';
 
-/**
- * @fileOverview PayPal Checkout Page
- * Renders the official PayPal buttons for the "Pro" plan subscription.
- * Upon success, it updates the user's Firestore record to 'paid' status.
- */
 export default function PayPalCheckoutPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -37,7 +31,6 @@ export default function PayPalCheckoutPage() {
       if (user && firestore) {
         try {
           const userRef = doc(firestore, 'users', user.uid);
-          // Update database record immediately on success
           updateDocumentNonBlocking(userRef, {
             accountType: 'paid',
             subscriptionStatus: 'active',
@@ -87,11 +80,9 @@ export default function PayPalCheckoutPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      {/* Decorative background blur */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -z-10" />
       
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-        {/* Order Summary */}
         <div className="space-y-6">
           <Button variant="ghost" asChild className="-ml-4">
             <Link href="/">
@@ -145,7 +136,6 @@ export default function PayPalCheckoutPage() {
           </div>
         </div>
 
-        {/* Payment Section */}
         <Card className="border-primary/20 bg-card/80 backdrop-blur-xl shadow-2xl">
           <CardHeader className="text-center">
             <CardTitle className="font-headline text-2xl tracking-tight">Payment Method</CardTitle>

@@ -11,8 +11,8 @@ import { LocaleProvider } from '@/context/LocaleContext';
 import Script from 'next/script';
 
 export const metadata: Metadata = {
-  title: 'CCyberGuard',
-  description: 'AI-Powered Cybersecurity Training Platform',
+  title: 'CyberGuard | AI-Powered Cybersecurity Training & Protection',
+  description: 'Learn how to protect your data or get enterprise-grade security consulting. The bridge between education and protection.',
   other: {
     'google-adsense-account': 'ca-pub-7698959644327699',
   },
@@ -32,13 +32,14 @@ export default function RootLayout({
             __html: `(function(){try{var e=localStorage.getItem("theme")||"dark";document.documentElement.classList.add(e)}catch(e){}})()`,
           }}
         />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet" />
-      </head>
-      <body className={cn('font-body antialiased')} suppressHydrationWarning>
+        {/* Google AdSense - strategy beforeInteractive for verification bots */}
+        <Script
+          id="adsense-script"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7698959644327699"
+          strategy="beforeInteractive"
+          crossOrigin="anonymous"
+        />
+        
         {/* Google tag (gtag.js) */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=AW-17971668046"
@@ -49,17 +50,17 @@ export default function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-
             gtag('config', 'AW-17971668046');
           `}
         </Script>
-        
-        <Script
-          id="adsense-script"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7698959644327699"
-          strategy="beforeInteractive"
-          crossOrigin="anonymous"
-        />
+
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet" />
+      </head>
+      <body className={cn('font-body antialiased')} suppressHydrationWarning>
         <FirebaseClientProvider>
           <AuthProvider>
             <LocaleProvider>
