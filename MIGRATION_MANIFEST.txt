@@ -1,0 +1,36 @@
+Project Migration Manifest - CyberGuard Studio
+Generated: March 2024
+
+This project is a professional-grade Next.js 15 application. Below is the structure you should verify after transferring the code to your new environment.
+
+### 1. TECH STACK
+- Framework: Next.js 15 (App Router)
+- UI: React 19, Tailwind CSS, Radix UI (ShadCN)
+- Backend: Firebase (Auth & Firestore)
+- AI: Genkit v1.x (Google Generative AI)
+- Payments: PayPal SDK
+
+### 2. CRITICAL CONFIGURATION FILES
+- package.json: Contains all necessary dependencies including @genkit-ai/google-genai and @paypal/react-paypal-js.
+- next.config.ts: Configured for "standalone" output, which is ideal for cloud hosting.
+- docs/backend.json: The definitive schema for your Firestore collections and User entities.
+- src/firebase/config.ts: Your public Firebase Client configuration.
+
+### 3. CORE LOGIC LOCATIONS
+- AI Flows (Genkit): Located in `src/ai/flows/`. These handle the tutor, phishing analysis, and module generation.
+- Firebase Initialization: Handled in `src/firebase/index.ts` and `src/firebase/client-provider.tsx`.
+- Tiered Access Logic: Check `src/components/ads/ad-banner.tsx` and `src/app/checkout/paypal/page.tsx` for the free/paid logic.
+
+### 4. ENVIRONMENT VARIABLES REQUIRED
+Ensure these are set in your new hosting environment:
+- NEXT_PUBLIC_FIREBASE_CONFIG (or individual Firebase keys)
+- PAYPAL_CLIENT_ID
+- GEMINI_API_KEY (for Genkit flows)
+
+### 5. NEXT STEPS FOR ANTIGRAVITY
+1. Download the project ZIP from the Firebase Studio UI.
+2. Extract and run `npm install` in your local environment.
+3. Initialize your AI provider (Gemini) with a new API key if necessary.
+4. Deploy the Firestore Security Rules found in `firestore.rules`.
+
+Good luck with the transition!
