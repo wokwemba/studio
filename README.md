@@ -1,6 +1,15 @@
+
 # CyberGuard Studio - Project Handover
 
 CyberGuard is an AI-powered cybersecurity platform that bridges the gap between individual education and enterprise protection.
+
+## 📦 How to move this to GitHub
+
+1. **Unzip** the downloaded project folder.
+2. **Create a new repository** on GitHub.com.
+3. Use **GitHub Desktop** to add the folder.
+4. **Commit** the changes with a message like "Initial commit".
+5. **Push** to GitHub.
 
 ## 🚀 Getting Started in a New Environment
 
