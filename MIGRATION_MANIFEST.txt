@@ -1,22 +1,24 @@
 CyberGuard Final Handover Manifest
 March 2024
 
-This project is a high-end Next.js 15 application. It is architected for portability and high availability.
+This project is a high-fidelity Next.js 15 application designed for cybersecurity training and enterprise protection.
 
-CRITICAL DIRECTORIES:
-- /src/ai/flows: Contains all Genkit AI logic (Tutor, Phishing Analyzer, etc.).
-- /src/app/checkout: Secure payment processing using the official PayPal SDK.
-- /src/components/ads: Tiered access logic (Free vs Pro).
-- /docs/backend.json: Definitive Firestore schema blueprint.
+CRITICAL PROJECT COMPONENTS:
+1. AI ENGINES (/src/ai/flows):
+   - Custom Genkit flows for Tutor, Phishing Analysis, Threat Scenarios, and IR Playbooks.
+2. MONETIZATION (/src/app/checkout/paypal):
+   - Live PayPal integration using Client ID: ARCioT1rXIcAVr_6yu3dNZg4XoKQmUxIwvDx0GwGf1loAVdd26MHDClOqPsXLavlleQZe_pHYzAhaoHM
+3. TIERED ACCESS (/src/components/ads):
+   - Logic-driven ad display based on Firestore `accountType` (free vs paid).
+4. INFRASTRUCTURE:
+   - Next.js 15 App Router, Tailwind CSS, ShadCN UI.
+   - Firebase Auth & Firestore (Schema blueprinted in /docs/backend.json).
 
-PRODUCTION CONFIGURATIONS:
-- Live PayPal Credentials: ARCioT1rXIcAVr_6yu3dNZg4XoKQmUxIwvDx0GwGf1loAVdd26MHDClOqPsXLavlleQZe_pHYzAhaoHM
-- AdSense ID: ca-pub-7698959644327699
-- Google Tag ID: AW-17971668046
+ENVIRONMENT VARIABLES REQUIRED:
+- NEXT_PUBLIC_FIREBASE_CONFIG
+- PAYPAL_CLIENT_ID
+- GEMINI_API_KEY
 
 NEXT STEPS IN GOOGLE AI STUDIO:
-1. Upload your ZIP project.
-2. Use the 'GOOGLE_AI_STUDIO_PROMPT.txt' provided in this manifest to orient the AI agent.
-3. Configure your API keys in the environment.
-
-Good luck building the future of digital protection!
+1. Upload the project ZIP.
+2. Provide the 'GOOGLE_AI_STUDIO_PROMPT.txt' to the AI agent to orient it to the codebase.
