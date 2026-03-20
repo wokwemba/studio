@@ -10,7 +10,9 @@ CRITICAL PROJECT COMPONENTS:
    - Live PayPal integration using Client ID: ARCioT1rXIcAVr_6yu3dNZg4XoKQmUxIwvDx0GwGf1loAVdd26MHDClOqPsXLavlleQZe_pHYzAhaoHM
 3. TIERED ACCESS (/src/components/ads):
    - Logic-driven ad display based on Firestore `accountType` (free vs paid).
-4. INFRASTRUCTURE:
+4. SEO & ANALYTICS (src/app/layout.tsx):
+   - Google AdSense (ca-pub-7698959644327699) and Google Tag (AW-17971668046) integrated with hydration safety.
+5. INFRASTRUCTURE:
    - Next.js 15 App Router, Tailwind CSS, ShadCN UI.
    - Firebase Auth & Firestore (Schema blueprinted in /docs/backend.json).
 

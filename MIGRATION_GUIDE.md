@@ -1,4 +1,4 @@
-# Technical Migration Guide
+# Technical Migration Guide: CyberGuard
 
 Use this guide to ensure all features work correctly after moving the project out of Firebase Studio.
 
@@ -22,8 +22,9 @@ The `src/components/ads/ad-banner.tsx` component handles the display of ads. It 
 - `accountType: "free"` -> Shows AdBanner
 - `accountType: "paid"` -> Hides AdBanner
 
-## 5. Security Rules
-The `firestore.rules` file is production-ready. It uses a tiered RBAC (Role-Based Access Control) system based on the `user_roles` collection.
+## 5. Security Rules & SEO
+- The `firestore.rules` file is production-ready.
+- Google AdSense and Google Tag are integrated in `src/app/layout.tsx` using Next.js `Script` components to prevent hydration errors.
 
 ## 6. Multi-language Support
 Translations are managed in `src/locales/`. To add a new language:

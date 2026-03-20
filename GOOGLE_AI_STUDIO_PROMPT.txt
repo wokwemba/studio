@@ -11,10 +11,11 @@ TECH STACK:
 - UI: ShadCN, Tailwind CSS, Lucide Icons
 - Backend: Firebase Auth & Firestore (blueprinted in docs/backend.json)
 - Payments: PayPal SDK (Live Mode)
+- Analytics: Google Tag & AdSense integrated.
 
 INSTRUCTIONS FOR AI STUDIO:
 1. Analyze the 'src/ai/flows' directory; these are the core intelligence engines.
-2. The 'src/app/checkout/paypal' directory handles monetization.
+2. The 'src/app/checkout/paypal' directory handles monetization and user tier upgrading.
 3. The 'src/components/ads' component handles the free-tier ad logic.
 4. Ensure the environment variables for FIREBASE, PAYPAL_CLIENT_ID, and GEMINI_API_KEY are configured.
 5. You can now continue building features or refining the UI based on the existing architectural patterns.
